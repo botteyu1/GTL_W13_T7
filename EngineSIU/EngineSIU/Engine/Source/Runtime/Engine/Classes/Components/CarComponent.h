@@ -41,6 +41,8 @@ private:
     float MaxSteerAngle = PxPi / 9.f;
     float DeltaSteerAngle = PxPi / 18.f;
     float MaxDriveTorque = 100.0f;
+    float Velocity = 0.f;
+    float MaxVelocity = 20.f;
 
     UStaticMeshComponent* WheelComp[4] = { nullptr };
 

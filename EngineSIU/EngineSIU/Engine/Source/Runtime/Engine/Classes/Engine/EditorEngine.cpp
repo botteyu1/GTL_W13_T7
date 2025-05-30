@@ -565,21 +565,31 @@ void UEditorEngine::SetPhysXScene(UWorld* World)
     UE_LOG(ELogLevel::Warning, "Setting Physics scene...");
     PhysicsManager->CreateScene(PIEWorld);
     PhysicsManager->SetCurrentScene(PIEWorld);
+    for (const auto& Actor : World->GetActiveLevel()->Actors)
+    {
+        for (const auto& Comp : Actor->GetComponents())
+        {
+            UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Comp);
+            int bPhysics = Prim->bSimulate ? 1 : 0;
+            UE_LOG(ELogLevel::Warning, "%s, simulate physics: %d", *Prim->GetName(), bPhysics);
+        }
+    }
 
     for (const auto& Actor : World->GetActiveLevel()->Actors)
     {
-        UPrimitiveComponent* Prim = Actor->GetComponentByClass<UPrimitiveComponent>();
-        int bPhysics = Prim->bSimulate ? 1 : 0;
-        UE_LOG(ELogLevel::Warning, "%s, simulate physics: %d", *Prim->GetName(), bPhysics);
-        if (UCarComponent* Car = Cast<UCarComponent>(Prim))
+        for (const auto& Comp : Actor->GetComponents())
         {
-            UE_LOG(ELogLevel::Warning, "Generate Car Physics...");
-            Car->CreatePhysXGameObject();
-        }
-        else if (Prim && Prim->bSimulate)
-        {
-            UE_LOG(ELogLevel::Warning, "Generate Primitive Physics...");
-            Prim->CreatePhysXGameObject();
+            UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Comp);
+            if (UCarComponent* Car = Cast<UCarComponent>(Prim))
+            {
+                UE_LOG(ELogLevel::Warning, "Generate Car Physics...");
+                Car->CreatePhysXGameObject();
+            }
+            else if (Prim && Prim->bSimulate)
+            {
+                UE_LOG(ELogLevel::Warning, "Generate Primitive Physics...");
+                Prim->CreatePhysXGameObject();
+            }
         }
     }
 }
