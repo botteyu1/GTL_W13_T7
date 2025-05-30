@@ -458,6 +458,7 @@ void SLevelEditor::RegisterEditorInputDelegates()
             // Viewport 선택 로직
             case EKeys::LeftMouseButton:
             {
+                bPressedAlt = false;
                 VSplitter->OnReleased();
                 HSplitter->OnReleased();
                 return;
@@ -491,7 +492,7 @@ void SLevelEditor::RegisterEditorInputDelegates()
                     )
                 {
                     // Gizmo control
-                    if (const UEditorEngine* EdEngine = Cast<UEditorEngine>(GEngine))
+                    if (UEditorEngine* EdEngine = Cast<UEditorEngine>(GEngine))
                     {
                         const UGizmoBaseComponent* Gizmo = Cast<UGizmoBaseComponent>(ActiveViewportClient->GetPickedGizmoComponent());
                         if (!Gizmo)
@@ -524,7 +525,7 @@ void SLevelEditor::RegisterEditorInputDelegates()
                         
                         FVector Result = TargetRayEnd + TargetDiff;
 
-                        if (ActiveViewportClient->bUseGridMove)
+                        if (ActiveViewportClient->bUseGridMove && !(GetAsyncKeyState(VK_SHIFT) & 0x8000))
                         {
                             float GridScale = ActiveViewportClient->GridMovementScale;
                             
@@ -535,6 +536,16 @@ void SLevelEditor::RegisterEditorInputDelegates()
                             RelativeMovement.Z = (roundf(RelativeMovement.Z / GridScale) * GridScale) + ActorStartLocation.Z;
 
                             Result = RelativeMovement;
+                        }
+
+                        if (!bPressedAlt  && (GetAsyncKeyState(VK_MENU) & 0x8000))
+                        {
+                            bPressedAlt = true;
+                            AActor* NewActor = EdEngine->ActiveWorld->DuplicateActor(EdEngine->GetSelectedActor());
+                            EdEngine->SelectActor(NewActor);
+                            EdEngine->DeselectComponent(EdEngine->GetSelectedComponent());
+                            TargetComponent = NewActor->GetRootComponent();
+                            EdEngine->SelectComponent(TargetComponent);
                         }
 
                         FVector NewLocation = TargetComponent->GetComponentLocation();

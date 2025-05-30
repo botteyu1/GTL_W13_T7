@@ -43,6 +43,8 @@ private:
 
     FVector ActorStartLocation;
 
+    bool bPressedAlt = false;
+
     bool bMultiViewportMode;
     
     uint32 EditorWidth;
