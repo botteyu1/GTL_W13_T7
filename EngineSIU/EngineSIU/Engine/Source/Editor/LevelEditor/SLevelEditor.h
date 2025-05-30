@@ -41,6 +41,8 @@ private:
     /** 좌클릭시 커서와 선택된 Actor와의 거리 차 */
     FVector TargetDiff;
 
+    FVector ActorStartLocation;
+
     bool bMultiViewportMode;
     
     uint32 EditorWidth;

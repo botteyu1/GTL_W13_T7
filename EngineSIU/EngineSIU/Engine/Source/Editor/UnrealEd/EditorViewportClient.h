@@ -154,6 +154,11 @@ public:
         const float FocalLength = SensorWidth / (2.f * FMath::Tan(FovRad / 2.0f));
         return FocalLength;
     }
+
+    /** Editing property */
+    bool bUseGridMove = false;
+    float GridMovementScale = 10.f;
+    bool bUseObjectMagnetic = false;
     
     static FVector Pivot;
     static float OrthoSize;

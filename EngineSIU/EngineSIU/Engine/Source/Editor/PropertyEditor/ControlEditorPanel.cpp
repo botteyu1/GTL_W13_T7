@@ -333,6 +333,22 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             FEngineLoop::Renderer.CompositingPass->GammaValue = Gamma;
         }
 
+        ImGui::Separator();
+
+        bool* bMagnetic = &GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->bUseObjectMagnetic;
+        ImGui::Checkbox("Magnetic", bMagnetic);
+
+        bool* bGridMove = &GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->bUseGridMove;;
+        ImGui::Checkbox("Grid Movement", bGridMove);
+
+        ImGui::Text("Scale");
+        float MoveScale = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GridMovementScale;
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::DragFloat("##GridMove", &MoveScale, 0.01f, 0.1f, 100.0f, "%.1f"))
+        {
+            GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GridMovementScale = MoveScale;
+        }
+
         ImGui::EndPopup();
     }
 

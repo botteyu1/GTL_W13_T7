@@ -346,6 +346,7 @@ void SLevelEditor::RegisterEditorInputDelegates()
                         ActiveViewportClient->DeprojectFVector2D(FWindowsCursor::GetClientPosition(), RayOrigin, RayDir);
 
                         const FVector TargetLocation = TargetComponent->GetComponentLocation();
+                        ActorStartLocation = TargetLocation;
                         const float TargetDist = FVector::Distance(ViewTransform->GetLocation(), TargetLocation);
                         const FVector TargetRayEnd = RayOrigin + RayDir * TargetDist;
                         TargetDiff = TargetLocation - TargetRayEnd;
@@ -520,7 +521,21 @@ void SLevelEditor::RegisterEditorInputDelegates()
 
                         const float TargetDist = FVector::Distance(ViewTransform->GetLocation(), TargetComponent->GetComponentLocation());
                         const FVector TargetRayEnd = RayOrigin + RayDir * TargetDist;
-                        const FVector Result = TargetRayEnd + TargetDiff;
+                        
+                        FVector Result = TargetRayEnd + TargetDiff;
+
+                        if (ActiveViewportClient->bUseGridMove)
+                        {
+                            float GridScale = ActiveViewportClient->GridMovementScale;
+                            
+                            FVector RelativeMovement = Result - ActorStartLocation;
+
+                            RelativeMovement.X = (roundf(RelativeMovement.X / GridScale) * GridScale) + ActorStartLocation.X;
+                            RelativeMovement.Y = (roundf(RelativeMovement.Y / GridScale) * GridScale) + ActorStartLocation.Y;
+                            RelativeMovement.Z = (roundf(RelativeMovement.Z / GridScale) * GridScale) + ActorStartLocation.Z;
+
+                            Result = RelativeMovement;
+                        }
 
                         FVector NewLocation = TargetComponent->GetComponentLocation();
                         if (EdEngine->GetEditorPlayer()->GetCoordMode() == CDM_WORLD)
