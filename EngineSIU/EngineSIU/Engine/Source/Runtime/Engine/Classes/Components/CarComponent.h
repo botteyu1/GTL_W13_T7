@@ -1,0 +1,64 @@
+#pragma once
+
+#include "StaticMeshComponent.h"
+#include "Physics/PhysicsManager.h"
+
+class UCarComponent : public UStaticMeshComponent
+{
+    DECLARE_CLASS(UCarComponent, UStaticMeshComponent)
+
+public:
+    UCarComponent();
+    virtual ~UCarComponent() override = default;
+
+    virtual UObject* Duplicate(UObject* InOuter) override;
+
+    virtual void TickComponent(float DeltaTime) override;
+    virtual void EndPhysicsTickComponent(float DeltaTime) override;
+
+    virtual void CreatePhysXGameObject() override;
+    virtual void Spawn();
+
+    virtual void GetProperties(TMap<FString, FString>& OutProperties) const override;
+    virtual void SetProperties(const TMap<FString, FString>& InProperties) override;
+
+    void MoveCar();
+
+    void createWheelConvexData(float radius, float halfHeight, int segmentCount, const FVector& Scale,
+        std::vector<PxVec3>& outPoints);
+
+    PxShape* CreateWheelShape(PxPhysics* Physics, PxCooking* Cooking, const FVector& Scale, int segmentCount);
+
+    void UpdateFromPhysics(GameObject* PhysicsActor, UStaticMeshComponent* ActualActor);
+
+private:
+    PxMaterial* DefaultMaterial = nullptr;
+    GameObject* CarBody = nullptr;
+    GameObject* Hub[2] = { nullptr }; //Front, Rear
+    GameObject* Wheels[4] = { nullptr }; //FR, FL, RR, RL
+    PxRevoluteJoint* WheelJoints[4] = { nullptr }; //FR, FL, RR, RL
+    PxRevoluteJoint* SteeringJoint = nullptr;
+    float MaxSteerAngle = PxPi / 9.f;
+    float DeltaSteerAngle = PxPi / 18.f;
+    float MaxDriveTorque = 100.0f;
+
+    UStaticMeshComponent* WheelComp[4] = { nullptr };
+
+    bool bHasBody = false;
+
+    FVector CarBodyPos = FVector(0, 0, 1.5f);
+    FVector BodyExtent;
+    float WheelRadius = 1.2f;
+    float WheelWidth = 0.6f;
+    float WheelHeight = 0.6f; //half height
+
+    FVector HubSize = FVector(0.2f, 0.5f, 0.2f);
+
+    const FVector WheelPos[4] =
+    {
+        {   4.f, 2.5f, 0.5f}, //FR
+        {   4.f, -2.5f, 0.5f}, //FL
+        {-4.65f, 2.5f, 0.5f}, //RR
+        {-4.65f, -2.5f, 0.5f}  //RL
+    };
+};

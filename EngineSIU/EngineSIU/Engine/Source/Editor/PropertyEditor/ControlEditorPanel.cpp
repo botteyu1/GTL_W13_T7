@@ -40,6 +40,7 @@
 #include <Engine/FbxLoader.h>
 #include "Engine/Classes/Engine/AssetManager.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Actors/CarActor.h"
 
 ControlEditorPanel::ControlEditorPanel()
 {
@@ -371,6 +372,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             { .Label = "CapsuleCol",        .OBJ = OBJ_CAPSULE_COLLISION },
             { .Label = "SkeletalMeshActor", .OBJ = OBJ_SKELETALMESH },
             { .Label = "SequencerPlayer",   .OBJ = OBJ_SEQUENCERPLAYER },
+            { .Label = "Car",   .OBJ = OBJ_CAR },
         };
 
         for (const auto& primitive : primitives)
@@ -495,6 +497,12 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     SpawnedActor = World->SpawnActor<ASequencerPlayer>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SEQUENCERPLAYER"));
                 }
+                break;
+                case OBJ_CAR:
+                    SpawnedActor = World->SpawnActor<ACarActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_CAR"));
+                    Cast<UCarComponent>(SpawnedActor->GetRootComponent())->Spawn();
+                    break;
                 case OBJ_CAMERA:
                 case OBJ_PLAYER:
                 case OBJ_END:

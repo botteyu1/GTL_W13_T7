@@ -1,6 +1,7 @@
-﻿#pragma once
+#pragma once
 #include <cassert>
 #include <compare>
+#include <PxPhysicsAPI.h>
 #include "MathUtility.h"
 #include "Serialization/Archive.h"
 
@@ -223,6 +224,11 @@ public:
 
     FString ToString() const;
     bool InitFromString(const FString& InSourceString);
+
+    physx::PxVec3 ToPxVec3() const
+    {
+        return physx::PxVec3(X, Y, Z);
+    }
 };
 
 inline FVector::FVector(const FRotator& InRotator)
