@@ -186,11 +186,11 @@ void APlayerCameraManager::StopAllInstancesOfCameraShake(UClass* ShakeClass, boo
 void APlayerCameraManager::DoUpdateCamera(float DeltaTime)
 {
     //Progress가 진행중이 아니면
-    if (PendingViewTarget.Target == nullptr)
-    {
-        ViewTarget.CheckViewTarget(PCOwner);
-        UpdateViewTarget(ViewTarget, DeltaTime);
-    }
+    // if (PendingViewTarget.Target == nullptr)
+    // {
+    //     //ViewTarget.CheckViewTarget(PCOwner);
+    //     UpdateViewTarget(ViewTarget, DeltaTime);
+    // }
 
     FMinimalViewInfo NewPOV = ViewTarget.POV;
     
@@ -240,7 +240,10 @@ void APlayerCameraManager::DoUpdateCamera(float DeltaTime)
         }
         else
         {
+            ViewTarget.Target = PendingViewTarget.Target; 
             PendingViewTarget.Target = nullptr;
+            PendingViewTarget.POV = FMinimalViewInfo();
+            UpdateViewTarget(ViewTarget, DeltaTime);
 
             BlendTimeToGo = 0;
 
@@ -248,6 +251,19 @@ void APlayerCameraManager::DoUpdateCamera(float DeltaTime)
 
             OnBlendCompleteEvent.Broadcast();
         }
+    }
+    // 블렌딩 진행 중이 아닐 경우 (ViewTarget은 SetViewTarget에 의해 설정된 최종 타겟)
+    else
+    {
+        if (ViewTarget.Target == nullptr || ViewTarget.Target->IsActorBeingDestroyed())
+        {
+            ViewTarget.CheckViewTarget(PCOwner);
+            //AssignViewTarget(PCOwner, ViewTarget); // PCOwner를 새로운 ViewTarget으로 즉시 할당
+        }
+
+        // 현재 ViewTarget으로부터 최신 POV 계산
+        UpdateViewTarget(ViewTarget, DeltaTime);
+        NewPOV = ViewTarget.POV;
     }
     
     // Fade Enabled 되었다면 Fade 처리 수행
@@ -265,6 +281,7 @@ void APlayerCameraManager::DoUpdateCamera(float DeltaTime)
             StopCameraFade();
         }
     }
+
 
     
     if (bAnimateVignette)
@@ -304,11 +321,11 @@ void APlayerCameraManager::SetViewTarget(class AActor* NewTarget, struct FViewTa
 	{
 
 		BlendTimeToGo = TransitionParams.BlendTime;
-
-		AssignViewTarget(PCOwner->GetPossessedActor(), ViewTarget);
-		AssignViewTarget(NewTarget, PendingViewTarget, TransitionParams);
-
 	}
+    //AssignViewTarget(PCOwner->GetPossessedActor(), ViewTarget);
+    AssignViewTarget(NewTarget, PendingViewTarget, TransitionParams);
+    
+
 
 	BlendParams = TransitionParams;
 }

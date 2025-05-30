@@ -111,8 +111,11 @@ void UCameraComponent::ResetFollowToPlayer()
 void UCameraComponent::GetCameraView(float DeltaTime, FMinimalViewInfo& DesiredView)
 {
 
+    FMatrix Matrix = GetWorldMatrix();
     DesiredView.Location = GetComponentLocation();
-    DesiredView.Rotation = GetComponentRotation();
+    DesiredView.Rotation = GetComponentRotation();    
+    //DesiredView.Location = Matrix.GetTranslationVector();
+    //DesiredView.Rotation = Matrix.ToQuat().Rotator();
     DesiredView.FOV = ViewFOV;
     DesiredView.PerspectiveNearClip = NearClip;
     DesiredView.PerspectiveFarClip = FarClip;

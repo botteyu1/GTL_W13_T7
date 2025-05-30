@@ -18,6 +18,14 @@ void UInputComponent::ProcessInput(float DeltaTime)
     {
         KeyBindDelegate[FString("D")].Broadcast(DeltaTime);
     }
+    if (PressedKeys.Contains(EKeys::Z))
+    {
+        KeyBindDelegate[FString("Z")].Broadcast(DeltaTime);
+    }
+    if (PressedKeys.Contains(EKeys::X))
+    {
+        KeyBindDelegate[FString("X")].Broadcast(DeltaTime);
+    }
 }
 
 void UInputComponent::SetPossess()
@@ -116,6 +124,42 @@ void UInputComponent::InputKey(const FKeyEvent& InKeyEvent)
             else if (InKeyEvent.GetInputEvent() == IE_Released)
             {
                 PressedKeys.Remove(EKeys::D);
+            }
+            break;
+        }
+    case 'Z':
+        {
+            if (InKeyEvent.GetInputEvent() == IE_Pressed)
+            {
+                PressedKeys.Add(EKeys::Z);
+            }
+            else if (InKeyEvent.GetInputEvent() == IE_Released)
+            {
+                PressedKeys.Remove(EKeys::Z);
+            }
+            break;
+        }
+    case 'X':
+        {
+            if (InKeyEvent.GetInputEvent() == IE_Pressed)
+            {
+                PressedKeys.Add(EKeys::X);
+            }
+            else if (InKeyEvent.GetInputEvent() == IE_Released)
+            {
+                PressedKeys.Remove(EKeys::X);
+            }
+            break;
+        }
+    case 'Q':
+        {
+            if (InKeyEvent.GetInputEvent() == IE_Pressed)
+            {
+                PressedKeys.Add(EKeys::Q);
+            }
+            else if (InKeyEvent.GetInputEvent() == IE_Released)
+            {
+                PressedKeys.Remove(EKeys::Q);
             }
             break;
         }
