@@ -86,7 +86,7 @@ void UCarComponent::CreatePhysXGameObject()
         CarBody->DynamicRigidBody->attachShape(*BodyShape);
         BodyShape->release();
         PxReal volume = 8 * BodyExtent.X * BodyExtent.Y * BodyExtent.Z;
-        PxReal density = 600.0f / volume;
+        PxReal density = 600.f / volume;
         PxRigidBodyExt::updateMassAndInertia(*CarBody->DynamicRigidBody, density);
 
         //PxVec3 inertia = CarBody->DynamicRigidBody->getMassSpaceInertiaTensor();
@@ -150,7 +150,7 @@ void UCarComponent::CreatePhysXGameObject()
         HubShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Hub, 0xFFFF, 0, 0));
         Hub[i]->DynamicRigidBody->attachShape(*HubShape);
         PxReal HubVolume = 8 * HubSize[0].x * HubSize[0].y * HubSize[0].z;
-        PxReal HubMass = 50.f;
+        PxReal HubMass = 100.f;
         PxRigidBodyExt::updateMassAndInertia(*Hub[i]->DynamicRigidBody, HubMass/HubVolume);
         Hub[i]->DynamicRigidBody->setLinearDamping(0.05f);
         Hub[i]->DynamicRigidBody->setAngularDamping(0.05f);
@@ -167,12 +167,23 @@ void UCarComponent::CreatePhysXGameObject()
     //Wheel-Hub (Front)
     for (int i = 0; i < 2; ++i)
     {
+        /*PxTransform WheelT = Wheels[i]->DynamicRigidBody->getGlobalPose();
+        PxVec3 JointPos = WheelT.p;
+        PxTransform JointT(JointPos, XtoY);
+        PxTransform BodyLocal = CarBody->DynamicRigidBody->getGlobalPose().getInverse() * JointT;
+            PxTransform WheelLocal = WheelT.getInverse() * JointT;
+
+        WheelJoints[i] = PxRevoluteJointCreate(
+            *Physics,
+            CarBody->DynamicRigidBody, BodyLocal,
+            Wheels[i]->DynamicRigidBody, WheelLocal
+        );*/
         PxTransform WheelT = Wheels[i]->DynamicRigidBody->getGlobalPose();
         PxVec3 JointPos = WheelT.p;
         PxTransform JointT(JointPos, XtoY);
         PxTransform HubLocal = Hub[0]->DynamicRigidBody->getGlobalPose().getInverse() * JointT;
         PxTransform WheelLocal = WheelT.getInverse() * JointT;
-
+        
         WheelJoints[i] = PxRevoluteJointCreate(
             *Physics,
             Hub[0]->DynamicRigidBody, HubLocal,
@@ -268,10 +279,11 @@ void UCarComponent::SetProperties(const TMap<FString, FString>& InProperties)
 void UCarComponent::MoveCar()
 {
     PxTransform CarT = CarBody->DynamicRigidBody->getGlobalPose();
-    if (CarT.p.x > 75.f && !bBoosted)
+    float Angle = FMath::DegreesToRadians(GetComponentRotation().Pitch);
+    float EndLoc = 100 * FMath::Cos(Angle);
+    if (CarT.p.x > EndLoc && !bBoosted)
     {
-        float Angle = GetComponentRotation().Pitch;
-        ApplyForceToActors(PxPi / 6.f, FinalBoost);
+        ApplyForceToActors(Angle, FinalBoost);
         bBoosted = true;
         return;
     }
@@ -280,11 +292,11 @@ void UCarComponent::MoveCar()
         return;
     if (GetAsyncKeyState('W') & 0x8000)
     {
-        //if (Velocity < 0)
-        //    Velocity = 0;
-        //Velocity += 0.1f;
-        FinalBoost += 2.5f;
-        Velocity = 20.f;
+        if (Velocity < 0)
+            Velocity = 0;
+        Velocity += 0.1f;
+        FinalBoost += 3.5f;
+        //Velocity = 20.f;
     }
     //else if (GetAsyncKeyState('S') & 0x8000)
     //{
@@ -302,21 +314,18 @@ void UCarComponent::MoveCar()
             Velocity += 0.1f;
         if (FMath::Abs(Velocity) < 0.1f)
             Velocity = 0.f;
-        FinalBoost -= 1.f;
+        FinalBoost -= 2.f;
     }
-    if (FinalBoost > 0.f)
-    {
-        UE_LOG(ELogLevel::Display, "Boost Before Clamp: %f", FinalBoost);
-        FinalBoost = FMath::Clamp(FinalBoost, 0.f, MaxBoost);
-        UE_LOG(ELogLevel::Display, "Boost After Clamp: %f", FinalBoost);
-    }
+    FinalBoost = FMath::Clamp(FinalBoost, 0.f, MaxBoost);
+    UE_LOG(ELogLevel::Display, "Boost: %f", FinalBoost);
+
+    Velocity = FMath::Clamp(Velocity, 0.f, MaxVelocity);
 
     for (int i = 0; i < 4; ++i)
     {
         WheelJoints[i]->setDriveVelocity(Velocity);
     }
 
-    //PxTransform TargetPose;
     if (GetAsyncKeyState('A') & 0x8000)
     {
         SteeringJoint->setDriveVelocity(DeltaSteerAngle * 3.f);

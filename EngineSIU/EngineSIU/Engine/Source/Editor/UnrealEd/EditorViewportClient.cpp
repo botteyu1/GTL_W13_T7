@@ -525,7 +525,7 @@ void FEditorViewportClient::UpdateViewMatrix()
             break;
         }
     }
-    if (GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE && Car) //여기 꼭 수정!!!
+    if (GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE && false) //여기 꼭 수정!!!
     {
         FVector Front = Car->GetForwardVector();
         FVector Pos = Car->GetComponentLocation() + Front * -20.f + FVector(0, 0, 7.5f);
