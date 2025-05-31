@@ -267,29 +267,33 @@ void UCarComponent::SetProperties(const TMap<FString, FString>& InProperties)
 
 void UCarComponent::MoveCar()
 {
-    if (!Wheels[0])
-        return;
-    /*if (GetKeyState(VK_RBUTTON) & 0x8000 || !bHasBody)
+    PxTransform CarT = CarBody->DynamicRigidBody->getGlobalPose();
+    if (CarT.p.x > 75.f && !bBoosted)
     {
-        for (int i = 0; i < 4; ++i)
-        {
-            WheelJoints[i]->setDriveVelocity(0.0f);
-        }
-        SteeringJoint->setDriveVelocity(0);
+        float Angle = GetComponentRotation().Pitch;
+        ApplyForceToActors(PxPi / 6.f, FinalBoost);
+        bBoosted = true;
         return;
-    }*/
+    }
+
+    if (!Wheels[0] || bBoosted)
+        return;
     if (GetAsyncKeyState('W') & 0x8000)
     {
-        if (Velocity < 0)
-            Velocity = 0;
-        Velocity += 0.1f;
+        //if (Velocity < 0)
+        //    Velocity = 0;
+        //Velocity += 0.1f;
+        FinalBoost += 2.5f;
+        Velocity = 20.f;
     }
-    else if (GetAsyncKeyState('S') & 0x8000)
-    {
-        if (Velocity > 0)
-            Velocity = 0;
-        Velocity -= 0.1f;
-    }
+    //else if (GetAsyncKeyState('S') & 0x8000)
+    //{
+    //    //if (Velocity > 0)
+    //    //    Velocity = 0;
+    //    //Velocity -= 0.1f;
+    //    FinalBoost -= 2.5f;
+    //    Velocity = -20.f;
+    //}
     else
     {
         if (Velocity > 0)
@@ -298,9 +302,14 @@ void UCarComponent::MoveCar()
             Velocity += 0.1f;
         if (FMath::Abs(Velocity) < 0.1f)
             Velocity = 0.f;
+        FinalBoost -= 1.f;
     }
-
-    Velocity = FMath::Clamp(Velocity, -MaxVelocity, MaxVelocity);
+    if (FinalBoost > 0.f)
+    {
+        UE_LOG(ELogLevel::Display, "Boost Before Clamp: %f", FinalBoost);
+        FinalBoost = FMath::Clamp(FinalBoost, 0.f, MaxBoost);
+        UE_LOG(ELogLevel::Display, "Boost After Clamp: %f", FinalBoost);
+    }
 
     for (int i = 0; i < 4; ++i)
     {
@@ -391,4 +400,13 @@ void UCarComponent::UpdateFromPhysics(GameObject* PhysicsActor, UStaticMeshCompo
 
     ActualActor->SetWorldLocation(Location);
     ActualActor->SetWorldRotation(FRotator(Quat));
+}
+
+void UCarComponent::ApplyForceToActors(float Angle, float Magnitude)
+{
+    PxVec3 Direction(FMath::Cos(Angle), 0, FMath::Sin(Angle));
+    CarBody->DynamicRigidBody->addForce(Direction * Magnitude, PxForceMode::eIMPULSE);
+    for (int i = 0; i < 4; ++i)
+        Wheels[i]->DynamicRigidBody->addForce(Direction * Magnitude, PxForceMode::eIMPULSE);
+    Hub[0]->DynamicRigidBody->addForce(Direction * Magnitude, PxForceMode::eIMPULSE);
 }

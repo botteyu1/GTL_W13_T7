@@ -52,7 +52,7 @@ void FPhysicsManager::InitPhysX()
     
     Physics = PxCreatePhysics(PX_PHYSICS_VERSION, *Foundation, PxTolerancesScale(), true, Pvd);
     
-    Material = Physics->createMaterial(0.5f, 0.7f, 0.1f);
+    Material = Physics->createMaterial(1.f, 0.9f, 0.f);
 
     PxInitExtensions(*Physics, Pvd);
 

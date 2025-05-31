@@ -31,6 +31,8 @@ public:
 
     void UpdateFromPhysics(GameObject* PhysicsActor, UStaticMeshComponent* ActualActor);
 
+    void ApplyForceToActors(float Angle, float Magnitude);
+
 private:
     PxMaterial* DefaultMaterial = nullptr;
     GameObject* CarBody = nullptr;
@@ -41,9 +43,10 @@ private:
     float MaxSteerAngle = PxPi / 9.f;
     float DeltaSteerAngle = PxPi / 18.f;
     float MaxDriveTorque = 1000.0f;
-    float Torque = 0.f;
     float Velocity = 0.f;
-    float MaxVelocity = 50.f;
+    float FinalBoost = 0.f;
+    float MaxBoost = 2500.f;
+    bool bBoosted = false;
 
     UStaticMeshComponent* WheelComp[4] = { nullptr };
 
