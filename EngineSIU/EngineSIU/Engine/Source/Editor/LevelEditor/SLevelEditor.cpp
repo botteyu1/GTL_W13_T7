@@ -321,34 +321,38 @@ void SLevelEditor::RegisterEditorInputDelegates()
             {
                 if (const UEditorEngine* EdEngine = Cast<UEditorEngine>(GEngine))
                 {
-                    if (const AActor* SelectedActor = EdEngine->GetSelectedActor())
+                    if (!EdEngine->GetSelectedActors().IsEmpty())
                     {
-                        USceneComponent* TargetComponent = nullptr;
-                        if (USceneComponent* SelectedComponent = EdEngine->GetSelectedComponent())
+                        USceneComponent* TargetComponent = EdEngine->GetSelectedComponent();
+                        if (TargetComponent)
                         {
-                            TargetComponent = SelectedComponent;
-                        }
-                        else if (AActor* SelectedActor = EdEngine->GetSelectedActor())
-                        {
-                            TargetComponent = SelectedActor->GetRootComponent();
-                        }
-                        else
-                        {
-                            return;
-                        }
+                            // 초기 Actor와 Cursor의 거리차를 저장
+                            const FViewportCamera* ViewTransform = ActiveViewportClient->GetViewportType() == LVT_Perspective
+                                                                ? &ActiveViewportClient->PerspectiveCamera
+                                                                : &ActiveViewportClient->OrthogonalCamera;
+                            
+                            FVector RayOrigin, RayDir;
+                            ActiveViewportClient->DeprojectFVector2D(FWindowsCursor::GetClientPosition(), RayOrigin, RayDir);
+                            
+                            const FVector TargetLocation = TargetComponent->GetComponentLocation();
+                            ActorStartLocation = TargetLocation;
+                            const float TargetDist = FVector::Distance(ViewTransform->GetLocation(), TargetLocation);
+                            const FVector TargetRayEnd = RayOrigin + RayDir * TargetDist;
+                            TargetDiff = TargetLocation - TargetRayEnd;
 
-                        // 초기 Actor와 Cursor의 거리차를 저장
-                        const FViewportCamera* ViewTransform = ActiveViewportClient->GetViewportType() == LVT_Perspective
-                                                            ? &ActiveViewportClient->PerspectiveCamera
-                                                            : &ActiveViewportClient->OrthogonalCamera;
-
-                        FVector RayOrigin, RayDir;
-                        ActiveViewportClient->DeprojectFVector2D(FWindowsCursor::GetClientPosition(), RayOrigin, RayDir);
-
-                        const FVector TargetLocation = TargetComponent->GetComponentLocation();
-                        const float TargetDist = FVector::Distance(ViewTransform->GetLocation(), TargetLocation);
-                        const FVector TargetRayEnd = RayOrigin + RayDir * TargetDist;
-                        TargetDiff = TargetLocation - TargetRayEnd;
+                            InitialActorLocations.Empty();
+                            for (AActor* SelectedActor : EdEngine->GetSelectedActors())
+                            {
+                                if (SelectedActor && SelectedActor->GetRootComponent())
+                                {
+                                    InitialActorLocations.Add(SelectedActor->GetActorLocation());
+                                }
+                                else
+                                {
+                                    InitialActorLocations.Add(FVector::ZeroVector);
+                                }
+                            }
+                        }
                     }
                 }
                 break;
@@ -457,6 +461,7 @@ void SLevelEditor::RegisterEditorInputDelegates()
             // Viewport 선택 로직
             case EKeys::LeftMouseButton:
             {
+                bPressedAlt = false;
                 VSplitter->OnReleased();
                 HSplitter->OnReleased();
                 return;
@@ -490,26 +495,27 @@ void SLevelEditor::RegisterEditorInputDelegates()
                     )
                 {
                     // Gizmo control
-                    if (const UEditorEngine* EdEngine = Cast<UEditorEngine>(GEngine))
+                    if (UEditorEngine* EdEngine = Cast<UEditorEngine>(GEngine))
                     {
+                        const TArray<AActor*> SelectedActors = EdEngine->GetSelectedActors();
+                        if (SelectedActors.IsEmpty())
+                        {
+                            return;
+                        }
+                        
                         const UGizmoBaseComponent* Gizmo = Cast<UGizmoBaseComponent>(ActiveViewportClient->GetPickedGizmoComponent());
                         if (!Gizmo)
                         {
                             return;
                         }
 
-                        USceneComponent* TargetComponent = EdEngine->GetSelectedComponent();
-                        if (!TargetComponent)
+                        AActor* PrimaryActor = EdEngine->GetPrimarySelectedActor();
+                        if (!PrimaryActor || !PrimaryActor->GetRootComponent())
                         {
-                            if (AActor* SelectedActor = EdEngine->GetSelectedActor())
-                            {
-                                TargetComponent = SelectedActor->GetRootComponent();
-                            }
-                            else
-                            {
-                                return;
-                            }
+                            return; // 주 선택 액터 또는 루트 컴포넌트 없으면 진행 불가
                         }
+                        
+                        USceneComponent* TargetComponent = EdEngine->GetSelectedComponent();
 
                         const FViewportCamera* ViewTransform = ActiveViewportClient->GetViewportType() == LVT_Perspective
                                                                 ? &ActiveViewportClient->PerspectiveCamera
@@ -518,53 +524,115 @@ void SLevelEditor::RegisterEditorInputDelegates()
                         FVector RayOrigin, RayDir;
                         ActiveViewportClient->DeprojectFVector2D(FWindowsCursor::GetClientPosition(), RayOrigin, RayDir);
 
-                        const float TargetDist = FVector::Distance(ViewTransform->GetLocation(), TargetComponent->GetComponentLocation());
+                        const float TargetDist = FVector::Distance(ViewTransform->GetLocation(), ActorStartLocation);
                         const FVector TargetRayEnd = RayOrigin + RayDir * TargetDist;
-                        const FVector Result = TargetRayEnd + TargetDiff;
+                        
+                        FVector GizmoTargetLocation = TargetRayEnd + TargetDiff;
 
-                        FVector NewLocation = TargetComponent->GetComponentLocation();
-                        if (EdEngine->GetEditorPlayer()->GetCoordMode() == CDM_WORLD)
+                        if (ActiveViewportClient->bUseGridMove && !(GetAsyncKeyState(VK_SHIFT) & 0x8000))
                         {
-                            // 월드 좌표계에서 카메라 방향을 고려한 이동
-                            if (Gizmo->GetGizmoType() == UGizmoBaseComponent::ArrowX)
+                            float GridScale = ActiveViewportClient->GridMovementScale;
+                            
+                            FVector RelativeMovement = GizmoTargetLocation - ActorStartLocation;
+
+                            RelativeMovement.X = (roundf(RelativeMovement.X / GridScale) * GridScale) + ActorStartLocation.X;
+                            RelativeMovement.Y = (roundf(RelativeMovement.Y / GridScale) * GridScale) + ActorStartLocation.Y;
+                            RelativeMovement.Z = (roundf(RelativeMovement.Z / GridScale) * GridScale) + ActorStartLocation.Z;
+
+                            GizmoTargetLocation = RelativeMovement;
+                        }
+
+                        FVector MovementDelta = GizmoTargetLocation - ActorStartLocation; // Real movement delta
+
+                        if (!bPressedAlt  && (GetAsyncKeyState(VK_MENU) & 0x8000))
+                        {
+                            bPressedAlt = true;
+                            TArray<AActor*> NewActors;
+                            for (AActor* OriginalActor : SelectedActors)
                             {
-                                // 카메라의 오른쪽 방향을 X축 이동에 사용
-                                NewLocation.X = Result.X;
+                                if(OriginalActor)
+                                {
+                                    AActor* NewActor = EdEngine->ActiveWorld->DuplicateActor(OriginalActor);
+                                    NewActors.Add(NewActor);
+                                }
                             }
-                            else if (Gizmo->GetGizmoType() == UGizmoBaseComponent::ArrowY)
+                            EdEngine->ClearSelectedActors(); // 이전 선택 해제
+                            InitialActorLocations.Empty();   // 이전 액터들의 초기 위치 정보도 클리어
+                            for (AActor* NewActor : NewActors)
                             {
-                                // 카메라의 오른쪽 방향을 Y축 이동에 사용
-                                NewLocation.Y = Result.Y;
-                            }
-                            else if (Gizmo->GetGizmoType() == UGizmoBaseComponent::ArrowZ)
-                            {
-                                // 카메라의 위쪽 방향을 Z축 이동에 사용
-                                NewLocation.Z = Result.Z;
+                                EdEngine->SelectActor(NewActor, true); // 복제된 액터들을 선택
+                                if (NewActor && NewActor->GetRootComponent())
+                                {
+                                     InitialActorLocations.Add(NewActor->GetRootComponent()->GetComponentLocation()); // 새 액터들의 현재 위치를 초기 위치로 저장
+                                }
                             }
                         }
-                        else
+
+                        for (int32 i = 0; i < SelectedActors.Num(); ++i)
                         {
-                            // Result에서 현재 액터 위치를 빼서 이동 벡터를 구함
-                            const FVector Delta = Result - TargetComponent->GetComponentLocation();
-                            // 각 축에 대해 Local 방향 벡터에 투영하여 이동량 계산
-                            if (Gizmo->GetGizmoType() == UGizmoBaseComponent::ArrowX)
+                            AActor* CurrentActor = SelectedActors[i];
+                            if (!CurrentActor || !CurrentActor->GetRootComponent() || i >= InitialActorLocations.Num())
                             {
-                                const float MoveAmount = FVector::DotProduct(Delta, TargetComponent->GetForwardVector());
-                                NewLocation += TargetComponent->GetForwardVector() * MoveAmount;
+                                continue;
                             }
-                            else if (Gizmo->GetGizmoType() == UGizmoBaseComponent::ArrowY)
+
+                            USceneComponent* NewSceneComponent = CurrentActor->GetRootComponent();
+                            FVector InitialLocation = InitialActorLocations[i];
+
+                            FVector NewLocation = NewSceneComponent->GetComponentLocation();
+                            NewLocation = InitialLocation;
+
+                            if (EdEngine->GetEditorPlayer()->GetCoordMode() == CDM_WORLD)
                             {
-                                const float MoveAmount = FVector::DotProduct(Delta, TargetComponent->GetRightVector());
-                                NewLocation += TargetComponent->GetRightVector() * MoveAmount;
-                                TargetComponent->SetWorldLocation(NewLocation);
+                                FVector AxisFilteredMovementDelta = FVector::ZeroVector;
+                                if (Gizmo->GetGizmoType() == UGizmoBaseComponent::ArrowX)
+                                {
+                                    AxisFilteredMovementDelta.X = MovementDelta.X;
+                                }
+                                else if (Gizmo->GetGizmoType() == UGizmoBaseComponent::ArrowY)
+                                {
+                                    AxisFilteredMovementDelta.Y = MovementDelta.Y;
+                                }
+                                else if (Gizmo->GetGizmoType() == UGizmoBaseComponent::ArrowZ)
+                                {
+                                    AxisFilteredMovementDelta.Z = MovementDelta.Z;
+                                }
+                                else
+                                {
+                                    AxisFilteredMovementDelta = MovementDelta;
+                                }
+                                NewLocation += AxisFilteredMovementDelta;
                             }
-                            else if (Gizmo->GetGizmoType() == UGizmoBaseComponent::ArrowZ)
+                            else
                             {
-                                const float MoveAmount = FVector::DotProduct(Delta, TargetComponent->GetUpVector());
-                                NewLocation += TargetComponent->GetUpVector() * MoveAmount;
+                                const FTransform PrimaryActorTransform = TargetComponent->GetComponentTransform();
+                                FVector LocalMovementDelta = FVector::ZeroVector;
+
+                                if (Gizmo->GetGizmoType() == UGizmoBaseComponent::ArrowX)
+                                {
+                                    // MovementDelta 를 PrimaryActor의 X축에 투영
+                                    float DotP = FVector::DotProduct(MovementDelta, PrimaryActorTransform.GetUnitAxis(EAxis::X));
+                                    LocalMovementDelta = PrimaryActorTransform.GetUnitAxis(EAxis::X) * DotP;
+                                }
+                                else if (Gizmo->GetGizmoType() == UGizmoBaseComponent::ArrowY)
+                                {
+                                    float DotP = FVector::DotProduct(MovementDelta, PrimaryActorTransform.GetUnitAxis(EAxis::Y));
+                                    LocalMovementDelta = PrimaryActorTransform.GetUnitAxis(EAxis::Y) * DotP;
+                                }
+                                else if (Gizmo->GetGizmoType() == UGizmoBaseComponent::ArrowZ)
+                                {
+                                    float DotP = FVector::DotProduct(MovementDelta, PrimaryActorTransform.GetUnitAxis(EAxis::Z));
+                                    LocalMovementDelta = PrimaryActorTransform.GetUnitAxis(EAxis::Z) * DotP;
+                                }
+                                 else
+                                 {
+                                     LocalMovementDelta = MovementDelta; // 전체 이동
+                                 }
+                                 NewLocation += LocalMovementDelta;
                             }
+
+                            NewSceneComponent->SetWorldLocation(NewLocation);
                         }
-                        TargetComponent->SetWorldLocation(NewLocation);
                     }
                 }
             }

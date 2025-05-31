@@ -346,7 +346,7 @@ void PropertyEditorPanel::RenderForActor(AActor* SelectedActor, USceneComponent*
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
         AActor* NewActor = Engine->ActiveWorld->DuplicateActor(Engine->GetSelectedActor());
         Engine->SelectActor(NewActor);
-        Engine->DeselectComponent(Engine->GetSelectedComponent());
+        // Engine->DeselectComponent(Engine->GetSelectedComponent());
     }
     
     FString BasePath = FString(L"LuaScripts\\");

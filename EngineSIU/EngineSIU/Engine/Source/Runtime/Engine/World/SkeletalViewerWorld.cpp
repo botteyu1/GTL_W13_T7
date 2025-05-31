@@ -24,5 +24,5 @@ void USkeletalViewerWorld::Tick(float DeltaTime)
 
     //TODO: 임시로 SkeletalMeshComponent을 강제로 셀렉트 함
     Cast<UEditorEngine>(GEngine)->SelectActor(SkeletalMeshComponent->GetOwner());
-    Cast<UEditorEngine>(GEngine)->SelectComponent(SkeletalMeshComponent);
+    // Cast<UEditorEngine>(GEngine)->SelectComponent(SkeletalMeshComponent);
 }

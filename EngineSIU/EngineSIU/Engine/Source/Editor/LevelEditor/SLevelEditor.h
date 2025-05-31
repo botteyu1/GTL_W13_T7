@@ -41,12 +41,17 @@ private:
     /** 좌클릭시 커서와 선택된 Actor와의 거리 차 */
     FVector TargetDiff;
 
+    FVector ActorStartLocation;
+
+    bool bPressedAlt = false;
+
     bool bMultiViewportMode;
     
     uint32 EditorWidth;
     uint32 EditorHeight;
 
     TArray<FDelegateHandle> InputDelegatesHandles;
+    TArray<FVector> InitialActorLocations;
 public:
     std::shared_ptr<FEditorViewportClient>* GetViewports() { return ViewportClients; }
     std::shared_ptr<FEditorViewportClient> GetActiveViewportClient() const

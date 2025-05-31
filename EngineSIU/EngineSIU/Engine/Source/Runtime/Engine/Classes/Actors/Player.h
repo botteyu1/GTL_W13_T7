@@ -25,7 +25,7 @@ class AEditorPlayer : public AActor
     void Input();
     bool PickGizmo(FVector& RayOrigin, FEditorViewportClient* InActiveViewport);
     void ProcessGizmoIntersection(UStaticMeshComponent* Component, const FVector& PickPosition, FEditorViewportClient* InActiveViewport, bool& bIsPickedGizmo);
-    void PickActor(const FVector& PickPosition);
+    void PickActor(const FVector& PickPosition, bool bMultiSelect = false) const;
     void AddControlMode();
     void AddCoordMode();
     void SetCoordMode(ECoordMode InMode) { CoordMode = InMode; }
@@ -79,11 +79,13 @@ public:
     virtual void PostSpawnInitialize() override;
     virtual void Tick(float DeltaTime) override;
     virtual UObject* Duplicate(UObject* InOuter) override;
+    virtual void BeginPlay() override;
 
     FName Socket = "jx_c_camera";
     USkeletalMeshComponent* SkeletalMeshComponent = nullptr;
+    
 
-private:
+protected:
     UCameraComponent* CameraComponent = nullptr;
 };
 #pragma endregion

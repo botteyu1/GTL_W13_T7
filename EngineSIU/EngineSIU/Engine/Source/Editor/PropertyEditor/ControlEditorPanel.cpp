@@ -39,6 +39,8 @@
 #include "Renderer/CompositingPass.h"
 #include <Engine/FbxLoader.h>
 #include "Engine/Classes/Engine/AssetManager.h"
+#include "Engine/Contents/Actors/ObjectViewCameraActor.h"
+#include "Engine/Contents/Actors/SideViewCameraActor.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Actors/CarActor.h"
 
@@ -334,6 +336,22 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             FEngineLoop::Renderer.CompositingPass->GammaValue = Gamma;
         }
 
+        ImGui::Separator();
+
+        bool* bMagnetic = &GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->bUseObjectMagnetic;
+        ImGui::Checkbox("Magnetic", bMagnetic);
+
+        bool* bGridMove = &GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->bUseGridMove;;
+        ImGui::Checkbox("Grid Movement", bGridMove);
+
+        ImGui::Text("Scale");
+        float MoveScale = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GridMovementScale;
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::DragFloat("##GridMove", &MoveScale, 0.01f, 0.1f, 100.0f, "%.1f"))
+        {
+            GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GridMovementScale = MoveScale;
+        }
+
         ImGui::EndPopup();
     }
 
@@ -372,6 +390,8 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             { .Label = "CapsuleCol",        .OBJ = OBJ_CAPSULE_COLLISION },
             { .Label = "SkeletalMeshActor", .OBJ = OBJ_SKELETALMESH },
             { .Label = "SequencerPlayer",   .OBJ = OBJ_SEQUENCERPLAYER },
+            { .Label = "SideViewCamera",   .OBJ = OBJ_SIDEVIEWCAMERA },
+            { .Label = "OBJECTVIEWCAMERACTOR",   .OBJ = OBJ_OBJECTVIEWCAMERACTOR },
             { .Label = "Car",   .OBJ = OBJ_CAR },
         };
 
@@ -496,6 +516,16 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                 {
                     SpawnedActor = World->SpawnActor<ASequencerPlayer>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SEQUENCERPLAYER"));
+                }
+                case OBJ_SIDEVIEWCAMERA:
+                {
+                    SpawnedActor = World->SpawnActor<ASideViewCameraActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_SIDEVIEWCAMERA"));
+                }
+                case OBJ_OBJECTVIEWCAMERACTOR:
+                {
+                    SpawnedActor = World->SpawnActor<AObjectViewCameraActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_OBJECTVIEWCAMERACTOR"));
                 }
                 break;
                 case OBJ_CAR:
