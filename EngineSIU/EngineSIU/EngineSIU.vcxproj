@@ -204,6 +204,7 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Contents\Actors\ADestructibleWoodenBox.cpp" />
     <ClCompile Include="Engine\Contents\Actors\Fish.cpp" />
     <ClCompile Include="Engine\Contents\Actors\ObjectViewCameraActor.cpp" />
     <ClCompile Include="Engine\Contents\Actors\PlayerCameraTest.cpp" />
@@ -517,6 +518,7 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Contents\Actors\ADestructibleWoodenBox.h" />
     <ClInclude Include="Engine\Contents\Actors\Fish.h" />
     <ClInclude Include="Engine\Contents\Actors\ObjectViewCameraActor.h" />
     <ClInclude Include="Engine\Contents\Actors\PlayerCameraTest.h" />
