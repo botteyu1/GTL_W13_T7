@@ -51,6 +51,7 @@ private:
     uint32 EditorHeight;
 
     TArray<FDelegateHandle> InputDelegatesHandles;
+    TArray<FVector> InitialActorLocations;
 public:
     std::shared_ptr<FEditorViewportClient>* GetViewports() { return ViewportClients; }
     std::shared_ptr<FEditorViewportClient> GetActiveViewportClient() const

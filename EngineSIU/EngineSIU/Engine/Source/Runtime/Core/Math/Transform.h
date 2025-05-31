@@ -1,4 +1,5 @@
 #pragma once
+#include "Axis.h"
 #include "Quat.h"
 #include "Vector.h"
 #include "Container/String.h"
@@ -84,6 +85,29 @@ struct FTransform
     // 상대 변환 계산
     FTransform GetRelativeTransform(const FTransform& Other) const;
     FTransform GetRelativeTransformReverse(const FTransform& Other) const;
+
+    /**
+     * @brief 지정된 로컬 축에 해당하는 월드 공간 단위 벡터를 반환합니다.
+     * @param Axis 가져올 축 (EAxis::X, EAxis::Y, EAxis::Z)
+     * @return 트랜스폼의 회전에 의해 변환된 단위 벡터
+     */
+    FVector GetUnitAxis(EAxis::Type Axis) const
+    {
+        switch (Axis)
+        {
+        case EAxis::X:
+            return Rotation.RotateVector(FVector(1.0f, 0.0f, 0.0f));
+        case EAxis::Y:
+            return Rotation.RotateVector(FVector(0.0f, 1.0f, 0.0f));
+        case EAxis::Z:
+            return Rotation.RotateVector(FVector(0.0f, 0.0f, 1.0f));
+        default:
+            // 잘못된 축이거나 EAxis::None과 같은 경우, 0 벡터 또는 기본 축을 반환할 수 있습니다.
+            // 여기서는 X축을 기본값으로 반환하거나, 필요하다면 경고/오류 처리를 추가합니다.
+            // check(false); // 잘못된 입력에 대한 어설트
+            return {1.0f, 0.0f, 0.0f}; // 또는 FVector::ZeroVector
+        }
+    }
     
     // 디버깅 및 직렬화 관련
     FString ToString() const;
