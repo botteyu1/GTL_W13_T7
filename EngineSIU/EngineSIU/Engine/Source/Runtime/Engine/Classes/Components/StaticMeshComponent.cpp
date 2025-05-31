@@ -148,10 +148,10 @@ void UStaticMeshComponent::GetUsedMaterials(TArray<UMaterial*>& Out) const
 
 int UStaticMeshComponent::CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const
 {
-    if (!AABB.Intersect(InRayOrigin, InRayDirection, OutHitDistance))
+    /*if (!AABB.Intersect(InRayOrigin, InRayDirection, OutHitDistance))
     {
         return 0;
-    }
+    }*/
     if (StaticMesh == nullptr)
     {
         return 0;

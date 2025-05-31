@@ -163,9 +163,38 @@ void AEditorPlayer::PickActor(const FVector& PickPosition)
 {
     if (!(ShowFlags::GetInstance().CurrentFlags & EEngineShowFlags::SF_Primitives)) return;
 
+    std::shared_ptr<FEditorViewportClient> ViewportClient = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
+    bool bIsOrtho = ViewportClient->IsOrthographic();
+    FMatrix ViewMatrix = ViewportClient->GetViewMatrix();
+
+    FVector RayOriginWorld, RayDirWorld;
+
+    if (bIsOrtho)
+    {
+        FMatrix InvView = FMatrix::Inverse(ViewMatrix);
+        RayOriginWorld = InvView.TransformPosition(PickPosition);
+        RayDirWorld = ViewportClient->OrthogonalCamera.GetForwardVector().GetSafeNormal();
+    }
+    else
+    {
+        FMatrix InvView = FMatrix::Inverse(ViewMatrix);
+        FVector ViewOrigin = FVector::ZeroVector;
+        RayOriginWorld = InvView.TransformPosition(ViewOrigin);
+        FVector RayTargetWorld = InvView.TransformPosition(PickPosition);
+        RayDirWorld = (RayTargetWorld - RayOriginWorld).GetSafeNormal();
+    }
+
+    FEngineLoop::PrimitiveDrawBatch.AddLine(
+        RayOriginWorld,
+        RayOriginWorld + RayDirWorld * 10000.f,
+        FVector4(1, 0, 0, 1), // 빨강
+        10000.f // 10초 (ms)
+    );
+
     USceneComponent* Possible = nullptr;
     int maxIntersect = 0;
     float minDistance = FLT_MAX;
+
     for (const auto iter : TObjectRange<UPrimitiveComponent>())
     {
         UPrimitiveComponent* pObj;
@@ -198,6 +227,7 @@ void AEditorPlayer::PickActor(const FVector& PickPosition)
             }
         }
     }
+
     if (Possible)
     {
         Cast<UEditorEngine>(GEngine)->SelectActor(Possible->GetOwner());
@@ -245,55 +275,59 @@ void AEditorPlayer::ScreenToViewSpace(int32 ScreenX, int32 ScreenY, std::shared_
 int AEditorPlayer::RayIntersectsObject(const FVector& PickPosition, USceneComponent* Component, float& HitDistance, int& IntersectCount)
 {
     FMatrix WorldMatrix = Component->GetWorldMatrix();
-    FMatrix ViewMatrix = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();
-    
-    bool bIsOrtho = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->IsOrthographic();
-    
+    std::shared_ptr<FEditorViewportClient> ViewportClient = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
+    FMatrix ViewMatrix = ViewportClient->GetViewMatrix();
+
+    bool bIsOrtho = ViewportClient->IsOrthographic();
 
     if (bIsOrtho)
     {
-        // 오쏘 모드: ScreenToViewSpace()에서 계산된 pickPosition이 클립/뷰 좌표라고 가정
-        FMatrix inverseView = FMatrix::Inverse(ViewMatrix);
-        // pickPosition을 월드 좌표로 변환
-        FVector worldPickPos = inverseView.TransformPosition(PickPosition);  
-        // 오쏘에서는 픽킹 원점은 unproject된 픽셀의 위치
-        FVector rayOrigin = worldPickPos;
-        // 레이 방향은 카메라의 정면 방향 (평행)
-        FVector orthoRayDir = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->OrthogonalCamera.GetForwardVector().GetSafeNormal();
+        // 오쏘 모드: ViewMatrix는 카메라→뷰 공간, 좌표는 이미 뷰공간
+        FMatrix InverseView = FMatrix::Inverse(ViewMatrix);
+        FVector RayOriginWorld = InverseView.TransformPosition(PickPosition);
 
-        // 객체의 로컬 좌표계로 변환
-        FMatrix LocalMatrix = FMatrix::Inverse(WorldMatrix);
-        FVector LocalRayOrigin = LocalMatrix.TransformPosition(rayOrigin);
-        FVector LocalRayDir = (LocalMatrix.TransformPosition(rayOrigin + orthoRayDir) - LocalRayOrigin).GetSafeNormal();
-        
-        IntersectCount = Component->CheckRayIntersection(LocalRayOrigin, LocalRayDir, HitDistance);
+        // 레이 방향: 카메라의 정면 벡터
+        FVector OrthoDirWorld = ViewportClient->OrthogonalCamera.GetForwardVector().GetSafeNormal();
+
+        // 레이 월드→로컬 변환
+        FMatrix InverseWorld = FMatrix::Inverse(WorldMatrix);
+        FVector RayOriginLocal = InverseWorld.TransformPosition(RayOriginWorld);
+        FVector RayDirLocal = InverseWorld.TransformVector(OrthoDirWorld).GetSafeNormal();
+
+        IntersectCount = Component->CheckRayIntersection(RayOriginLocal, RayDirLocal, HitDistance);
         return IntersectCount;
     }
     else
     {
-        FMatrix InverseMatrix = FMatrix::Inverse(WorldMatrix * ViewMatrix);
-        FVector CameraOrigin = { 0,0,0 };
-        FVector PickRayOrigin = InverseMatrix.TransformPosition(CameraOrigin);
-        
-        // 퍼스펙티브 모드의 기존 로직 사용
-        FVector TransformedPick = InverseMatrix.TransformPosition(PickPosition);
-        FVector RayDirection = (TransformedPick - PickRayOrigin).GetSafeNormal();
-        
-        IntersectCount = Component->CheckRayIntersection(PickRayOrigin, RayDirection, HitDistance);
+        // 카메라 기준 원점 (뷰 공간에서 0,0,0)
+        FVector CameraViewOrigin = FVector::ZeroVector;
+
+        // View→World
+        FMatrix InverseView = FMatrix::Inverse(ViewMatrix);
+        FVector RayOriginWorld = InverseView.TransformPosition(CameraViewOrigin);
+        FVector RayTargetWorld = InverseView.TransformPosition(PickPosition);
+        FVector RayDirWorld = (RayTargetWorld - RayOriginWorld).GetSafeNormal();
+
+        // 월드 → 로컬
+        FMatrix InverseWorld = FMatrix::Inverse(WorldMatrix);
+        FVector RayOriginLocal = InverseWorld.TransformPosition(RayOriginWorld);
+        //safe normal을 Normalize로 변경하니 해결됨
+        FVector RayDirLocal = InverseWorld.TransformVector(RayDirWorld);
+        RayDirLocal.Normalize();
+
+        IntersectCount = Component->CheckRayIntersection(RayOriginLocal, RayDirLocal, HitDistance);
 
         if (IntersectCount > 0)
         {
-            FVector LocalHitPoint = PickRayOrigin + RayDirection * HitDistance;
+            // HitDistance는 로컬 공간 기준이므로 월드로 환산
+            FVector HitPointLocal = RayOriginLocal + RayDirLocal * HitDistance;
+            FVector HitPointWorld = WorldMatrix.TransformPosition(HitPointLocal);
 
-            FVector WorldHitPoint = WorldMatrix.TransformPosition(LocalHitPoint);
-
-            FMatrix InverseView = FMatrix::Inverse(ViewMatrix);
-            FVector WorldRayOrigin = InverseView.TransformPosition(CameraOrigin);
-
-            float WorldDistance = FVector::Distance(WorldRayOrigin, WorldHitPoint);
-
+            float WorldDistance = FVector::Distance(RayOriginWorld, HitPointWorld);
             HitDistance = WorldDistance;
         }
+       
+        
         return IntersectCount;
     }
 }

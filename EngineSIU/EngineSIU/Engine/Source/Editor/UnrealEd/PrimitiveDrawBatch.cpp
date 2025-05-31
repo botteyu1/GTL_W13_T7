@@ -18,6 +18,7 @@ UPrimitiveDrawBatch::~UPrimitiveDrawBatch()
     ReleaseOBBBuffers();
     ReleaseBoundingBoxBuffers();
     ReleaseConeBuffers();
+    ReleaseLineBuffers();
 
     // Primitive 버퍼들 릴리즈
     if (GridConstantBuffer)
@@ -39,6 +40,22 @@ void UPrimitiveDrawBatch::Initialize(FGraphicsDevice* graphics)
     InitializeGrid(5, 5000);
     CreatePrimitiveBuffers();
 }
+void UPrimitiveDrawBatch::Tick(float DeltaTimeSeconds)
+{
+    float DeltaMS = DeltaTimeSeconds * 1000.0f;
+
+    for (int32 i = DebugLines.Num() - 1; i >= 0; --i)
+    {
+        FDebugLine& Line = DebugLines[i];
+        Line.RemainingTimeMS -= DeltaMS;
+
+        if (Line.RemainingTimeMS <= 0.0f)
+        {
+            DebugLines.RemoveAt(i);
+        }
+    }
+}
+
 
 void UPrimitiveDrawBatch::ReleaseResources()
 {
@@ -51,6 +68,7 @@ void UPrimitiveDrawBatch::ReleaseResources()
     ReleaseOBBBuffers();
     ReleaseBoundingBoxBuffers();
     ReleaseConeBuffers();
+    ReleaseLineBuffers();
     if (GridConstantBuffer)
     {
         GridConstantBuffer->Release();
@@ -79,9 +97,13 @@ void UPrimitiveDrawBatch::PrepareBatch(FLinePrimitiveBatchArgs& OutLinePrimitive
     UpdateConeBuffers();
     UpdateOBBBuffers();
 
+    // ✅ 디버그 라인 버퍼 업데이트 추가
+    UpdateLineBuffers();
+
     int BoundingBoxSize = BoundingBoxes.Num();
     int ConeSize = Cones.Num();
     int OBBSize = OrientedBoundingBoxes.Num();
+    int DebugLineSize = DebugLines.Num(); // optional if args 구조체에 있으면
 
     UpdateLinePrimitiveCountBuffer(BoundingBoxSize, ConeSize);
 
@@ -91,7 +113,9 @@ void UPrimitiveDrawBatch::PrepareBatch(FLinePrimitiveBatchArgs& OutLinePrimitive
     OutLinePrimitiveBatchArgs.ConeCount = ConeSize;
     OutLinePrimitiveBatchArgs.ConeSegmentCount = ConeSegmentCount;
     OutLinePrimitiveBatchArgs.OBBCount = OBBSize;
+    OutLinePrimitiveBatchArgs.LineCount = DebugLineSize; // ← 구조체가 있다면 포함하세요
 }
+
 
 void UPrimitiveDrawBatch::RemoveArr()
 {
@@ -169,16 +193,38 @@ void UPrimitiveDrawBatch::UpdateOBBBuffers()
         UpdateOBBBuffer(OBBBuffer, OrientedBoundingBoxes, OBBCount);
     }
 }
+void UPrimitiveDrawBatch::UpdateLineBuffers()
+{
+    if (DebugLines.Num() > AllocatedLineCapacity)
+    {
+        AllocatedLineCapacity = DebugLines.Num();
+        ReleaseLineBuffers();
+        DebugLineBuffer = CreateLineBuffer(static_cast<UINT>(AllocatedLineCapacity));
+        DebugLineSRV = CreateLineSRV(DebugLineBuffer, static_cast<UINT>(AllocatedLineCapacity));
+    }
+
+    if (DebugLineBuffer && DebugLineSRV)
+    {
+        int LineCount = DebugLines.Num();
+        UpdateLineBuffer(DebugLineBuffer, DebugLines, LineCount);
+    }
+}
 
 void UPrimitiveDrawBatch::UpdateLinePrimitiveCountBuffer(int NumBoundingBoxes, int NumCones) const
 {
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     HRESULT HR = Graphics->DeviceContext->Map(LinePrimitiveBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
-    auto Data = static_cast<FPrimitiveCounts*>(MappedResource.pData);
-    Data->BoundingBoxCount = NumBoundingBoxes;
-    Data->ConeCount = NumCones;
-    Graphics->DeviceContext->Unmap(LinePrimitiveBuffer, 0);
+    if (SUCCEEDED(HR))
+    {
+        auto* Data = static_cast<FPrimitiveCounts*>(MappedResource.pData);
+        Data->BoundingBoxCount = NumBoundingBoxes;
+        Data->ConeCount = NumCones;
+        Data->DebugLineCount = DebugLines.Num();
+        Data->OBBCount = OrientedBoundingBoxes.Num();
+        Graphics->DeviceContext->Unmap(LinePrimitiveBuffer, 0);
+    }
 }
+
 
 // 5. 릴리즈 함수들
 void UPrimitiveDrawBatch::ReleaseBoundingBoxBuffers()
@@ -220,6 +266,19 @@ void UPrimitiveDrawBatch::ReleaseOBBBuffers()
     {
         OBBSRV->Release();
         OBBSRV = nullptr;
+    }
+}
+void UPrimitiveDrawBatch::ReleaseLineBuffers()
+{
+    if (DebugLineBuffer)
+    {
+        DebugLineBuffer->Release();
+        DebugLineBuffer = nullptr;
+    }
+    if (DebugLineSRV)
+    {
+        DebugLineSRV->Release();
+        DebugLineSRV = nullptr;
     }
 }
 
@@ -292,6 +351,15 @@ void UPrimitiveDrawBatch::AddConeToBatch(const FVector& Center, float Radius, fl
     Cone.Color = Color;
     Cone.ConeSegmentCount = ConeSegmentCount;
     Cones.Add(Cone);
+}
+void UPrimitiveDrawBatch::AddLine(const FVector& Start, const FVector& End, const FVector4& Color, float LifeTimeMS)
+{
+    FDebugLine Line;
+    Line.Start = Start;
+    Line.End = End;
+    Line.Color = Color;
+    Line.RemainingTimeMS = (LifeTimeMS > 0.0f) ? LifeTimeMS : 0.0001f;
+    DebugLines.Add(Line);
 }
 
 // 7. 버퍼 생성 함수들
@@ -371,6 +439,20 @@ ID3D11Buffer* UPrimitiveDrawBatch::CreateConeBuffer(UINT NumCones) const
     Graphics->Device->CreateBuffer(&BufferDesc, nullptr, &Buffer);
     return Buffer;
 }
+ID3D11Buffer* UPrimitiveDrawBatch::CreateLineBuffer(UINT NumLines) const
+{
+    D3D11_BUFFER_DESC BufferDesc = {};
+    BufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    BufferDesc.ByteWidth = sizeof(FDebugLine) * NumLines;
+    BufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    BufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    BufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    BufferDesc.StructureByteStride = sizeof(FDebugLine);
+
+    ID3D11Buffer* Buffer = nullptr;
+    Graphics->Device->CreateBuffer(&BufferDesc, nullptr, &Buffer);
+    return Buffer;
+}
 
 // 8. SRV 생성 함수들
 ID3D11ShaderResourceView* UPrimitiveDrawBatch::CreateBoundingBoxSRV(ID3D11Buffer* Buffer, UINT NumBoundingBoxes)
@@ -407,6 +489,18 @@ ID3D11ShaderResourceView* UPrimitiveDrawBatch::CreateConeSRV(ID3D11Buffer* Buffe
 
     Graphics->Device->CreateShaderResourceView(Buffer, &SRVDesc, &ConeSRV);
     return ConeSRV;
+}
+ID3D11ShaderResourceView* UPrimitiveDrawBatch::CreateLineSRV(ID3D11Buffer* Buffer, UINT NumLines)
+{
+    D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
+    SRVDesc.Format = DXGI_FORMAT_UNKNOWN;
+    SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    SRVDesc.Buffer.ElementOffset = 0;
+    SRVDesc.Buffer.NumElements = NumLines;
+
+    ID3D11ShaderResourceView* SRV = nullptr;
+    Graphics->Device->CreateShaderResourceView(Buffer, &SRVDesc, &SRV);
+    return SRV;
 }
 
 // 9. 버퍼 업데이트 (데이터 복사) 함수들
@@ -451,6 +545,30 @@ void UPrimitiveDrawBatch::UpdateConesBuffer(ID3D11Buffer* Buffer, const TArray<F
     }
     Graphics->DeviceContext->Unmap(Buffer, 0);
 }
+void UPrimitiveDrawBatch::UpdateLineBuffer(ID3D11Buffer* Buffer, const TArray<FDebugLine>& Lines, int NumLines) const
+{
+    if (!Buffer)
+        return;
+
+    D3D11_MAPPED_SUBRESOURCE MappedResource;
+    HRESULT HR = Graphics->DeviceContext->Map(Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+    auto Data = static_cast<FDebugLineData*>(MappedResource.pData);
+    for (int i = 0; i < DebugLines.Num(); ++i)
+    {
+        const FDebugLine& Src = Lines[i];
+        FDebugLineData& Dst = Data[i];
+
+        Dst.Start = Src.Start;
+        Dst.pad0 = 0.f;
+
+        Dst.End = Src.End;
+        Dst.pad1 = 0.f;
+
+        Dst.Color = Src.Color;
+    }
+
+    Graphics->DeviceContext->Unmap(Buffer, 0);
+}
 
 void UPrimitiveDrawBatch::PrepareLineResources() const
 {
@@ -467,5 +585,9 @@ void UPrimitiveDrawBatch::PrepareLineResources() const
         Graphics->DeviceContext->VSSetShaderResources(2, 1, &BoundingBoxSRV);
         Graphics->DeviceContext->VSSetShaderResources(3, 1, &ConeSRV);
         Graphics->DeviceContext->VSSetShaderResources(4, 1, &OBBSRV);
+        if (DebugLineSRV)
+        {
+            Graphics->DeviceContext->VSSetShaderResources(5, 1, &DebugLineSRV); // t5 바인딩
+        }
     }
 }
