@@ -184,12 +184,12 @@ void AEditorPlayer::PickActor(const FVector& PickPosition)
         RayDirWorld = (RayTargetWorld - RayOriginWorld).GetSafeNormal();
     }
 
-    FEngineLoop::PrimitiveDrawBatch.AddLine(
+    /*FEngineLoop::PrimitiveDrawBatch.AddLine(
         RayOriginWorld,
         RayOriginWorld + RayDirWorld * 10000.f,
         FVector4(1, 0, 0, 1), // 빨강
         10000.f // 10초 (ms)
-    );
+    );*/
 
     USceneComponent* Possible = nullptr;
     int maxIntersect = 0;
