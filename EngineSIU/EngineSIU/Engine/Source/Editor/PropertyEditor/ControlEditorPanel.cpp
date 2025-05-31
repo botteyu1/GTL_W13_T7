@@ -516,18 +516,20 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                 {
                     SpawnedActor = World->SpawnActor<ASequencerPlayer>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SEQUENCERPLAYER"));
+                    break;
                 }
                 case OBJ_SIDEVIEWCAMERA:
                 {
                     SpawnedActor = World->SpawnActor<ASideViewCameraActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SIDEVIEWCAMERA"));
+                    break;
                 }
                 case OBJ_OBJECTVIEWCAMERACTOR:
                 {
                     SpawnedActor = World->SpawnActor<AObjectViewCameraActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_OBJECTVIEWCAMERACTOR"));
+                    break;
                 }
-                break;
                 case OBJ_CAR:
                     SpawnedActor = World->SpawnActor<ACarActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_CAR"));
