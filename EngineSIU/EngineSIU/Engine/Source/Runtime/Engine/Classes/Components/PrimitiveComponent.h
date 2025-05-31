@@ -37,6 +37,7 @@ public:
     
     FBoundingBox AABB;
 
+
     bool GetGenerateOverlapEvents() const { return bGenerateOverlapEvents; }
     
     bool bGenerateOverlapEvents = true;
@@ -116,6 +117,10 @@ public:
     virtual void CreatePhysXGameObject();
 
     virtual void BeginPlay() override;
+
+    void SetVisibility(bool bInIsVisible) { bIsVisible = bInIsVisible; }
+    bool IsVisible() const { return bIsVisible; }
+
     
 protected:
     TArray<FOverlapInfo> OverlappingComponents;
@@ -129,6 +134,9 @@ protected:
     
 private:
     FString m_Type;
+
+    
+    bool bIsVisible = true; // 컴포넌트가 보이는지 여부
 
 public:
     FString GetType() { return m_Type; }

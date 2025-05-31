@@ -533,7 +533,7 @@ void UAssetManager::AddToAssetMap(const FAssetLoadResult& Result, const FString&
         Info.AssetType = EAssetType::StaticMesh;
         Info.AssetObject = StaticMesh;
         
-        FString Key = Info.GetFullPath();
+        FString Key = Info.GetFullPath() ;
         AssetRegistry->PathNameToAssetInfo.Add(Key, Info);
 
         AssetMap[EAssetType::StaticMesh].Add(Key, StaticMesh);

@@ -66,6 +66,8 @@ public:
     /** Component가 현재 활성화 중인지 여부를 반환합니다. */
     bool IsActive() const { return bIsActive; }
 
+    void SetActive(bool bNewActive) { bIsActive = bNewActive; }
+
     void Activate();
     void Deactivate();
 

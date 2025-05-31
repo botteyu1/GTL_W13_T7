@@ -68,8 +68,13 @@ void FRenderPassBase::RenderStaticMesh_Internal(const FStaticMeshRenderData* Ren
     UINT Offset = 0;
 
     FVertexInfo VertexInfo;
-    BufferManager->CreateVertexBuffer(RenderData->ObjectName, RenderData->Vertices, VertexInfo);
+    HRESULT Result = BufferManager->CreateVertexBuffer(RenderData->ObjectName, RenderData->Vertices, VertexInfo);
 
+    if (Result != S_OK)
+    {
+        return;
+    }
+    
     Graphics->DeviceContext->IASetVertexBuffers(0, 1, &VertexInfo.VertexBuffer, &Stride, &Offset);
 
     FIndexInfo IndexInfo;
