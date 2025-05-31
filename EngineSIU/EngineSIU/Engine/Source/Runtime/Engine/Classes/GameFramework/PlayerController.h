@@ -28,7 +28,7 @@ public:
 
     UInputComponent* GetInputComponent() const { return InputComponent; }
 
-    void SetViewTarget(class AActor* NewViewTarget, struct FViewTargetTransitionParams TransitionParams);
+    void SetViewTarget(class AActor* NewViewTarget, struct  FViewTargetTransitionParams TransitionParams=FViewTargetTransitionParams());
 
     virtual void Possess(AActor* InActor);
 
