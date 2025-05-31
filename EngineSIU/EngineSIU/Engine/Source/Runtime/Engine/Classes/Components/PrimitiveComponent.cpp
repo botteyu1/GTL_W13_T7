@@ -760,3 +760,37 @@ void UPrimitiveComponent::ClearComponentOverlaps(bool bDoNotifies, bool bSkipNot
         }
     }
 }
+
+FBoundingBox UPrimitiveComponent::GetWorldBoundingBox() const
+{
+    FTransform ComponentWorldTransform = GetComponentTransform(); // FTransform 객체를 반환한다고 가정
+
+    // 3. 로컬 AABB의 8개 꼭짓점을 정의합니다.
+    FVector Corners[8];
+    Corners[0] = FVector(AABB.MinLocation.X, AABB.MinLocation.Y, AABB.MinLocation.Z);
+    Corners[1] = FVector(AABB.MaxLocation.X, AABB.MinLocation.Y, AABB.MinLocation.Z);
+    Corners[2] = FVector(AABB.MinLocation.X, AABB.MaxLocation.Y, AABB.MinLocation.Z);
+    Corners[3] = FVector(AABB.MaxLocation.X, AABB.MaxLocation.Y, AABB.MinLocation.Z);
+    Corners[4] = FVector(AABB.MinLocation.X, AABB.MinLocation.Y, AABB.MaxLocation.Z);
+    Corners[5] = FVector(AABB.MaxLocation.X, AABB.MinLocation.Y, AABB.MaxLocation.Z);
+    Corners[6] = FVector(AABB.MinLocation.X, AABB.MaxLocation.Y, AABB.MaxLocation.Z);
+    Corners[7] = FVector(AABB.MaxLocation.X, AABB.MaxLocation.Y, AABB.MaxLocation.Z);
+
+    // 4. 8개 꼭짓점을 월드 좌표로 변환하고, 새 월드 AABB의 Min/Max를 찾습니다.
+    FVector WorldMin(FLT_MAX, FLT_MAX, FLT_MAX);
+    FVector WorldMax(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+    for (auto Corner : Corners)
+    {
+        // FTransform에 로컬 위치를 월드 위치로 변환하는 함수가 있다고 가정 (예: TransformPosition)
+        FVector WorldCorner = ComponentWorldTransform.TransformPosition(Corner); 
+        
+        WorldMin.X = FMath::Min(WorldMin.X, WorldCorner.X);
+        WorldMin.Y = FMath::Min(WorldMin.Y, WorldCorner.Y);
+        WorldMin.Z = FMath::Min(WorldMin.Z, WorldCorner.Z);
+        WorldMax.X = FMath::Max(WorldMax.X, WorldCorner.X);
+        WorldMax.Y = FMath::Max(WorldMax.Y, WorldCorner.Y);
+        WorldMax.Z = FMath::Max(WorldMax.Z, WorldCorner.Z);
+    }
+    return {WorldMin, WorldMax};
+}

@@ -12,6 +12,7 @@
 #include "UObject/ObjectFactory.h"
 #include "BaseGizmos/TransformGizmo.h"
 #include "Camera/CameraComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "SlateCore/Input/Events.h"
 
@@ -324,6 +325,124 @@ void FEditorViewportClient::InputKey(const FKeyEvent& InKeyEvent)
             EdEngine->GetEditorPlayer()->AddControlMode();
             break;
         }
+
+        case VK_END:
+        {
+            UWorld* World = EdEngine->EditorWorld;
+            if (!World)
+            {
+                return;
+            }
+            const TArray<AActor*>& AllSceneActors = World->GetActiveLevel()->Actors;
+            
+            for (AActor* SelectedActor : EdEngine->GetSelectedActors())
+            {
+                if (!SelectedActor || !SelectedActor->GetRootComponent())
+                {
+                    return;
+                }
+
+                UPrimitiveComponent* RootComponent = SelectedActor->GetComponentByClass<UPrimitiveComponent>();
+                FBoundingBox SelectedActorBounds = RootComponent->GetWorldBoundingBox();
+                if (!SelectedActorBounds.IsValidBox())
+                {
+                    continue;
+                }
+                
+                FVector SelectedActorPivotLocation = RootComponent->GetComponentLocation();
+                float PivotToActualBottomOffsetZ = SelectedActorPivotLocation.Z - SelectedActorBounds.MinLocation.Z;
+
+                FVector RayStart = SelectedActorPivotLocation;
+                FVector RayDirection = FVector::DownVector;
+                float MaxRayLength = 100000.0f;
+
+                FHitResult ClosestHit;
+                ClosestHit.Distance = MaxRayLength;
+                ClosestHit.HitActor = nullptr;
+
+                TArray<AActor*> ActorsToIgnore;
+                ActorsToIgnore.Add(SelectedActor);
+
+                for (AActor* TargetActor : AllSceneActors)
+                {
+                    if (ActorsToIgnore.Contains(TargetActor) || !TargetActor || !TargetActor->GetRootComponent())
+                    {
+                        continue;
+                    }
+
+                    UPrimitiveComponent* PrimitiveComponent =  TargetActor->GetComponentByClass<UPrimitiveComponent>();
+                    if (!PrimitiveComponent)
+                    {
+                        continue;
+                    }
+                    
+                    FBoundingBox TargetActorBounds = PrimitiveComponent->GetWorldBoundingBox();
+                    if (!TargetActorBounds.IsValidBox())
+                    {
+                        continue;
+                    }
+
+                    float CurrentHitTValue; // 레이와 교차점까지의 거리 (t 값)
+                    if (TargetActorBounds.Intersect(RayStart, RayDirection, CurrentHitTValue))
+                    {
+                         FVector HitSurfacePointOnTarget; // 레이가 대상 액터의 표면에 닿는 실제 지점
+
+                        // Case 1: 레이가 대상 박스 외부에서 시작하여 교차 (CurrentHitTValue > 0)
+                        if (CurrentHitTValue > KINDA_SMALL_NUMBER)
+                        {
+                            HitSurfacePointOnTarget = RayStart + RayDirection * CurrentHitTValue;
+                        }
+                        // Case 2: 레이가 대상 박스의 경계면 또는 내부에서 시작 (CurrentHitTValue가 0에 가까움)
+                        else 
+                        {
+                            // RayStart의 X, Y가 TargetActorBounds의 X, Y 범위 내에 있는지 확인
+                            bool bXinTarget = (RayStart.X >= TargetActorBounds.MinLocation.X && RayStart.X <= TargetActorBounds.MaxLocation.X);
+                            bool bYinTarget = (RayStart.Y >= TargetActorBounds.MinLocation.Y && RayStart.Y <= TargetActorBounds.MaxLocation.Y);
+
+                            // 그리고 RayStart.Z가 TargetActorBounds의 MinLocation.Z 이상인지 (즉, 피벗이 대상 박스 바닥 위쪽에 있는지) 확인
+                            if (bXinTarget && bYinTarget && RayStart.Z >= TargetActorBounds.MinLocation.Z)
+                            {
+                                if (RayStart.Z >= TargetActorBounds.MaxLocation.Z)
+                                {
+                                    HitSurfacePointOnTarget = FVector(RayStart.X, RayStart.Y, TargetActorBounds.MaxLocation.Z);
+                                    CurrentHitTValue = RayStart.Z - TargetActorBounds.MaxLocation.Z; 
+                                    if (CurrentHitTValue < 0.0f)
+                                    {
+                                        CurrentHitTValue = 0.0f;
+                                    }
+                                }
+                                else
+                                {
+                                    continue; 
+                                }
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                        
+                        if (CurrentHitTValue >= 0.0f && CurrentHitTValue < ClosestHit.Distance && CurrentHitTValue <= MaxRayLength)
+                        {
+                            ClosestHit.Distance = CurrentHitTValue;
+                            ClosestHit.HitActor = TargetActor;
+                            ClosestHit.ImpactPoint = HitSurfacePointOnTarget; 
+                            ClosestHit.ImpactNormal = FVector(0.0f, 0.0f, 1.0f);
+                        }
+                    }
+                }
+
+                if (ClosestHit.HitActor)
+                {
+                    float NewPivotZ = ClosestHit.ImpactPoint.Z + PivotToActualBottomOffsetZ;
+
+                    FVector NewLocation = FVector(SelectedActorPivotLocation.X, SelectedActorPivotLocation.Y, NewPivotZ);
+                    RootComponent->SetWorldLocation(NewLocation);
+                }
+            }
+        }
+        break;
+        
         default:
             break;
         }
