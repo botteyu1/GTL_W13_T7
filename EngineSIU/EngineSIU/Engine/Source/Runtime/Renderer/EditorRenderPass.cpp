@@ -29,7 +29,7 @@
 void FEditorRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
 {
     FRenderPassBase::Initialize(InBufferManager, InGraphics, InShaderManager);
-    
+
     CreateShaders();
     CreateBuffers();
     CreateConstantBuffers();
@@ -55,21 +55,21 @@ void FEditorRenderPass::CreateShaders()
         };
 
     auto AddShaderSetWithoutLayout = [this](const std::wstring& KeyPrefix, const std::string& VsEntry, const std::string& PsEntry)
-    {
-        ShaderManager->AddVertexShader(KeyPrefix + L"VS", L"Shaders/EditorShader.hlsl", VsEntry);
-        ShaderManager->AddPixelShader(KeyPrefix + L"PS", L"Shaders/EditorShader.hlsl", PsEntry);
-    };
-    
+        {
+            ShaderManager->AddVertexShader(KeyPrefix + L"VS", L"Shaders/EditorShader.hlsl", VsEntry);
+            ShaderManager->AddPixelShader(KeyPrefix + L"PS", L"Shaders/EditorShader.hlsl", PsEntry);
+        };
+
 
     // Cone
     AddShaderSetWithoutLayout(L"Cone", "ConeVS", "ConePS");
 
     // Icons
     AddShaderSetWithoutLayout(L"Icon", "IconVS", "IconPS");
-    
+
     // Arrow (기즈모 layout 재사용)
     AddShaderSet(L"Arrow", "ArrowVS", "ArrowPS", LayoutGizmo, ARRAYSIZE(LayoutGizmo));
-    
+
     AddShaderSet(L"Sphere", "SphereVS", "SpherePS", LayoutPosOnly, ARRAYSIZE(LayoutPosOnly));
     AddShaderSet(L"Box", "BoxVS", "BoxPS", LayoutPosOnly, ARRAYSIZE(LayoutPosOnly));
     AddShaderSet(L"Capsule", "CapsuleVS", "CapsulePS", LayoutPosOnly, ARRAYSIZE(LayoutPosOnly));
@@ -79,7 +79,7 @@ void FEditorRenderPass::CreateBuffers()
 {
     FVertexInfo OutVertexInfo;
     FIndexInfo OutIndexInfo;
-    
+
     ////////////////////////////////////
     // Box 버퍼 생성
     const TArray<FVector> CubeFrameVertices = {
@@ -108,7 +108,7 @@ void FEditorRenderPass::CreateBuffers()
 
     Resources.Primitives.Box.VertexInfo = OutVertexInfo;
     Resources.Primitives.Box.IndexInfo = OutIndexInfo;
-    
+
     ////////////////////////////////////
     // Sphere 버퍼 생성
     const TArray<FVector> SphereFrameVertices =
@@ -224,7 +224,7 @@ void FEditorRenderPass::CreateBuffers()
         81, 81, 82, 82, 83, 83, 84, 84, 85, 85, 86, 86, 87, 87, 88, 88, 89, 89, 90, 90,
         91, 91, 92, 92, 93, 93, 94, 94, 95
     };
-    
+
     BufferManager->CreateVertexBuffer<FVector>(TEXT("SphereVertexBuffer"), SphereFrameVertices, OutVertexInfo, D3D11_USAGE_IMMUTABLE, 0);
     BufferManager->CreateIndexBuffer<uint32>(TEXT("SphereIndexBuffer"), SphereFrameIndices, OutIndexInfo);
 
@@ -258,7 +258,7 @@ void FEditorRenderPass::BindShaderResource(const std::wstring& VertexKey, const 
     ID3D11VertexShader* VertexShader = ShaderManager->GetVertexShaderByKey(VertexKey);
     ID3D11PixelShader* PixelShader = ShaderManager->GetPixelShaderByKey(PixelKey);
     ID3D11InputLayout* InputLayout = ShaderManager->GetInputLayoutByKey(VertexKey);
-    
+
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
     Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
     Graphics->DeviceContext->IASetInputLayout(InputLayout);
@@ -279,7 +279,7 @@ void FEditorRenderPass::PrepareRenderArr()
     {
         return;
     }
-    
+
     for (const auto* Actor : TObjectRange<AActor>())
     {
         for (const auto* Component : Actor->GetComponents())
@@ -329,7 +329,7 @@ void FEditorRenderPass::PrepareRenderArr()
                 {
                     Resources.Components.BoxComponents.Add(BoxComponent);
                 }
-            
+
                 if (UCapsuleComponent* CapsuleComponent = Cast<UCapsuleComponent>(Component))
                 {
                     Resources.Components.CapsuleComponents.Add(CapsuleComponent);
@@ -380,7 +380,7 @@ void FEditorRenderPass::LazyLoad()
 
     FIndexInfo IndexInfo;
     BufferManager->CreateIndexBuffer(RenderData->ObjectName, RenderData->Indices, IndexInfo);
-    
+
     Resources.Primitives.Arrow.VertexInfo.VertexBuffer = VertexInfo.VertexBuffer;
     Resources.Primitives.Arrow.VertexInfo.NumVertices = VertexInfo.NumVertices;
     Resources.Primitives.Arrow.VertexInfo.Stride = sizeof(FStaticMeshVertex); // Directional Light의 Arrow에 해당됨
@@ -399,7 +399,7 @@ void FEditorRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& Vie
 
     const uint64 ShowFlag = Viewport->GetShowFlag();
 
-    BindRenderTarget(Viewport);    
+    BindRenderTarget(Viewport);
 
     if (ShowFlag & EEngineShowFlags::SF_LightWireframe)
     {
@@ -458,7 +458,7 @@ void FEditorRenderPass::RenderPointlightInstanced(uint64 ShowFlag)
             }
         }
     }
-    
+
     BufferManager->BindConstantBuffer("SphereConstantBuffer", 11, EShaderStage::Vertex);
     int BufferIndex = 0;
     for (int i = 0; i < (1 + BufferAll.Num() / ConstantBufferSizeSphere) * ConstantBufferSizeSphere; ++i)
@@ -615,7 +615,7 @@ void FEditorRenderPass::RenderIcons(const UWorld* World, std::shared_ptr<FEditor
 void FEditorRenderPass::UpdateTextureIcon(EIconType Type)
 {
     Graphics->DeviceContext->PSSetShaderResources(0, 1, &Resources.IconTextures[Type]->TextureSRV);
-    
+
     ID3D11SamplerState* SamplerState = Graphics->GetSamplerState(Resources.IconTextures[Type]->SamplerType);
     Graphics->DeviceContext->PSSetSamplers(0, 1, &SamplerState);
 }
@@ -681,7 +681,7 @@ void FEditorRenderPass::RenderBoxInstanced(uint64 ShowFlag)
 {
     BindShaderResource(L"BoxVS", L"BoxPS", D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
     BindBuffers(Resources.Primitives.Box);
-    
+
     // 위치랑 bounding box 크기 정보 가져오기
     TArray<FConstantBufferDebugBox> BufferAll;
     for (UBoxComponent* BoxComponent : Resources.Components.BoxComponents)
@@ -708,20 +708,17 @@ void FEditorRenderPass::RenderBoxInstanced(uint64 ShowFlag)
 
     for (const UStaticMeshComponent* StaticComp : Resources.Components.StaticMeshComponent)
     {
-        if (ShowFlag & EEngineShowFlags::SF_CollisionSelectedOnly)
+        for (const auto& GeomAttribute : StaticComp->GeomAttributes)
         {
-            for (const auto& GeomAttribute : StaticComp->GeomAttributes)
+            if (GeomAttribute.GeomType == EGeomType::EBox)
             {
-                if (GeomAttribute.GeomType == EGeomType::EBox)
-                {
-                    FConstantBufferDebugBox b;
-                    FMatrix WorldMatrix =
-                        FTransform(GeomAttribute.Rotation, GeomAttribute.Offset, GeomAttribute.Extent).ToMatrixWithScale()
-                        * StaticComp->GetWorldMatrix().GetMatrixWithoutScale();
-                    b.WorldMatrix = WorldMatrix;
-                    b.Extent = GeomAttribute.Extent;
-                    BufferAll.Add(b);
-                }
+                FConstantBufferDebugBox b;
+                FMatrix WorldMatrix =
+                    FTransform(GeomAttribute.Rotation, GeomAttribute.Offset).ToMatrixWithScale()
+                    * StaticComp->GetWorldMatrix().GetMatrixWithoutScale();
+                b.WorldMatrix = WorldMatrix;
+                b.Extent = GeomAttribute.Extent;
+                BufferAll.Add(b);
             }
         }
     }
@@ -744,7 +741,7 @@ void FEditorRenderPass::RenderBoxInstanced(uint64 ShowFlag)
                 {
                     FConstantBufferDebugBox b;
                     FMatrix WorldMatrix =
-                        FTransform(Attributes.Rotation, Attributes.Offset, Attributes.Extent).ToMatrixWithScale()
+                        FTransform(Attributes.Rotation, Attributes.Offset).ToMatrixWithScale()
                         * BoneMatrix
                         * SkelMeshComp->GetWorldMatrix().GetMatrixWithoutScale();
                     b.WorldMatrix = WorldMatrix;
@@ -754,7 +751,7 @@ void FEditorRenderPass::RenderBoxInstanced(uint64 ShowFlag)
             }
         }
     }
-    
+
     BufferManager->BindConstantBuffer("BoxConstantBuffer", 11, EShaderStage::Vertex);
     int BufferIndex = 0;
     for (uint32 i = 0; i < (1 + BufferAll.Num() / ConstantBufferSizeBox) * ConstantBufferSizeBox; ++i)
@@ -812,20 +809,17 @@ void FEditorRenderPass::RenderSphereInstanced(uint64 ShowFlag)
 
     for (const UStaticMeshComponent* StaticComp : Resources.Components.StaticMeshComponent)
     {
-        if (ShowFlag & EEngineShowFlags::SF_CollisionSelectedOnly)
+        for (const auto& GeomAttribute : StaticComp->GeomAttributes)
         {
-            for (const auto& GeomAttribute : StaticComp->GeomAttributes)
+            if (GeomAttribute.GeomType == EGeomType::ESphere)
             {
-                if (GeomAttribute.GeomType == EGeomType::ESphere)
-                {
-                    FConstantBufferDebugSphere b;
-                    FMatrix WorldMatrix =
-                        FTransform(GeomAttribute.Rotation, GeomAttribute.Offset, GeomAttribute.Extent).ToMatrixWithScale()
-                        * StaticComp->GetWorldMatrix().GetMatrixWithoutScale();
-                    b.Position = WorldMatrix.GetTranslationVector();
-                    b.Radius = GeomAttribute.Extent.X;
-                    BufferAll.Add(b);
-                }
+                FConstantBufferDebugSphere b;
+                FMatrix WorldMatrix =
+                    FTransform(GeomAttribute.Rotation, GeomAttribute.Offset).ToMatrixWithScale()
+                    * StaticComp->GetWorldMatrix().GetMatrixWithoutScale();
+                b.Position = WorldMatrix.GetTranslationVector();
+                b.Radius = GeomAttribute.Extent.X;
+                BufferAll.Add(b);
             }
         }
     }
@@ -848,7 +842,7 @@ void FEditorRenderPass::RenderSphereInstanced(uint64 ShowFlag)
                 {
                     FConstantBufferDebugSphere b;
                     FMatrix WorldMatrix =
-                        FTransform(Attributes.Rotation, Attributes.Offset, Attributes.Extent).ToMatrixWithScale()
+                        FTransform(Attributes.Rotation, Attributes.Offset).ToMatrixWithScale()
                         * BoneMatrix
                         * SkelMeshComp->GetWorldMatrix().GetMatrixWithoutScale();
                     b.Position = WorldMatrix.GetTranslationVector();
@@ -888,7 +882,7 @@ void FEditorRenderPass::RenderSphereInstanced(uint64 ShowFlag)
 void FEditorRenderPass::RenderCapsuleInstanced(uint64 ShowFlag)
 {
     BindShaderResource(L"CapsuleVS", L"CapsulePS", D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-    
+
     // 위치랑 bounding box 크기 정보 가져오기
     TArray<FConstantBufferDebugCapsule> BufferAll;
     for (UShapeComponent* ShapeComponent : Resources.Components.CapsuleComponents)
@@ -920,21 +914,18 @@ void FEditorRenderPass::RenderCapsuleInstanced(uint64 ShowFlag)
 
     for (const UStaticMeshComponent* StaticComp : Resources.Components.StaticMeshComponent)
     {
-        if (ShowFlag & EEngineShowFlags::SF_CollisionSelectedOnly)
+        for (const auto& GeomAttribute : StaticComp->GeomAttributes)
         {
-            for (const auto& GeomAttribute : StaticComp->GeomAttributes)
+            if (GeomAttribute.GeomType == EGeomType::ECapsule)
             {
-                if (GeomAttribute.GeomType == EGeomType::ECapsule)
-                {
-                    FConstantBufferDebugCapsule b;
-                    FMatrix WorldMatrix =
-                        FTransform(GeomAttribute.Rotation, GeomAttribute.Offset, GeomAttribute.Extent).ToMatrixWithScale()
-                        * StaticComp->GetWorldMatrix().GetMatrixWithoutScale();
-                    b.WorldMatrix = WorldMatrix;
-                    b.Radius = GeomAttribute.Extent.X;
-                    b.Height = GeomAttribute.Extent.Z;
-                    BufferAll.Add(b);
-                }
+                FConstantBufferDebugCapsule b;
+                FMatrix WorldMatrix =
+                    FTransform(GeomAttribute.Rotation, GeomAttribute.Offset).ToMatrixWithScale()
+                    * StaticComp->GetWorldMatrix().GetMatrixWithoutScale();
+                b.WorldMatrix = WorldMatrix;
+                b.Radius = GeomAttribute.Extent.X;
+                b.Height = GeomAttribute.Extent.Z;
+                BufferAll.Add(b);
             }
         }
     }
@@ -957,7 +948,7 @@ void FEditorRenderPass::RenderCapsuleInstanced(uint64 ShowFlag)
                 {
                     FConstantBufferDebugCapsule b;
                     FMatrix WorldMatrix =
-                        FTransform(Attributes.Rotation, Attributes.Offset, Attributes.Extent).ToMatrixWithScale()
+                        FTransform(Attributes.Rotation, Attributes.Offset).ToMatrixWithScale()
                         * BoneMatrix
                         * SkelMeshComp->GetWorldMatrix().GetMatrixWithoutScale();
                     b.WorldMatrix = WorldMatrix;
@@ -968,7 +959,7 @@ void FEditorRenderPass::RenderCapsuleInstanced(uint64 ShowFlag)
             }
         }
     }
-    
+
     BufferManager->BindConstantBuffer("CapsuleConstantBuffer", 11, EShaderStage::Vertex);
     int BufferIndex = 0;
     for (int i = 0; i < (1 + BufferAll.Num() / ConstantBufferSizeCapsule) * ConstantBufferSizeCapsule; ++i)
@@ -986,7 +977,7 @@ void FEditorRenderPass::RenderCapsuleInstanced(uint64 ShowFlag)
                 break;
             }
         }
-    
+
         if (SubBuffer.Num() > 0)
         {
             BufferManager->UpdateConstantBuffer<FConstantBufferDebugCapsule>(TEXT("CapsuleConstantBuffer"), SubBuffer);
