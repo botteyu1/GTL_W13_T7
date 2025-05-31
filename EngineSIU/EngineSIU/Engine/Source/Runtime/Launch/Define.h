@@ -363,14 +363,43 @@ struct FCone
     int ConeSegmentCount; // 원뿔 밑면 분할 수
     float pad[3];
 };
+struct FDebugLine
+{
+    FVector Start;
+    float pad0 = 0.f;
+
+    FVector End;
+    float pad1 = 0.f;
+
+    FVector4 Color;
+
+    float RemainingTimeMS = 0.f; // ✅ CPU 전용
+};
+struct FDebugLineData
+{
+    FVector Start;
+    float pad0;
+
+    FVector End;
+    float pad1;
+
+    FVector4 Color;
+};
+
 
 struct FPrimitiveCounts
 {
     int BoundingBoxCount;
-    int pad;
+    int pad0;
     int ConeCount;
     int pad1;
+    int DebugLineCount;
+    int pad2;
+    int OBBCount;
+    int pad3;
 };
+
+
 
 #define MAX_LIGHTS 16
 #define NUM_FACES 6
@@ -497,6 +526,7 @@ struct FLinePrimitiveBatchArgs
     int ConeCount;
     int ConeSegmentCount;
     int OBBCount;
+    int LineCount;
 };
 
 struct FViewportSize

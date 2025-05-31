@@ -1,4 +1,4 @@
-﻿#include "Matrix.h"
+#include "Matrix.h"
 
 #include <cmath>
 #include "MathSSE.h"
@@ -444,6 +444,30 @@ FVector4 FMatrix::TransformVector(const FVector4& V, const FMatrix& M)
     result.Y = V.X * M.M[0][1] + V.Y * M.M[1][1] + V.Z * M.M[2][1] + V.W * M.M[3][1];
     result.Z = V.X * M.M[0][2] + V.Y * M.M[1][2] + V.Z * M.M[2][2] + V.W * M.M[3][2];
     result.W = V.X * M.M[0][3] + V.Y * M.M[1][3] + V.Z * M.M[2][3] + V.W * M.M[3][3];
+    return result;
+}
+// 방향 벡터 변환 (W=0)
+FVector FMatrix::TransformVector(const FVector& V) const
+{
+    FVector result;
+
+    result.X = V.X * M[0][0] + V.Y * M[1][0] + V.Z * M[2][0];
+    result.Y = V.X * M[0][1] + V.Y * M[1][1] + V.Z * M[2][1];
+    result.Z = V.X * M[0][2] + V.Y * M[1][2] + V.Z * M[2][2];
+
+    return result;
+}
+
+// 4D 벡터 변환 (방향/위치 구분 가능)
+FVector4 FMatrix::TransformVector(const FVector4& V) const
+{
+    FVector4 result;
+
+    result.X = V.X * M[0][0] + V.Y * M[1][0] + V.Z * M[2][0] + V.W * M[3][0];
+    result.Y = V.X * M[0][1] + V.Y * M[1][1] + V.Z * M[2][1] + V.W * M[3][1];
+    result.Z = V.X * M[0][2] + V.Y * M[1][2] + V.Z * M[2][2] + V.W * M[3][2];
+    result.W = V.X * M[0][3] + V.Y * M[1][3] + V.Z * M[2][3] + V.W * M[3][3];
+
     return result;
 }
 

@@ -12,6 +12,7 @@
 
 #include "EngineLoop.h"
 #include "UnrealClient.h"
+#include "Engine/Engine.h"
 
 #include "UObject/UObjectIterator.h"
 
@@ -35,6 +36,7 @@ void FLineRenderPass::PrepareRenderArr()
 
 void FLineRenderPass::ClearRenderArr()
 {
+    FEngineLoop::PrimitiveDrawBatch.Tick(1.0f / 60.0f);
     // 필요에 따라 내부 배열을 초기화
 }
 
@@ -73,7 +75,8 @@ void FLineRenderPass::DrawLineBatch(const FLinePrimitiveBatchArgs& BatchArgs) co
     const UINT InstanceCount = BatchArgs.GridParam.NumGridLines + 3 +
         (BatchArgs.BoundingBoxCount * 12) +
         (BatchArgs.ConeCount * (2 * BatchArgs.ConeSegmentCount)) +
-        (12 * BatchArgs.OBBCount);
+        (12 * BatchArgs.OBBCount)+
+        (BatchArgs.LineCount);
 
     Graphics->DeviceContext->DrawInstanced(VertexCountPerInstance, InstanceCount, 0, 0);
     Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
