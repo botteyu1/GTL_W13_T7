@@ -311,7 +311,9 @@ int AEditorPlayer::RayIntersectsObject(const FVector& PickPosition, USceneCompon
         // 월드 → 로컬
         FMatrix InverseWorld = FMatrix::Inverse(WorldMatrix);
         FVector RayOriginLocal = InverseWorld.TransformPosition(RayOriginWorld);
-        FVector RayDirLocal = InverseWorld.TransformVector(RayDirWorld).GetSafeNormal();
+        //safe normal을 Normalize로 변경하니 해결됨
+        FVector RayDirLocal = InverseWorld.TransformVector(RayDirWorld);
+        RayDirLocal.Normalize();
 
         IntersectCount = Component->CheckRayIntersection(RayOriginLocal, RayDirLocal, HitDistance);
 
