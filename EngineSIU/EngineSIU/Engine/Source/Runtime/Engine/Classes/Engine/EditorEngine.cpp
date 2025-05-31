@@ -573,7 +573,7 @@ void UEditorEngine::SetPhysXScene(UWorld* World)
             int bPhysics = Prim->bSimulate ? 1 : 0;
             UE_LOG(ELogLevel::Warning, "%s, simulate physics: %d", *Prim->GetName(), bPhysics);
         }
-    }
+    } 
 
     for (const auto& Actor : World->GetActiveLevel()->Actors)
     {

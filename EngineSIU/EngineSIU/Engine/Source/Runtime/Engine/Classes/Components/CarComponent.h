@@ -40,13 +40,13 @@ private:
     GameObject* Wheels[4] = { nullptr }; //FR, FL, RR, RL
     PxRevoluteJoint* WheelJoints[4] = { nullptr }; //FR, FL, RR, RL
     PxRevoluteJoint* SteeringJoint = nullptr;
-    float MaxSteerAngle = PxPi / 9.f;
+    float MaxSteerAngle = PxPi / 18.f;
     float DeltaSteerAngle = PxPi / 18.f;
     float MaxDriveTorque = 1000.0f;
     float Velocity = 0.f;
     float MaxVelocity = 30.f;
     float FinalBoost = 0.f;
-    float MaxBoost = 2000.f;
+    float MaxBoost = 7500.f;
     bool bBoosted = false;
 
     UStaticMeshComponent* WheelComp[4] = { nullptr };
@@ -58,6 +58,8 @@ private:
     float WheelRadius = 1.2f;
     float WheelWidth = 0.6f;
     float WheelHeight = 0.6f; //half height
+
+    float SlopeAngle;
 
     FVector HubSize = FVector(0.2f, 0.5f, 0.2f);
 

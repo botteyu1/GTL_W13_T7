@@ -52,7 +52,7 @@ void FPhysicsManager::InitPhysX()
     
     Physics = PxCreatePhysics(PX_PHYSICS_VERSION, *Foundation, PxTolerancesScale(), true, Pvd);
     
-    Material = Physics->createMaterial(1.f, 0.9f, 0.f);
+    Material = Physics->createMaterial(0.5f, 0.5f, 0.0f);
 
     PxInitExtensions(*Physics, Pvd);
 
@@ -77,7 +77,7 @@ PxScene* FPhysicsManager::CreateScene(UWorld* World)
     
     PxSceneDesc SceneDesc(Physics->getTolerancesScale());
     
-    SceneDesc.gravity = PxVec3(0, 0, -9.81f);
+    SceneDesc.gravity = PxVec3(0, 0, -20.f);
     
     unsigned int hc = std::thread::hardware_concurrency();
     Dispatcher = PxDefaultCpuDispatcherCreate(hc-2);
