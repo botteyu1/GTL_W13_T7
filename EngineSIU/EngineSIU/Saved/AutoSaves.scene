@@ -40,6 +40,22 @@
             "Components": [
                 {
                     "ComponentClass": "USceneComponent",
+                    "ComponentID": "USceneComponent_207",
+                    "Properties": {
+                        "AttachParentID": "USkeletalMeshComponent_182",
+                        "ComponentClass": "USceneComponent",
+                        "ComponentName": "USceneComponent_207",
+                        "ComponentOwner": "AActor_180",
+                        "ComponentOwnerClass": "AActor",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "USceneComponent",
                     "ComponentID": "USceneComponent_211",
                     "Properties": {
                         "AttachParentID": "USkeletalMeshComponent_182",
@@ -71,22 +87,6 @@
                     }
                 },
                 {
-                    "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_207",
-                    "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_182",
-                        "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_207",
-                        "ComponentOwner": "AActor_180",
-                        "ComponentOwnerClass": "AActor",
-                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
                     "ComponentClass": "USkeletalMeshComponent",
                     "ComponentID": "USkeletalMeshComponent_182",
                     "Properties": {
@@ -104,7 +104,7 @@
                         "LoopStartFrame": "0",
                         "PlayRate": "1.000000",
                         "RelativeLocation": "X=-77.254 Y=-101.400 Z=321.357",
-                        "RelativeRotation": "Pitch=90.000 Yaw=180.000 Roll=-55.619",
+                        "RelativeRotation": "Pitch=90.000 Yaw=0.000 Roll=124.381",
                         "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
                         "RigidBodyType": "1",
                         "SkeletalMeshKey": "Contents/Human/Human",
@@ -129,15 +129,15 @@
             "Components": [
                 {
                     "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_191",
+                    "ComponentID": "USceneComponent_218",
                     "Properties": {
-                        "AttachParentID": "nullptr",
+                        "AttachParentID": "USceneComponent_191",
                         "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_191",
+                        "ComponentName": "USceneComponent_218",
                         "ComponentOwner": "ASequencerPlayer_190",
                         "ComponentOwnerClass": "ASequencerPlayer",
-                        "RelativeLocation": "X=-530.342 Y=0.000 Z=500.000",
-                        "RelativeRotation": "Pitch=-29.300 Yaw=0.000 Roll=-0.000",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
                         "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
                         "bAutoActive": "true",
                         "bIsActive": "true"
@@ -145,11 +145,11 @@
                 },
                 {
                     "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_218",
+                    "ComponentID": "USceneComponent_213",
                     "Properties": {
                         "AttachParentID": "USceneComponent_191",
                         "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_218",
+                        "ComponentName": "USceneComponent_213",
                         "ComponentOwner": "ASequencerPlayer_190",
                         "ComponentOwnerClass": "ASequencerPlayer",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
@@ -176,28 +176,28 @@
                     }
                 },
                 {
-                    "ComponentClass": "UCameraComponent",
-                    "ComponentID": "UCameraComponent_214",
+                    "ComponentClass": "USceneComponent",
+                    "ComponentID": "USceneComponent_191",
                     "Properties": {
-                        "AttachParentID": "USceneComponent_213",
-                        "ComponentClass": "UCameraComponent",
-                        "ComponentName": "UCameraComponent_214",
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "USceneComponent",
+                        "ComponentName": "USceneComponent_191",
                         "ComponentOwner": "ASequencerPlayer_190",
                         "ComponentOwnerClass": "ASequencerPlayer",
-                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeLocation": "X=-530.342 Y=0.000 Z=500.000",
+                        "RelativeRotation": "Pitch=-29.300 Yaw=0.000 Roll=-0.000",
                         "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
                         "bAutoActive": "true",
                         "bIsActive": "true"
                     }
                 },
                 {
-                    "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_213",
+                    "ComponentClass": "UCameraComponent",
+                    "ComponentID": "UCameraComponent_207",
                     "Properties": {
-                        "AttachParentID": "USceneComponent_191",
-                        "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_213",
+                        "AttachParentID": "USceneComponent_206",
+                        "ComponentClass": "UCameraComponent",
+                        "ComponentName": "UCameraComponent_207",
                         "ComponentOwner": "ASequencerPlayer_190",
                         "ComponentOwnerClass": "ASequencerPlayer",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
@@ -225,11 +225,11 @@
                 },
                 {
                     "ComponentClass": "UCameraComponent",
-                    "ComponentID": "UCameraComponent_207",
+                    "ComponentID": "UCameraComponent_214",
                     "Properties": {
-                        "AttachParentID": "USceneComponent_206",
+                        "AttachParentID": "USceneComponent_213",
                         "ComponentClass": "UCameraComponent",
-                        "ComponentName": "UCameraComponent_207",
+                        "ComponentName": "UCameraComponent_214",
                         "ComponentOwner": "ASequencerPlayer_190",
                         "ComponentOwnerClass": "ASequencerPlayer",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
@@ -400,7 +400,7 @@
                         "ComponentOwner": "ACube_1026",
                         "ComponentOwnerClass": "ACube",
                         "RelativeLocation": "X=-33.605 Y=0.000 Z=500.000",
-                        "RelativeRotation": "Pitch=43.600 Yaw=90.000 Roll=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
                         "RelativeScale3D": "X=10.000 Y=10.000 Z=20.000",
                         "RigidBodyType": "1",
                         "StaticMeshPath": "Contents/Primitives/CubePrimitive.obj",
