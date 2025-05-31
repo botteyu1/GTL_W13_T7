@@ -43,6 +43,8 @@ public:
 
     static FVector TransformVector(const FVector& V, const FMatrix& M);
     static FVector4 TransformVector(const FVector4& V, const FMatrix& M);
+    FVector TransformVector(const FVector& V) const;
+    FVector4 TransformVector(const FVector4& V) const;
 
     FVector4 TransformFVector4(const FVector4& vector) const;
     FVector TransformPosition(const FVector& vector) const;
