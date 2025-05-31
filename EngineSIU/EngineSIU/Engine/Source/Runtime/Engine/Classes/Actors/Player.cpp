@@ -31,51 +31,47 @@ void AEditorPlayer::Input()
     if (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
     {
         if (!bLeftMouseDown)
-        {   
+        {
+            bool bMultiSelected = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
             bLeftMouseDown = true;
 
             POINT mousePos;
             GetCursorPos(&mousePos);
             GetCursorPos(&LastMousePos);
             ScreenToClient(GEngineLoop.AppWnd, &mousePos);
-
-            /*
-            uint32 UUID = FEngineLoop::GraphicDevice.GetPixelUUID(mousePos);
-            // TArray<UObject*> objectArr = GetWorld()->GetObjectArr();
-            for ( const USceneComponent* obj : TObjectRange<USceneComponent>())
-            {
-                if (obj->GetUUID() != UUID) continue;
-
-                UE_LOG(ELogLevel::Display, *obj->GetName());
-            }
-            */
-
+            
             FVector pickPosition;
 
             std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
             ScreenToViewSpace(mousePos.x, mousePos.y, ActiveViewport, pickPosition);
-            bool res = PickGizmo(pickPosition, ActiveViewport.get());
-            if (!res) PickActor(pickPosition);
-            if (res)
+            
+            bool CanPickGizmo = PickGizmo(pickPosition, ActiveViewport.get());
+            
+            if (!CanPickGizmo)
+            {
+                PickActor(pickPosition, bMultiSelected);
+            }
+            else
             {
                 UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
                 if (Engine->ActiveWorld->WorldType == EWorldType::SkeletalViewer)
-                if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(Engine->GetSelectedComponent()))
                 {
-                    UGizmoBaseComponent* Gizmo = Cast<UGizmoBaseComponent>(ActiveViewport->GetPickedGizmoComponent());
-                    int BoneIndex = Engine->SkeletalMeshViewerWorld->SelectBoneIndex;
-                    TArray<FMatrix> GlobalBoneMatrices;
-                    SkeletalMeshComp->GetCurrentGlobalBoneMatrices(GlobalBoneMatrices);
+                    if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(Engine->GetSelectedComponent()))
+                    {
+                        UGizmoBaseComponent* Gizmo = Cast<UGizmoBaseComponent>(ActiveViewport->GetPickedGizmoComponent());
+                        int BoneIndex = Engine->SkeletalMeshViewerWorld->SelectBoneIndex;
+                        TArray<FMatrix> GlobalBoneMatrices;
+                        SkeletalMeshComp->GetCurrentGlobalBoneMatrices(GlobalBoneMatrices);
 
-                    FTransform GlobalBoneTransform = FTransform(GlobalBoneMatrices[BoneIndex]);
-                    InitialBoneRotationForGizmo = GlobalBoneTransform.GetRotation();
+                        FTransform GlobalBoneTransform = FTransform(GlobalBoneMatrices[BoneIndex]);
+                        InitialBoneRotationForGizmo = GlobalBoneTransform.GetRotation();
+                    }
                 }
                 //bIsGizmoDragging = true;
                 //GizmoDrag_InitialLocalXAxis = InitialBoneRotationForGizmo.RotateVector(FVector::ForwardVector); // 또는 (1,0,0) 등 FBX 기준 축
                 //GizmoDrag_InitialLocalYAxis = InitialBoneRotationForGizmo.RotateVector(FVector::RightVector);
                 //GizmoDrag_InitialLocalZAxis = InitialBoneRotationForGizmo.RotateVector(FVector::UpVector);
             }
-            
         }
         else
         {
@@ -97,6 +93,7 @@ void AEditorPlayer::Input()
             bLeftMouseDown = false;
             std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
             ActiveViewport->SetPickedGizmoComponent(nullptr);
+            UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
         }
     }
 }
@@ -159,7 +156,7 @@ bool AEditorPlayer::PickGizmo(FVector& pickPosition, FEditorViewportClient* InAc
     return isPickedGizmo;
 }
 
-void AEditorPlayer::PickActor(const FVector& PickPosition)
+void AEditorPlayer::PickActor(const FVector& PickPosition, bool bMultiSelect) const
 {
     if (!(ShowFlags::GetInstance().CurrentFlags & EEngineShowFlags::SF_Primitives)) return;
 
@@ -198,16 +195,27 @@ void AEditorPlayer::PickActor(const FVector& PickPosition)
             }
         }
     }
+    
+    UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+    
     if (Possible)
     {
-        Cast<UEditorEngine>(GEngine)->SelectActor(Possible->GetOwner());
-        Cast<UEditorEngine>(GEngine)->SelectComponent(Possible);
+        if (Engine->GetSelectedActors().Contains(Possible->GetOwner()))
+        {
+            Engine->DeselectActor(Possible->GetOwner());
+        }
+        else
+        {
+            Engine->SelectActor(Possible->GetOwner(), bMultiSelect);
+        }
+
+        UE_LOG(ELogLevel::Display, "Selected Actor Count: %d", Engine->GetSelectedActors().Num());
     }
     else
     {
-        Cast<UEditorEngine>(GEngine)->DeselectActor(Cast<UEditorEngine>(GEngine)->GetSelectedActor());
-        Cast<UEditorEngine>(GEngine)->DeselectComponent(Cast<UEditorEngine>(GEngine)->GetSelectedComponent());
+        Engine->ClearSelectedActors();
     }
+
 }
 
 void AEditorPlayer::AddControlMode()
