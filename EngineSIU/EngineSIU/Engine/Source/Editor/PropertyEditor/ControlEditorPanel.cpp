@@ -39,6 +39,8 @@
 #include "Renderer/CompositingPass.h"
 #include <Engine/FbxLoader.h>
 #include "Engine/Classes/Engine/AssetManager.h"
+#include "Engine/Contents/Actors/ObjectViewCameraActor.h"
+#include "Engine/Contents/Actors/SideViewCameraActor.h"
 #include "Particles/ParticleSystemComponent.h"
 
 ControlEditorPanel::ControlEditorPanel()
@@ -371,6 +373,8 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             { .Label = "CapsuleCol",        .OBJ = OBJ_CAPSULE_COLLISION },
             { .Label = "SkeletalMeshActor", .OBJ = OBJ_SKELETALMESH },
             { .Label = "SequencerPlayer",   .OBJ = OBJ_SEQUENCERPLAYER },
+            { .Label = "SideViewCamera",   .OBJ = OBJ_SIDEVIEWCAMERA },
+            { .Label = "OBJECTVIEWCAMERACTOR",   .OBJ = OBJ_OBJECTVIEWCAMERACTOR },
         };
 
         for (const auto& primitive : primitives)
@@ -494,6 +498,16 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                 {
                     SpawnedActor = World->SpawnActor<ASequencerPlayer>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SEQUENCERPLAYER"));
+                }
+                case OBJ_SIDEVIEWCAMERA:
+                {
+                    SpawnedActor = World->SpawnActor<ASideViewCameraActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_SIDEVIEWCAMERA"));
+                }
+                case OBJ_OBJECTVIEWCAMERACTOR:
+                {
+                    SpawnedActor = World->SpawnActor<AObjectViewCameraActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_OBJECTVIEWCAMERACTOR"));
                 }
                 case OBJ_CAMERA:
                 case OBJ_PLAYER:

@@ -698,3 +698,23 @@ UObject* ASequencerPlayer::Duplicate(UObject* InOuter)
 
     return NewActor;
 }
+
+void ASequencerPlayer::BeginPlay()
+{
+    APlayer::BeginPlay();
+    if (CameraComponent == nullptr)
+    {
+        CameraComponent = GetComponentByClass<UCameraComponent>();
+    }
+
+    if (CameraComponent)
+    {
+        GEngine->ActiveWorld->GetPlayerController()->BindAction("X", 
+            [this](float DeltaTime)
+            {
+                FViewTargetTransitionParams TransitionParams;
+                TransitionParams.BlendTime = 1.f; // 0.5초 동안 부드럽게 전환
+                GEngine->ActiveWorld->GetPlayerController()->SetViewTarget(this, TransitionParams);
+            });
+    }
+}
