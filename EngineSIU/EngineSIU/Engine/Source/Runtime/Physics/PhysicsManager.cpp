@@ -52,9 +52,11 @@ void FPhysicsManager::InitPhysX()
     
     Physics = PxCreatePhysics(PX_PHYSICS_VERSION, *Foundation, PxTolerancesScale(), true, Pvd);
     
-    Material = Physics->createMaterial(0.5f, 0.7f, 0.1f);
+    Material = Physics->createMaterial(0.5f, 0.5f, 0.0f);
 
     PxInitExtensions(*Physics, Pvd);
+
+    Cooking = PxCreateCooking(PX_PHYSICS_VERSION, *Foundation, PxCookingParams(Physics->getTolerancesScale()));
 }
 
 PxScene* FPhysicsManager::CreateScene(UWorld* World)
@@ -75,13 +77,13 @@ PxScene* FPhysicsManager::CreateScene(UWorld* World)
     
     PxSceneDesc SceneDesc(Physics->getTolerancesScale());
     
-    SceneDesc.gravity = PxVec3(0, 0, -9.81f);
+    SceneDesc.gravity = PxVec3(0, 0, -20.f);
     
     unsigned int hc = std::thread::hardware_concurrency();
     Dispatcher = PxDefaultCpuDispatcherCreate(hc-2);
     SceneDesc.cpuDispatcher = Dispatcher;
     
-    SceneDesc.filterShader = PxDefaultSimulationFilterShader;
+    SceneDesc.filterShader = MySimulationFilterShader;
     
     // sceneDesc.simulationEventCallback = gMyCallback; // TODO: 이벤트 핸들러 등록(옵저버 or component 별 override)
     
@@ -755,4 +757,33 @@ void FPhysicsManager::CleanupScene()
         CurrentScene->release();
         CurrentScene = nullptr;
     }
+}
+
+PxFilterFlags MySimulationFilterShader(PxFilterObjectAttributes attributes0, PxFilterData filterData0, PxFilterObjectAttributes attributes1, PxFilterData filterData1, PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
+{
+    // 1) 기본 시뮬레이션 필터링
+    PxFilterFlags flags = PxDefaultSimulationFilterShader(
+        attributes0, filterData0,
+        attributes1, filterData1,
+        pairFlags, constantBlock, constantBlockSize);
+
+    // 2) 충돌 이벤트를 꼭 받아오도록 플래그 추가
+    pairFlags = PxPairFlag::eCONTACT_DEFAULT
+        | PxPairFlag::eNOTIFY_TOUCH_FOUND
+        | PxPairFlag::eNOTIFY_TOUCH_LOST
+        | PxPairFlag::eNOTIFY_CONTACT_POINTS
+        | PxPairFlag::eNOTIFY_TOUCH_PERSISTS
+        ;
+
+    bool bIsCarBodyWheel = ((filterData0.word0 == ECC_CarBody && filterData1.word0 == ECC_Wheel) ||
+        (filterData0.word0 == ECC_Wheel && filterData1.word0 == ECC_CarBody));
+    bool bIsCarHub = ((filterData0.word0 == ECC_CarBody && filterData1.word0 == ECC_Hub) ||
+        (filterData0.word0 == ECC_Hub && filterData1.word0 == ECC_CarBody));
+    bool bIsWheelHub = ((filterData0.word0 == ECC_Wheel && filterData1.word0 == ECC_Hub) ||
+        (filterData0.word0 == ECC_Hub && filterData1.word0 == ECC_Wheel));
+
+    if (bIsCarBodyWheel || bIsCarHub || bIsWheelHub)
+        return PxFilterFlag::eSUPPRESS;
+
+    return flags;
 }

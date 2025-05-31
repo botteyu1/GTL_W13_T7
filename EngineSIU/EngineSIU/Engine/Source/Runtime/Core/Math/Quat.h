@@ -1,4 +1,5 @@
 #pragma once
+#include <PxPhysicsAPI.h>
 #include "MathUtility.h"
 #include "Rotator.h"
 #include "Serialization/Archive.h"
@@ -153,6 +154,11 @@ public:
     FString ToString() const;
 
     bool IsIdentity() const;
+
+    physx::PxQuat ToPxQuat() const
+    {
+        return physx::PxQuat(X, Y, Z, W);
+    }
 };
 
 inline FArchive& operator<<(FArchive& Ar, FQuat& Q)

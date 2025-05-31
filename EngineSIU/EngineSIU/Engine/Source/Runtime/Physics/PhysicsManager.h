@@ -67,6 +67,8 @@ public:
 
     PxPhysics* GetPhysics() { return Physics; }
     PxMaterial* GetMaterial() const { return Material; }
+
+    PxCooking* GetCooking() { return Cooking; }
     
     void Simulate(float DeltaTime);
     void ShutdownPhysX();
@@ -82,6 +84,7 @@ private:
     PxScene* CurrentScene = nullptr;
     PxMaterial* Material = nullptr;
     PxDefaultCpuDispatcher* Dispatcher = nullptr;
+    PxCooking* Cooking = nullptr;
     // 디버깅용
     PxPvd* Pvd;
     PxPvdTransport* Transport;
@@ -96,3 +99,15 @@ private:
     void ApplyShapeCollisionSettings(PxShape* Shape, const FBodyInstance* BodyInstance) const;
 };
 
+enum ECollisionChannel
+{
+    ECC_CarBody = (1 << 0),
+    ECC_Wheel = (1 << 1),
+    ECC_Hub = (1 << 2),
+    // 필요 시 다른 채널…
+};
+
+PxFilterFlags MySimulationFilterShader(
+    PxFilterObjectAttributes attributes0, PxFilterData filterData0,
+    PxFilterObjectAttributes attributes1, PxFilterData filterData1,
+    PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize);
