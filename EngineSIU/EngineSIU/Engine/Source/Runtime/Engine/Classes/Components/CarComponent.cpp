@@ -11,7 +11,7 @@ UCarComponent::UCarComponent()
 UObject* UCarComponent::Duplicate(UObject* InOuter)
 {
     ThisClass* NewComponent = Cast<ThisClass>(Super::Duplicate(InOuter));
-    
+
     return NewComponent;
 }
 
@@ -68,15 +68,14 @@ void UCarComponent::CreatePhysXGameObject()
     if (!DefaultMaterial)
         DefaultMaterial = Physics->createMaterial(1.f, 0.9f, 0.f);
 
-    FVector CarScale = GetOwner()->GetActorScale();
     PxQuat CarRotation = GetOwner()->GetActorRotation().Quaternion().ToPxQuat();
 
-    //몸통
+    //몸통    
     CarBody = new GameObject();
 
     PxQuat BodyQuat = GetComponentRotation().Quaternion().ToPxQuat();
 
-    BodyExtent = (AABB.MaxLocation - AABB.MinLocation) * CarScale * 0.5f;
+    BodyExtent = (AABB.MaxLocation - AABB.MinLocation) * GetComponentScale3D() * 0.5f;
     BodyExtent.Z *= 0.5f;
     PxBoxGeometry CarBodyGeom(BodyExtent.ToPxVec3());
     CarBody->DynamicRigidBody = Physics->createRigidDynamic(PxTransform(GetComponentLocation().ToPxVec3(), BodyQuat));
@@ -87,13 +86,19 @@ void UCarComponent::CreatePhysXGameObject()
         CarBody->DynamicRigidBody->attachShape(*BodyShape);
         BodyShape->release();
         PxReal volume = 8 * BodyExtent.X * BodyExtent.Y * BodyExtent.Z;
-        PxReal density = 1200.0f / volume;
+        PxReal density = 600.0f / volume;
         PxRigidBodyExt::updateMassAndInertia(*CarBody->DynamicRigidBody, density);
+
+        //PxVec3 inertia = CarBody->DynamicRigidBody->getMassSpaceInertiaTensor();
+        //// 예시로 yaw축 관성만 50%로 줄이려면
+        //inertia.z *= 0.5f;
+        //CarBody->DynamicRigidBody->setMassSpaceInertiaTensor(inertia);
+
         CarBody->DynamicRigidBody->setLinearDamping(0.1f);
         CarBody->DynamicRigidBody->setAngularDamping(0.1f);
-        CarBody->DynamicRigidBody->setSolverIterationCounts(
-            /*minPositionIters=*/8,
-            /*minVelocityIters=*/4
+        CarBody->DynamicRigidBody->setSolverIterationCounts(  
+            /*minPositionIters=*/12,
+            /*minVelocityIters=*/6
         );
         Scene->addActor(*CarBody->DynamicRigidBody);
     }
@@ -103,11 +108,12 @@ void UCarComponent::CreatePhysXGameObject()
     for (int i = 0; i < 4; ++i)
     {
         FVector WheelPosition = WheelComp[i]->GetComponentLocation();
-        FQuat WheelQuat = WheelComp[i]->GetComponentRotation().Quaternion();
+        //FQuat WheelQuat = WheelComp[i]->GetComponentRotation().Quaternion();
+        FVector WheelScale = WheelComp[i]->GetComponentScale3D();
         Wheels[i] = new GameObject();
-        Wheels[i]->DynamicRigidBody = Physics->createRigidDynamic(PxTransform(WheelPosition.ToPxVec3(), WheelQuat.ToPxQuat()));
+        Wheels[i]->DynamicRigidBody = Physics->createRigidDynamic(PxTransform(WheelPosition.ToPxVec3()));
         //Wheels[i]->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
-        PxShape* WheelShape = CreateWheelShape(Physics, Cooking, CarScale, 32);
+        PxShape* WheelShape = CreateWheelShape(Physics, Cooking, WheelScale, 32);
         WheelShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Wheel, 0xFFFF, 0, 0));
         Wheels[i]->DynamicRigidBody->attachShape(*WheelShape);
         WheelShape->release();
@@ -143,12 +149,14 @@ void UCarComponent::CreatePhysXGameObject()
         PxShape* HubShape = Physics->createShape(PxBoxGeometry(HubSize[i]), *DefaultMaterial);
         HubShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Hub, 0xFFFF, 0, 0));
         Hub[i]->DynamicRigidBody->attachShape(*HubShape);
-        PxRigidBodyExt::updateMassAndInertia(*Hub[i]->DynamicRigidBody, 50.f);
+        PxReal HubVolume = 8 * HubSize[0].x * HubSize[0].y * HubSize[0].z;
+        PxReal HubMass = 50.f;
+        PxRigidBodyExt::updateMassAndInertia(*Hub[i]->DynamicRigidBody, HubMass/HubVolume);
         Hub[i]->DynamicRigidBody->setLinearDamping(0.05f);
         Hub[i]->DynamicRigidBody->setAngularDamping(0.05f);
         Hub[i]->DynamicRigidBody->setSolverIterationCounts(
-            /*minPositionIters=*/8,
-            /*minVelocityIters=*/4
+            /*minPositionIters=*/12,
+            /*minVelocityIters=*/6
         );
         Scene->addActor(*Hub[i]->DynamicRigidBody);
     }
@@ -211,6 +219,7 @@ void UCarComponent::CreatePhysXGameObject()
     SteeringJoint->setConstraintFlag(PxConstraintFlag::eCOLLISION_ENABLED, false);
     SteeringJoint->setLimit(PxJointAngularLimitPair(-MaxSteerAngle, +MaxSteerAngle));
     SteeringJoint->setRevoluteJointFlag(PxRevoluteJointFlag::eLIMIT_ENABLED, true);
+    SteeringJoint->setConstraintFlag(PxConstraintFlag::ePROJECTION, true);
     SteeringJoint->setConstraintFlag(physx::PxConstraintFlag::eVISUALIZATION, true);
 
     ////Body-Hub (Rear);
@@ -229,19 +238,20 @@ void UCarComponent::CreatePhysXGameObject()
 
 void UCarComponent::Spawn()
 {
-    FVector CarPos = GetOwner()->GetActorLocation();
-    FVector CarScale = GetOwner()->GetActorScale();
     SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/Car/Car_RemoveWheel.obj"));
-    SetWorldLocation(CarBodyPos + CarPos);
-    SetWorldScale3D(CarScale);
+    FMatrix CarMatrix = GetWorldMatrix();
+
     for (int i = 0; i < 4; ++i)
     {
+        FMatrix WheelLocalMatrix = FTransform(WheelPos[i]).ToMatrixWithScale();
+        //FMatrix WheelWorldMatrix = WheelLocalMatrix * CarMatrix;
         AActor* Owner = GetOwner();
         WheelComp[i] = GetOwner()->AddComponent<UStaticMeshComponent>();
         WheelComp[i]->SetupAttachment(GetOwner()->GetRootComponent());
         WheelComp[i]->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/Car/tire.obj"));
-        WheelComp[i]->SetWorldLocation(WheelPos[i] + CarPos);
-        WheelComp[i]->SetWorldScale3D(CarScale);
+        WheelComp[i]->SetRelativeTransform(FTransform(WheelPos[i] - FVector(0, 0, 1.5f)));
+        //WheelComp[i]->SetRelativeRotation(WheelWorldMatrix.GetMatrixWithoutScale().ToQuat());
+        //WheelComp[i]->SetWorldScale3D(WheelWorldMatrix.GetScaleVector());
     }
 }
 
@@ -282,7 +292,12 @@ void UCarComponent::MoveCar()
     }
     else
     {
-        Velocity = 0;
+        if (Velocity > 0)
+            Velocity -= 0.1f;
+        else if (Velocity < 0)
+            Velocity += 0.1f;
+        if (FMath::Abs(Velocity) < 0.1f)
+            Velocity = 0.f;
     }
 
     Velocity = FMath::Clamp(Velocity, -MaxVelocity, MaxVelocity);
@@ -295,20 +310,16 @@ void UCarComponent::MoveCar()
     //PxTransform TargetPose;
     if (GetAsyncKeyState('A') & 0x8000)
     {
-        //TargetPose = PxTransform(PxQuat(MaxSteerAngle, PxVec3(1, 0, 0)));
-        SteeringJoint->setDriveVelocity(DeltaSteerAngle);
+        SteeringJoint->setDriveVelocity(DeltaSteerAngle * 3.f);
     }
     else if (GetAsyncKeyState('D') & 0x8000)
     {
-        //TargetPose = PxTransform(PxQuat(-MaxSteerAngle, PxVec3(1, 0, 0)));
-        SteeringJoint->setDriveVelocity(-DeltaSteerAngle);
+        SteeringJoint->setDriveVelocity(-DeltaSteerAngle * 3.f);
     }
     else
     {
-        //TargetPose = PxTransform(PxQuat(0.0f, PxVec3(0, 0, 1)));
         SteeringJoint->setDriveVelocity(0.f);
     }
-    //SteeringJoint->setDrivePosition(TargetPose);
 }
 
 void UCarComponent::createWheelConvexData(float radius, float halfHeight, int segmentCount, const FVector& Scale, std::vector<PxVec3>& outPoints)

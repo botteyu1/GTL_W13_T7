@@ -40,9 +40,10 @@ private:
     PxRevoluteJoint* SteeringJoint = nullptr;
     float MaxSteerAngle = PxPi / 9.f;
     float DeltaSteerAngle = PxPi / 18.f;
-    float MaxDriveTorque = 100.0f;
+    float MaxDriveTorque = 1000.0f;
+    float Torque = 0.f;
     float Velocity = 0.f;
-    float MaxVelocity = 20.f;
+    float MaxVelocity = 50.f;
 
     UStaticMeshComponent* WheelComp[4] = { nullptr };
 
