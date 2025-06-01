@@ -81,6 +81,10 @@ public:
     template<typename T>
     void UpdateDynamicVertexBuffer(const FString& KeyName, const TArray<T>& Vertices) const;
 
+    HRESULT UpdateOrCreateDynamicVertexBuffer(
+    const FString& KeyName, const void* pVertexData, uint32_t Stride, uint32_t NumVertices, FVertexInfo& OutVertexInfo
+    );
+
     void BindConstantBuffers(const TArray<FString>& Keys, UINT StartSlot, EShaderStage Stage) const;
     void BindConstantBuffer(const FString& Key, UINT StartSlot, EShaderStage Stage) const;
     void BindStructuredBufferSRV(const FString& Key, UINT StartSlot, EShaderStage Stage) const;

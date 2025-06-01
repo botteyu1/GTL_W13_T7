@@ -35,6 +35,7 @@ public:
     virtual void UnPossess();
     
     virtual void BindAction(const FString& Key, const std::function<void(float)>& Callback);
+    virtual void BindMouseAction(const FString& Key, const std::function<void(FPointerEvent)>& Callback);
 
     AActor* GetPossessedActor() const { return PossessedActor; }
     

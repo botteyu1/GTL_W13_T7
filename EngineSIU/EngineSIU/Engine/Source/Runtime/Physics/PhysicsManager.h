@@ -47,7 +47,14 @@ public:
     void InitPhysX();
     
     PxScene* CreateScene(UWorld* World);
-    PxScene* GetScene(UWorld* World) { return SceneMap[World]; }
+    PxScene* GetScene(UWorld* World)
+    { 
+        if (SceneMap.Contains(World))
+            {
+                return SceneMap[World];
+            }
+            return nullptr;
+    }
     bool ConnectPVD();
     void RemoveScene(UWorld* World) { SceneMap.Remove(World); }
     void SetCurrentScene(UWorld* World) { CurrentScene = SceneMap[World]; }

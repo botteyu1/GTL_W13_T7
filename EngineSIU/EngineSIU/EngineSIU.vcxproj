@@ -205,6 +205,8 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Contents\Actors\ADestructibleWoodenBox.cpp" />
+    <ClCompile Include="Engine\Contents\Actors\CameraActor.cpp" />
+    <ClCompile Include="Engine\Contents\Actors\FreeCameraActor.cpp" />
     <ClCompile Include="Engine\Contents\Actors\ObjectViewCameraActor.cpp" />
     <ClCompile Include="Engine\Contents\Actors\PlayerCameraTest.cpp" />
     <ClCompile Include="Engine\Contents\Actors\SideViewCameraActor.cpp" />
@@ -396,6 +398,7 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     <ClCompile Include="Engine\Source\Runtime\Renderer\LineRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\ParticleMeshRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\ParticleSpriteRenderPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\PhysicsDebugRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\PostProcess\CameraEffectRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\PostProcess\DepthOfFieldRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\PostProcess\FogRenderPass.cpp" />
@@ -520,6 +523,8 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Contents\Actors\ADestructibleWoodenBox.h" />
+    <ClInclude Include="Engine\Contents\Actors\CameraActor.h" />
+    <ClInclude Include="Engine\Contents\Actors\FreeCameraActor.h" />
     <ClInclude Include="Engine\Contents\Actors\ObjectViewCameraActor.h" />
     <ClInclude Include="Engine\Contents\Actors\PlayerCameraTest.h" />
     <ClInclude Include="Engine\Contents\Actors\SideViewCameraActor.h" />
@@ -764,6 +769,7 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     <ClInclude Include="Engine\Source\Runtime\Renderer\LineRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\ParticleMeshRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\ParticleSpriteRenderPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\PhysicsDebugRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\PostProcess\CameraEffectRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\PostProcess\DepthOfFieldRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\PostProcess\FogRenderPass.h" />

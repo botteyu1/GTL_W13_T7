@@ -39,6 +39,7 @@
 #include "Renderer/CompositingPass.h"
 #include <Engine/FbxLoader.h>
 #include "Engine/Classes/Engine/AssetManager.h"
+#include "Engine/Contents/Actors/FreeCameraActor.h"
 #include "Engine/Contents/Actors/ObjectViewCameraActor.h"
 #include "Engine/Contents/Actors/SideViewCameraActor.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -196,7 +197,7 @@ void ControlEditorPanel::CreateMenuButton(const ImVec2 ButtonSize, ImFont* IconF
         if (FileName == nullptr)
         {
             tinyfd_messageBox("Error", "파일을 불러올 수 없습니다.", "ok", "error", 1);
-            ImGui::End();
+            //ImGui::End();
             return;
         }
         if (UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine))
@@ -393,6 +394,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             { .Label = "SideViewCamera",   .OBJ = OBJ_SIDEVIEWCAMERA },
             { .Label = "OBJECTVIEWCAMERACTOR",   .OBJ = OBJ_OBJECTVIEWCAMERACTOR },
             { .Label = "Car",   .OBJ = OBJ_CAR },
+            { .Label = "FreeCamera",   .OBJ = OBJ_FREECAMERA },
         };
 
         for (const auto& primitive : primitives)
@@ -534,6 +536,12 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     SpawnedActor = World->SpawnActor<ACarActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_CAR"));
                     Cast<UCarComponent>(SpawnedActor->GetRootComponent())->Spawn();
+                    break;
+                case OBJ_FREECAMERA:
+                {
+                    SpawnedActor = World->SpawnActor<AFreeCameraActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_FREECAMERA"));
+                }
                     break;
                 case OBJ_CAMERA:
                 case OBJ_PLAYER:
