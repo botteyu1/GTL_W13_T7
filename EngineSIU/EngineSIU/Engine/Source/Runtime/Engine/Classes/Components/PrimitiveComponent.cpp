@@ -548,8 +548,15 @@ void UPrimitiveComponent::CreatePhysXGameObject()
     {
         AggregateGeomAttributes DefaultAttribute;
         DefaultAttribute.GeomType = EGeomType::EBox;
-        DefaultAttribute.Offset = FVector(AABB.MaxLocation + AABB.MinLocation) / 2;
-        DefaultAttribute.Extent = FVector(AABB.MaxLocation - AABB.MinLocation) / 2 * GetComponentScale3D();
+        // 개선: Scale을 먼저 적용한 AABB로부터 다시 계산
+        FVector ScaledMin = AABB.MinLocation * GetComponentScale3D();
+        FVector ScaledMax = AABB.MaxLocation * GetComponentScale3D();
+
+        FVector BoxCenter = (ScaledMin + ScaledMax) * 0.5f;
+        FVector BoxExtent = (ScaledMax - ScaledMin) * 0.5f;
+
+        DefaultAttribute.Offset = BoxCenter;
+        DefaultAttribute.Extent = BoxExtent;
         GeomAttributes.Add(DefaultAttribute);
     }
 
