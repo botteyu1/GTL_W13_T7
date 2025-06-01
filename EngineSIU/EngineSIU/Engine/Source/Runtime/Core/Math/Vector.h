@@ -102,6 +102,7 @@ public:
 public:
     FVector() : X(0), Y(0), Z(0) {}
     FVector(float X, float Y, float Z) : X(X), Y(Y), Z(Z) {}
+    explicit FVector(const physx::PxVec3& Vec3) : X(Vec3.x), Y(Vec3.y), Z(Vec3.z) {}
     explicit FVector(float Scalar) : X(Scalar), Y(Scalar), Z(Scalar) {}
 
     explicit FVector(const FRotator& InRotator);
@@ -229,6 +230,7 @@ public:
     {
         return physx::PxVec3(X, Y, Z);
     }
+
 };
 
 inline FVector::FVector(const FRotator& InRotator)

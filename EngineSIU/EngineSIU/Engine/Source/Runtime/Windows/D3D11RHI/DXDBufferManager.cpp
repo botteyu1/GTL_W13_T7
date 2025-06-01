@@ -69,6 +69,92 @@ void FDXDBufferManager::ReleaseStructuredBuffer()
     StructuredBufferPool.Empty();
 }
 
+HRESULT FDXDBufferManager::UpdateOrCreateDynamicVertexBuffer(
+    const FString& KeyName, const void* pVertexData, uint32_t Stride, uint32_t NumVertices, FVertexInfo& OutVertexInfo
+)
+{
+    if (pVertexData == nullptr && NumVertices > 0)
+    {
+
+    }
+
+    uint32_t RequiredBufferSize = Stride * NumVertices;
+    bool bNeedsNewBuffer = true;
+
+    if (!KeyName.IsEmpty() && VertexBufferPool.Contains(KeyName))
+    {
+        OutVertexInfo = VertexBufferPool[KeyName];
+        if (OutVertexInfo.VertexBuffer && OutVertexInfo.Stride * OutVertexInfo.NumVertices >= RequiredBufferSize)
+        {
+            // 기존 버퍼가 존재하고 크기가 충분하면 재사용 (데이터만 업데이트)
+            bNeedsNewBuffer = false;
+        }
+        else
+        {
+            // 크기가 부족하거나 버퍼가 유효하지 않으면 기존 것 해제
+            if (OutVertexInfo.VertexBuffer)
+            {
+                OutVertexInfo.VertexBuffer->Release();
+                OutVertexInfo.VertexBuffer = nullptr;
+            }
+            VertexBufferPool.Remove(KeyName); // 풀에서 제거
+        }
+    }
+
+    if (bNeedsNewBuffer)
+    {
+        if (NumVertices == 0) // 0개의 정점으로 버퍼를 만들 필요는 없음
+        {
+            OutVertexInfo.VertexBuffer = nullptr;
+            OutVertexInfo.NumVertices = 0;
+            OutVertexInfo.Stride = 0;
+            if (!KeyName.IsEmpty()) VertexBufferPool.Remove(KeyName); // 키가 있었다면 제거
+            return S_OK; // 또는 오류
+        }
+
+        D3D11_BUFFER_DESC BufferDesc = {};
+        BufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+        BufferDesc.ByteWidth = RequiredBufferSize;
+        BufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+        BufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; // Map을 위해 필요
+
+        // 동적 버퍼 생성 시 초기 데이터는 보통 제공하지 않거나,
+        // pVertexData가 있다면 이를 사용할 수 있지만, Map/Unmap이 일반적입니다.
+        // 여기서는 초기 데이터 없이 생성하고, 아래에서 Map/Unmap으로 채웁니다.
+        HRESULT hr = DXDevice->CreateBuffer(&BufferDesc, nullptr, &OutVertexInfo.VertexBuffer);
+        if (FAILED(hr))
+        {
+            OutVertexInfo.VertexBuffer = nullptr; // 실패 시 nullptr로 설정
+            return hr;
+        }
+
+        OutVertexInfo.NumVertices = NumVertices;
+        OutVertexInfo.Stride = Stride;
+        if (!KeyName.IsEmpty())
+        {
+            VertexBufferPool.Add(KeyName, OutVertexInfo);
+        }
+    }
+
+    // 버퍼에 데이터 업데이트 (생성되었거나 재사용될 때 모두)
+    if (OutVertexInfo.VertexBuffer && pVertexData && NumVertices > 0)
+    {
+        D3D11_MAPPED_SUBRESOURCE MappedResource;
+        HRESULT hr = DXDeviceContext->Map(OutVertexInfo.VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+        if (SUCCEEDED(hr))
+        {
+            memcpy(MappedResource.pData, pVertexData, RequiredBufferSize);
+            DXDeviceContext->Unmap(OutVertexInfo.VertexBuffer, 0);
+        }
+        else
+        {
+            return hr; // Map 실패 시 오류 반환
+        }
+    }
+    // OutVertexInfo는 이미 최신 상태 (새로 생성되었거나 기존 것을 가져옴)
+    return S_OK;
+}
+
 void FDXDBufferManager::BindConstantBuffers(const TArray<FString>& Keys, UINT StartSlot, EShaderStage Stage) const
 {
     const int Count = Keys.Num();

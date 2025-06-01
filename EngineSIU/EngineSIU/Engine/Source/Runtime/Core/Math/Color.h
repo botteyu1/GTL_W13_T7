@@ -103,6 +103,14 @@ struct FLinearColor
     // FVector4 생성자와의 혼동을 피하기 위해 explicit으로 유지할 것.
     explicit FLinearColor(const FVector& InVector) : R(InVector.X), G(InVector.Y), B(InVector.Z), A(1.0f) {}
 
+    explicit FLinearColor(physx::PxU32 PxColor)  {
+        // PxDebug* 색상은 보통 ARGB 순서의 8비트 채널입니다.
+        A = static_cast<float>((PxColor >> 24) & 0xFF) / 255.0f;
+        R = static_cast<float>((PxColor >> 16) & 0xFF) / 255.0f;
+        G = static_cast<float>((PxColor >> 8) & 0xFF) / 255.0f;
+        B = static_cast<float>((PxColor) & 0xFF) / 255.0f;
+    }
+    
     // FVector + float combine constructor
     explicit FLinearColor(const FVector& InVector, float InAlpha) : R(InVector.X), G(InVector.Y), B(InVector.Z), A(InAlpha) {}
 
