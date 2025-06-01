@@ -106,6 +106,7 @@ public:
     virtual void InitializeFor(APlayerController* PC);
 
     AActor* GetViewTarget() const;
+    bool IsViewTargetActor(AActor* InActor) const;
     
     void UpdateCamera(float DeltaTime);
 

@@ -60,6 +60,8 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     ParticleSpriteRenderPass = AddRenderPass<FParticleSpriteRenderPass>();
     ParticleMeshRenderPass = AddRenderPass<FParticleMeshRenderPass>();
     
+    PhysicsDebugRenderPass = AddRenderPass<FPhysicsDebugRenderPass>();
+    
     DepthPrePass = AddRenderPass<FDepthPrePass>();
     TileLightCullingPass = AddRenderPass<FTileLightCullingPass>();
 
@@ -446,6 +448,14 @@ void FRenderer::RenderTranslucent(const std::shared_ptr<FEditorViewportClient>& 
 
 void FRenderer::RenderEditorOverlay(const std::shared_ptr<FEditorViewportClient>& Viewport) const
 {
+    const uint64 ShowFlag = Viewport->GetShowFlag();
+
+    if (ShowFlag & EEngineShowFlags::SF_PhysicsDebug)
+    {
+        QUICK_SCOPE_CYCLE_COUNTER(PhysicsDebugPass_CPU)
+        QUICK_GPU_SCOPE_CYCLE_COUNTER(PhysicsDebugPass_GPU, *GPUTimingManager)
+        PhysicsDebugRenderPass->Render(Viewport); 
+    }
     if (GEngine->ActiveWorld->WorldType != EWorldType::PIE)
     {
         {

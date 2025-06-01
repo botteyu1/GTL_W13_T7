@@ -20,6 +20,7 @@
 #include "SkeletalMesh.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 #include "Particles/ParticleSystem.h"
+#include <Components/CarComponent.h>
 
 extern FEngineLoop GEngineLoop;
 
@@ -30,6 +31,9 @@ namespace PrivateEditorSelection
 
     static USceneComponent* GComponentSelected = nullptr;
     static USceneComponent* GComponentHovered = nullptr;
+
+    static TArray<AActor*> GSelectedActors;
+    static TArray<USceneComponent*> GSelectedComponents;
 }
 
 void UEditorEngine::Init()
@@ -399,7 +403,7 @@ void UEditorEngine::StartParticleViewer(UParticleSystem* ParticleSystemAsset)
 
     // ParticleActor 강제 설정
     Cast<UEditorEngine>(GEngine)->SelectActor(ParticleActor);
-    Cast<UEditorEngine>(GEngine)->SelectComponent(ParticleSystemComponent);
+    // Cast<UEditorEngine>(GEngine)->SelectComponent(ParticleSystemComponent);
 
     FViewportCamera& Camera = *GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetPerspectiveCamera();
 
@@ -561,15 +565,27 @@ void UEditorEngine::BindEssentialObjects()
 
 void UEditorEngine::SetPhysXScene(UWorld* World)
 {
+    UE_LOG(ELogLevel::Warning, "Setting Physics scene...");
     PhysicsManager->CreateScene(PIEWorld);
     PhysicsManager->SetCurrentScene(PIEWorld);
 
     for (const auto& Actor : World->GetActiveLevel()->Actors)
     {
-        UPrimitiveComponent* Prim = Actor->GetComponentByClass<UPrimitiveComponent>();
-        if (Prim && Prim->bSimulate)
+        for (const auto& Comp : Actor->GetComponents())
         {
-            Prim->CreatePhysXGameObject();
+            if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Comp))
+            {
+                if (UCarComponent* Car = Cast<UCarComponent>(Prim))
+                {
+                    UE_LOG(ELogLevel::Warning, "Generate Car Physics...");
+                    Car->CreatePhysXGameObject();
+                }
+                else if (Prim && Prim->bSimulate)
+                {
+                    UE_LOG(ELogLevel::Warning, "Generate Primitive Physics...");
+                    Prim->CreatePhysXGameObject();
+                }
+            }
         }
     }
 }
@@ -696,29 +712,59 @@ FWorldContext* UEditorEngine::GetPIEWorldContext(/*int32 WorldPIEInstance*/)
     return nullptr;
 }
 
-void UEditorEngine::SelectActor(AActor* InActor)
+// void UEditorEngine::SelectActor(AActor* InActor)
+// {
+//     if (InActor && CanSelectActor(InActor))
+//     {
+//         UE_LOGFMT(ELogLevel::Display, "Select Actor: {}", InActor->GetName());
+//         PrivateEditorSelection::GActorSelected = InActor;
+//     }
+// }
+
+void UEditorEngine::SelectActor(AActor* InActor, bool bAdditional)
 {
-    if (InActor && CanSelectActor(InActor))
+    if (!InActor)
     {
-        UE_LOGFMT(ELogLevel::Display, "Select Actor: {}", InActor->GetName());
-        PrivateEditorSelection::GActorSelected = InActor;
+        return;
+    }
+
+    if (!bAdditional)
+    {
+        ClearSelectedActors();
+    }
+
+    if (!PrivateEditorSelection::GSelectedActors.Contains(InActor))
+    {
+        PrivateEditorSelection::GSelectedActors.Add(InActor);
     }
 }
 
-void UEditorEngine::DeselectActor(AActor* InActor)
+void UEditorEngine::DeselectActor(AActor* InActor) const
 {
-    if (PrivateEditorSelection::GActorSelected == InActor && InActor)
+    // if (PrivateEditorSelection::GActorSelected == InActor && InActor)
+    // {
+    //     UE_LOGFMT(ELogLevel::Display, "Deselect Actor: {}", InActor->GetName());
+    //     PrivateEditorSelection::GActorSelected = nullptr;
+    //     ClearComponentSelection();
+    // }
+
+    if (!InActor)
     {
-        UE_LOGFMT(ELogLevel::Display, "Deselect Actor: {}", InActor->GetName());
-        PrivateEditorSelection::GActorSelected = nullptr;
-        ClearComponentSelection();
+        return;
     }
+
+    PrivateEditorSelection::GSelectedActors.Remove(InActor);
 }
 
 void UEditorEngine::ClearActorSelection()
 {
     UE_LOGFMT(ELogLevel::Display, "Clear Actor Selection");
     PrivateEditorSelection::GActorSelected = nullptr;
+}
+
+void UEditorEngine::ClearSelectedActors()
+{
+    PrivateEditorSelection::GSelectedActors.Empty();
 }
 
 bool UEditorEngine::CanSelectActor(const AActor* InActor) const
@@ -728,7 +774,22 @@ bool UEditorEngine::CanSelectActor(const AActor* InActor) const
 
 AActor* UEditorEngine::GetSelectedActor() const
 {
-    return PrivateEditorSelection::GActorSelected;
+    // return PrivateEditorSelection::GActorSelected;
+    return GetPrimarySelectedActor();
+}
+
+TArray<AActor*> UEditorEngine::GetSelectedActors() const
+{
+    return PrivateEditorSelection::GSelectedActors;
+}
+
+AActor* UEditorEngine::GetPrimarySelectedActor() const
+{
+    if (PrivateEditorSelection::GSelectedActors.IsEmpty())
+    {
+        return nullptr;
+    }
+    return PrivateEditorSelection::GSelectedActors.Last();
 }
 
 void UEditorEngine::HoverActor(AActor* InActor)
@@ -782,7 +843,12 @@ bool UEditorEngine::CanSelectComponent(const USceneComponent* InComponent) const
 
 USceneComponent* UEditorEngine::GetSelectedComponent() const
 {
-    return PrivateEditorSelection::GComponentSelected;
+    if (PrivateEditorSelection::GSelectedActors.IsEmpty())
+    {
+        return nullptr;
+    }
+    
+    return dynamic_cast<USceneComponent*>(PrivateEditorSelection::GSelectedActors.Last()->GetRootComponent());
 }
 
 void UEditorEngine::HoverComponent(USceneComponent* InComponent)

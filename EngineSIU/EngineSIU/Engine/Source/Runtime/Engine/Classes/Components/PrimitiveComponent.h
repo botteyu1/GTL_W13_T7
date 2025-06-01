@@ -148,6 +148,8 @@ public:
     }
     
     FBoundingBox GetBoundingBox() const { return AABB; }
+
+    FBoundingBox GetWorldBoundingBox() const;
 };
 
 

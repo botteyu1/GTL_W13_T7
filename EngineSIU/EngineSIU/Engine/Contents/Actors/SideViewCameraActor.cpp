@@ -6,7 +6,7 @@
 
 void ASideViewCameraActor::PostSpawnInitialize()
 {
-    AActor::PostSpawnInitialize();
+    Super::PostSpawnInitialize();
 
     CameraComponent = AddComponent<UCameraComponent>("UCameraComponent_0");
     SetRootComponent(CameraComponent);
@@ -14,12 +14,12 @@ void ASideViewCameraActor::PostSpawnInitialize()
 
 UObject* ASideViewCameraActor::Duplicate(UObject* InOuter)
 {
-    return AActor::Duplicate(InOuter);
+    return Super::Duplicate(InOuter);
 }
 
 void ASideViewCameraActor::BeginPlay()
 {
-    AActor::BeginPlay();
+    Super::BeginPlay();
     if (CameraComponent == nullptr)
     {
         CameraComponent = GetComponentByClass<UCameraComponent>();
@@ -27,7 +27,7 @@ void ASideViewCameraActor::BeginPlay()
 
     if (CameraComponent)
     {
-        GEngine->ActiveWorld->GetPlayerController()->BindAction("Z", 
+        GEngine->ActiveWorld->GetPlayerController()->BindAction("Three", 
             [this](float DeltaTime)
             {
                 FViewTargetTransitionParams TransitionParams;
@@ -39,10 +39,10 @@ void ASideViewCameraActor::BeginPlay()
 
 void ASideViewCameraActor::Tick(float DeltaTime)
 {
-    AActor::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 }
 
 void ASideViewCameraActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    AActor::EndPlay(EndPlayReason);
+    Super::EndPlay(EndPlayReason);
 }

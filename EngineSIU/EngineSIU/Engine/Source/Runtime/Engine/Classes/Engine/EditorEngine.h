@@ -54,14 +54,18 @@ public:
     FWorldContext* GetPIEWorldContext(/*int32 WorldPIEInstance = 0*/);
 
 public:
-    void SelectActor(AActor* InActor);
+    // void SelectActor(AActor* InActor);
+    void SelectActor(AActor* InActor, bool bAdditional = false);
 
     // 전달된 액터가 선택된 컴포넌트와 같다면 해제 
-    void DeselectActor(AActor* InActor);
-    void ClearActorSelection(); 
+    void DeselectActor(AActor* InActor) const;
+    void ClearActorSelection();
+    void ClearSelectedActors();
     
     bool CanSelectActor(const AActor* InActor) const;
     AActor* GetSelectedActor() const;
+    TArray<AActor*> GetSelectedActors() const;
+    AActor* GetPrimarySelectedActor() const;
 
     void HoverActor(AActor* InActor);
     

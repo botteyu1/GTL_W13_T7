@@ -39,9 +39,11 @@
 #include "Renderer/CompositingPass.h"
 #include <Engine/FbxLoader.h>
 #include "Engine/Classes/Engine/AssetManager.h"
+#include "Engine/Contents/Actors/FreeCameraActor.h"
 #include "Engine/Contents/Actors/ObjectViewCameraActor.h"
 #include "Engine/Contents/Actors/SideViewCameraActor.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Actors/CarActor.h"
 
 ControlEditorPanel::ControlEditorPanel()
 {
@@ -195,7 +197,7 @@ void ControlEditorPanel::CreateMenuButton(const ImVec2 ButtonSize, ImFont* IconF
         if (FileName == nullptr)
         {
             tinyfd_messageBox("Error", "파일을 불러올 수 없습니다.", "ok", "error", 1);
-            ImGui::End();
+            //ImGui::End();
             return;
         }
         if (UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine))
@@ -335,6 +337,22 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             FEngineLoop::Renderer.CompositingPass->GammaValue = Gamma;
         }
 
+        ImGui::Separator();
+
+        bool* bMagnetic = &GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->bUseObjectMagnetic;
+        ImGui::Checkbox("Magnetic", bMagnetic);
+
+        bool* bGridMove = &GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->bUseGridMove;;
+        ImGui::Checkbox("Grid Movement", bGridMove);
+
+        ImGui::Text("Scale");
+        float MoveScale = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GridMovementScale;
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::DragFloat("##GridMove", &MoveScale, 0.01f, 0.1f, 100.0f, "%.1f"))
+        {
+            GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GridMovementScale = MoveScale;
+        }
+
         ImGui::EndPopup();
     }
 
@@ -375,6 +393,8 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             { .Label = "SequencerPlayer",   .OBJ = OBJ_SEQUENCERPLAYER },
             { .Label = "SideViewCamera",   .OBJ = OBJ_SIDEVIEWCAMERA },
             { .Label = "OBJECTVIEWCAMERACTOR",   .OBJ = OBJ_OBJECTVIEWCAMERACTOR },
+            { .Label = "Car",   .OBJ = OBJ_CAR },
+            { .Label = "FreeCamera",   .OBJ = OBJ_FREECAMERA },
         };
 
         for (const auto& primitive : primitives)
@@ -498,17 +518,31 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                 {
                     SpawnedActor = World->SpawnActor<ASequencerPlayer>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SEQUENCERPLAYER"));
+                    break;
                 }
                 case OBJ_SIDEVIEWCAMERA:
                 {
                     SpawnedActor = World->SpawnActor<ASideViewCameraActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SIDEVIEWCAMERA"));
+                    break;
                 }
                 case OBJ_OBJECTVIEWCAMERACTOR:
                 {
                     SpawnedActor = World->SpawnActor<AObjectViewCameraActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_OBJECTVIEWCAMERACTOR"));
+                    break;
                 }
+                case OBJ_CAR:
+                    SpawnedActor = World->SpawnActor<ACarActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_CAR"));
+                    Cast<UCarComponent>(SpawnedActor->GetRootComponent())->Spawn();
+                    break;
+                case OBJ_FREECAMERA:
+                {
+                    SpawnedActor = World->SpawnActor<AFreeCameraActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_FREECAMERA"));
+                }
+                    break;
                 case OBJ_CAMERA:
                 case OBJ_PLAYER:
                 case OBJ_END:
