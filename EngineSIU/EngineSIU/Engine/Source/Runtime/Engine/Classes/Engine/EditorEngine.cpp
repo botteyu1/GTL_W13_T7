@@ -363,6 +363,7 @@ void UEditorEngine::StartParticleViewer(UParticleSystem* ParticleSystemAsset)
 
     ClearActorSelection();
     ClearComponentSelection();
+    ClearSelectedActors();
     
     if (ParticleViewerWorld)
     {
@@ -427,6 +428,7 @@ void UEditorEngine::StartParticleViewer(UParticleSystem* ParticleSystemAsset)
 
     ClearActorSelection();
     ClearComponentSelection();
+    ClearSelectedActors();
 }
 
 void UEditorEngine::StartPhysicsAssetViewer(FName PreviewMeshKey, FName PhysicsAssetName)
@@ -643,6 +645,7 @@ void UEditorEngine::EndParticleViewer()
     if (ParticleViewerWorld)
     {
         this->ClearActorSelection();
+        this->ClearSelectedActors();
         WorldList.Remove(GetWorldContextFromWorld(ParticleViewerWorld));
         ParticleViewerWorld->Release();
         GUObjectArray.MarkRemoveObject(ParticleViewerWorld);
@@ -654,8 +657,10 @@ void UEditorEngine::EndParticleViewer()
         
         ClearActorSelection();
         ClearComponentSelection();
+        ClearSelectedActors();
     }
     ActiveWorld = EditorWorld;
+    
 
     if (AEditorPlayer* Player = GetEditorPlayer())
     {

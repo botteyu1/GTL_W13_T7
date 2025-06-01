@@ -497,6 +497,11 @@ void SLevelEditor::RegisterEditorInputDelegates()
                     // Gizmo control
                     if (UEditorEngine* EdEngine = Cast<UEditorEngine>(GEngine))
                     {
+                        if (EdEngine->GetEditorPlayer()->GetControlMode() != CM_TRANSLATION)
+                        {
+                            return;
+                        }
+                        
                         const TArray<AActor*> SelectedActors = EdEngine->GetSelectedActors();
                         if (SelectedActors.IsEmpty())
                         {
