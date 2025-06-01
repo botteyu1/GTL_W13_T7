@@ -30,6 +30,38 @@ void UInputComponent::ProcessInput(float DeltaTime)
     {
         KeyBindDelegate[FString("C")].Broadcast(DeltaTime);
     }
+    if (PressedKeys.Contains(EKeys::Q))
+    {
+        KeyBindDelegate[FString("Q")].Broadcast(DeltaTime);
+    }
+    if (PressedKeys.Contains(EKeys::E))
+    {
+        KeyBindDelegate[FString("E")].Broadcast(DeltaTime);
+    }
+    if (PressedKeys.Contains(EKeys::Y))
+    {
+        KeyBindDelegate[FString("Y")].Broadcast(DeltaTime);
+    }
+    if (PressedKeys.Contains(EKeys::One))
+    {
+        KeyBindDelegate[FString("One")].Broadcast(DeltaTime);
+    }
+    if (PressedKeys.Contains(EKeys::Two))
+    {
+        KeyBindDelegate[FString("Two")].Broadcast(DeltaTime);
+    }
+    if (PressedKeys.Contains(EKeys::Three))
+    {
+        KeyBindDelegate[FString("Three")].Broadcast(DeltaTime);
+    }
+    if (PressedKeys.Contains(EKeys::Four))
+    {
+        KeyBindDelegate[FString("Four")].Broadcast(DeltaTime);
+    }
+    if (PressedKeys.Contains(EKeys::Five))
+    {
+        KeyBindDelegate[FString("Five")].Broadcast(DeltaTime);
+    }
 }
 
 void UInputComponent::SetPossess()
@@ -52,6 +84,31 @@ void UInputComponent::BindInputDelegate()
     {
         InputKey(InKeyEvent);
     }));
+    BindMouseDelegateHandles.Add(Handler->OnRawMouseInputDelegate.AddLambda([this](const FPointerEvent& InMouseEvent)
+    {
+        // Mouse Move 이벤트 일때만 실행
+        if (
+            InMouseEvent.GetInputEvent() == IE_Axis
+            && InMouseEvent.GetEffectingButton() == EKeys::Invalid
+            )
+        {
+            // 에디터 카메라 이동 로직
+            if (
+                !InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton)
+                && InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton)
+                )
+            {
+                MouseBindDelegate[FString("MouseRightMove")].Broadcast(InMouseEvent);
+            }
+            else if (
+                !InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton)
+                && InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton)
+                )
+            {
+                MouseBindDelegate[FString("MouseLeftMove")].Broadcast(InMouseEvent);
+            }
+        }
+    }));
     
 }
 
@@ -73,9 +130,19 @@ void UInputComponent::ClearBindDelegate()
     {
         Handler->OnKeyUpDelegate.Remove(DelegateHandle);
     }
+    for (FDelegateHandle Handle : BindMouseDelegateHandles)
+    {
+        Handler->OnMouseDownDelegate.Remove(Handle);
+        Handler->OnMouseUpDelegate.Remove(Handle);
+        Handler->OnMouseDoubleClickDelegate.Remove(Handle);
+        Handler->OnMouseWheelDelegate.Remove(Handle);
+        Handler->OnMouseMoveDelegate.Remove(Handle);
+        Handler->OnRawMouseInputDelegate.Remove(Handle);
+    }
     
     BindKeyDownDelegateHandles.Empty();
     BindKeyUpDelegateHandles.Empty();
+    BindMouseDelegateHandles.Empty();
 }
 
 void UInputComponent::InputKey(const FKeyEvent& InKeyEvent)
@@ -179,6 +246,84 @@ void UInputComponent::InputKey(const FKeyEvent& InKeyEvent)
             }
             break;
         }
+    case 'Y':
+    {
+        if (InKeyEvent.GetInputEvent() == IE_Pressed)
+        {
+            PressedKeys.Add(EKeys::Y);
+        }
+        else if (InKeyEvent.GetInputEvent() == IE_Released)
+        {
+            PressedKeys.Remove(EKeys::Y);
+        }
+        break;
+    }
+    case 'E':
+    {
+        if (InKeyEvent.GetInputEvent() == IE_Pressed)
+        {
+            PressedKeys.Add(EKeys::E);
+        }
+        else if (InKeyEvent.GetInputEvent() == IE_Released)
+        {
+            PressedKeys.Remove(EKeys::E);
+        }
+        break;
+    }
+    case '1':
+    {
+        if (InKeyEvent.GetInputEvent() == IE_Pressed)
+        {
+            PressedKeys.Add(EKeys::One);
+        }
+        else if (InKeyEvent.GetInputEvent() == IE_Released)
+        {
+            PressedKeys.Remove(EKeys::One);
+        }
+        break;
+    }
+    case '2':
+    {
+        if (InKeyEvent.GetInputEvent() == IE_Pressed)
+        {
+            PressedKeys.Add(EKeys::Two);
+        }
+        else if (InKeyEvent.GetInputEvent() == IE_Released)
+        {
+            PressedKeys.Remove(EKeys::Two);
+        }
+        break;
+    }
+    case '3':
+        if (InKeyEvent.GetInputEvent() == IE_Pressed)
+        {
+            PressedKeys.Add(EKeys::Three);
+        }
+        else if (InKeyEvent.GetInputEvent() == IE_Released)
+        {
+            PressedKeys.Remove(EKeys::Three);
+        }
+        break;
+    case '4':
+        if (InKeyEvent.GetInputEvent() == IE_Pressed)
+        {
+            PressedKeys.Add(EKeys::Four);
+        }
+        else if (InKeyEvent.GetInputEvent() == IE_Released)
+        {
+            PressedKeys.Remove(EKeys::Four);
+        }
+        break;
+    case '5':
+        if (InKeyEvent.GetInputEvent() == IE_Pressed)
+        {
+            PressedKeys.Add(EKeys::Five);
+        }
+        else if (InKeyEvent.GetInputEvent() == IE_Released)
+        {
+            PressedKeys.Remove(EKeys::Five);
+        }
+        break;
     default:
         break;
     }
@@ -195,5 +340,18 @@ void UInputComponent::BindAction(const FString& Key, const std::function<void(fl
     KeyBindDelegate[Key].AddLambda([this, Callback](float DeltaTime)
     {
         Callback(DeltaTime);
+    });
+}
+
+void UInputComponent::BindMouseAction(const FString& Key, const std::function<void(const FPointerEvent&)>& Callback)
+{
+    if (Callback == nullptr)
+    {
+        return;
+    }
+    
+    MouseBindDelegate[Key].AddLambda([this, Callback](const FPointerEvent& InMouseEvent)
+    {
+        Callback(InMouseEvent);
     });
 }

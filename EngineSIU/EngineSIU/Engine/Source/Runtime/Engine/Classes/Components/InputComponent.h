@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOneFloatDelegate, const float&)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnePointerEventDelegate, const FPointerEvent&)
 
 class UInputComponent : public UActorComponent
 {
@@ -16,6 +17,8 @@ public:
     UInputComponent() = default;
     virtual ~UInputComponent() override = default;
     void BindAction(const FString& Key, const std::function<void(float)>& Callback);
+
+    void BindMouseAction(const FString& Key, const std::function<void(const FPointerEvent&)>& Callback);
 
     void ProcessInput(float DeltaTime);
     
@@ -28,8 +31,14 @@ public:
 
 private:
     TMap<FString, FOneFloatDelegate> KeyBindDelegate;
+    TMap<FString,FOnePointerEventDelegate> MouseBindDelegate;
+    
     TArray<FDelegateHandle> BindKeyDownDelegateHandles;
     TArray<FDelegateHandle> BindKeyUpDelegateHandles;
+    TArray<FDelegateHandle> BindMouseDelegateHandles;
+
 
     TSet<EKeys::Type> PressedKeys;
 };
+
+

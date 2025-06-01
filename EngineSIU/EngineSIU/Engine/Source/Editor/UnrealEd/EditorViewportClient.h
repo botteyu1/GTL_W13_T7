@@ -107,13 +107,14 @@ public:
      * @param OutWorldDir Direction Vector (World Space)
      */
     void DeprojectFVector2D(const FVector2D& ScreenPos, FVector& OutWorldOrigin, FVector& OutWorldDir) const;
+    
+    const float CameraSpeedMultiplier = 10.0f;
 
 protected:
     /** Camera speed setting */
     int32 CameraSpeedSetting = 1;
     /** Camera speed scalar */
     float CameraSpeed = 1.0f;
-    float CameraSpeedMultiplier = 10.0f;
     float GridSize;
 
     void GetViewInfo(FMinimalViewInfo& OutViewInfo) const;

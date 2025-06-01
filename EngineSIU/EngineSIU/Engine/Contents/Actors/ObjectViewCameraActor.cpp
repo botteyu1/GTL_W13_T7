@@ -5,17 +5,19 @@
 
 void AObjectViewCameraActor::PostSpawnInitialize()
 {
-    AActor::PostSpawnInitialize();
+    Super::PostSpawnInitialize();
+    CameraComponent = AddComponent<UCameraComponent>("UCameraComponent_0");
+    SetRootComponent(CameraComponent);
 }
 
 UObject* AObjectViewCameraActor::Duplicate(UObject* InOuter)
 {
-    return AActor::Duplicate(InOuter);
+    return Super::Duplicate(InOuter);
 }
 
 void AObjectViewCameraActor::BeginPlay()
 {
-    AActor::BeginPlay();
+    Super::BeginPlay();
     if (CameraComponent == nullptr)
     {
         CameraComponent = GetComponentByClass<UCameraComponent>();
@@ -23,11 +25,11 @@ void AObjectViewCameraActor::BeginPlay()
 
     if (CameraComponent)
     {
-        GEngine->ActiveWorld->GetPlayerController()->BindAction("C", 
+        GEngine->ActiveWorld->GetPlayerController()->BindAction("Four", 
             [this](float DeltaTime)
             {
                 FViewTargetTransitionParams TransitionParams;
-                TransitionParams.BlendTime = 1.f; // 0.5초 동안 부드럽게 전환
+                TransitionParams.BlendTime = 0.f; // 0.5초 동안 부드럽게 전환
                 GEngine->ActiveWorld->GetPlayerController()->SetViewTarget(this, TransitionParams);
             });
     }
@@ -35,10 +37,10 @@ void AObjectViewCameraActor::BeginPlay()
 
 void AObjectViewCameraActor::Tick(float DeltaTime)
 {
-    AActor::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 }
 
 void AObjectViewCameraActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    AActor::EndPlay(EndPlayReason);
+    Super::EndPlay(EndPlayReason);
 }

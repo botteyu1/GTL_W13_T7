@@ -16,6 +16,7 @@ void APlayerController::PostSpawnInitialize()
 
 void APlayerController::BeginPlay()
 {
+    
 }
 
 void APlayerController::Tick(float DeltaTime)
@@ -103,6 +104,15 @@ void APlayerController::BindAction(const FString& Key, const std::function<void(
         InputComponent->BindAction(Key, Callback);
     }
 }
+
+void APlayerController::BindMouseAction(const FString& Key, const std::function<void(FPointerEvent)>& Callback)
+{
+    if (InputComponent)
+    {
+        InputComponent->BindMouseAction(Key, Callback);
+    }
+}
+
 
 AActor* APlayerController::GetViewTarget() const
 {
