@@ -1,15 +1,14 @@
 #pragma once
-#include "CameraActor.h"
 #include "GameFramework/Actor.h"
 
 
-class AObjectViewCameraActor : public ACameraActor
+class ACameraActor : public AActor
 {
-    DECLARE_CLASS(AObjectViewCameraActor, ACameraActor)
+    DECLARE_CLASS(ACameraActor, AActor)
 
 public:
-    AObjectViewCameraActor() = default;
-    virtual ~AObjectViewCameraActor() override = default;
+    ACameraActor() = default;
+    virtual ~ACameraActor() override = default;
 
 public: 
     virtual void PostSpawnInitialize() override;
@@ -23,5 +22,11 @@ public:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 
-
+    class UCameraComponent* GetCameraComponent() const
+    {
+        return CameraComponent;
+    }
+    
+    UCameraComponent* CameraComponent = nullptr;
+    
 };

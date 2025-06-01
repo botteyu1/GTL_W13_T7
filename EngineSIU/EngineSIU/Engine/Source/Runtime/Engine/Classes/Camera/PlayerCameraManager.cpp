@@ -95,6 +95,15 @@ AActor* APlayerCameraManager::GetViewTarget() const
     return ViewTarget.Target;
 }
 
+bool APlayerCameraManager::IsViewTargetActor(AActor* InActor) const
+{
+    if (ViewTarget.Target == InActor or PendingViewTarget.Target ==  InActor)
+    {
+        return true;
+    }
+    return false;
+}
+
 void APlayerCameraManager::UpdateCamera(float DeltaTime)
 {
     if (PCOwner)

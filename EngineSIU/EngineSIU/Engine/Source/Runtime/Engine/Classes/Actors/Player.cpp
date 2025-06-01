@@ -709,7 +709,7 @@ void ASequencerPlayer::BeginPlay()
 
     if (CameraComponent)
     {
-        GEngine->ActiveWorld->GetPlayerController()->BindAction("X", 
+        GEngine->ActiveWorld->GetPlayerController()->BindAction("Two", 
             [this](float DeltaTime)
             {
                 FViewTargetTransitionParams TransitionParams;
