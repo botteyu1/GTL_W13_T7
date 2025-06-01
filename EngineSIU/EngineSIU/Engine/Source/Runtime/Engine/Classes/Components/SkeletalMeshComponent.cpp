@@ -171,33 +171,37 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     if (bSimulate)
     {
         const FReferenceSkeleton& RefSkeleton = SkeletalMeshAsset->GetSkeleton()->GetReferenceSkeleton();
+        const FVector CompScale = GetComponentScale3D(); // ✅ 컴포넌트 스케일 보정 값
+
         TArray<FMatrix> BoneWorldMatrices;
         for (int32 i = 0; i < RefSkeleton.GetRawBoneNum(); ++i)
         {
             bool bFoundBodyInstance = false;
             for (FBodyInstance* BI : Bodies)
             {
-                 if (BI->BoneIndex == i)
-                 {
-                    // 바디 인스턴스가 있는 경우, 또는 첫번째 바디 인스턴스인 경우에는
-                    // 바디 인스턴스의 월드 매트릭스를 그대로 사용
-                     BI->BIGameObject->UpdateFromPhysics(GEngine->PhysicsManager->GetScene(GEngine->ActiveWorld));
-                     XMMATRIX DXMatrix = BI->BIGameObject->WorldMatrix;
-                     XMFLOAT4X4 dxMat;
-                     XMStoreFloat4x4(&dxMat, DXMatrix);
+                if (BI->BoneIndex == i)
+                {
+                    // 바디 인스턴스의 월드 매트릭스를 PhysX에서 가져오기
+                    BI->BIGameObject->UpdateFromPhysics(GEngine->PhysicsManager->GetScene(GEngine->ActiveWorld));
+                    XMMATRIX DXMatrix = BI->BIGameObject->WorldMatrix;
+                    XMFLOAT4X4 dxMat;
+                    XMStoreFloat4x4(&dxMat, DXMatrix);
 
-                     FMatrix WorldMatrix;
-                     for (int32 Row = 0; Row < 4; ++Row)
-                     {
-                         for (int32 Col = 0; Col < 4; ++Col)
-                         {
-                             WorldMatrix.M[Row][Col] = *(&dxMat._11 + Row * 4 + Col);
-                         }
-                     }
-                     BoneWorldMatrices.Add(WorldMatrix);
-                     bFoundBodyInstance = true;
-                     break;
-                 }
+                    FMatrix WorldMatrix;
+                    for (int32 Row = 0; Row < 4; ++Row)
+                    {
+                        for (int32 Col = 0; Col < 4; ++Col)
+                        {
+                            WorldMatrix.M[Row][Col] = *(&dxMat._11 + Row * 4 + Col);
+                        }
+                    }
+
+                    // ✅ 컴포넌트 스케일 보정 적용
+                    FMatrix ScaledMatrix = FMatrix::CreateScaleMatrix(CompScale) * WorldMatrix;
+                    BoneWorldMatrices.Add(ScaledMatrix);
+                    bFoundBodyInstance = true;
+                    break;
+                }
             }
 
             if (!bFoundBodyInstance)
@@ -212,12 +216,14 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
                 {
                     ParentWorldMatrix = BoneWorldMatrices[ParentIndex];
                 }
+
                 const FMatrix CurrentLocalMatrix = RefSkeleton.GetRawRefBonePose()[i].ToMatrixWithScale();
                 const FMatrix CurrentWorldMatrix = CurrentLocalMatrix * ParentWorldMatrix;
                 BoneWorldMatrices.Add(CurrentWorldMatrix);
             }
         }
 
+        // 본 로컬 포즈 재계산
         for (int32 i = 0; i < RefSkeleton.GetRawBoneNum(); ++i)
         {
             const int32 ParentIndex = RefSkeleton.GetParentIndex(i);
@@ -230,34 +236,14 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
             {
                 ParentMatrix = BoneWorldMatrices[ParentIndex];
             }
+
             const FMatrix CurrentWorldMatrix = BoneWorldMatrices[i];
             const FMatrix CurrentLocalMatrix = CurrentWorldMatrix * FMatrix::Inverse(ParentMatrix);
-            BonePoseContext.Pose[i] = FTransform(CurrentLocalMatrix);
+            FTransform LocalTransform = FTransform(CurrentLocalMatrix);
+
+            BonePoseContext.Pose[i] = LocalTransform;
         }
-        
-        //for (FBodyInstance* BI : Bodies)
-        //{
-        //    if (RigidBodyType != ERigidBodyType::STATIC)
-        //    {
-        //        BI->BIGameObject->UpdateFromPhysics(GEngine->PhysicsManager->GetScene(GEngine->ActiveWorld));
-        //        XMMATRIX DXMatrix = BI->BIGameObject->WorldMatrix;
-        //        XMFLOAT4X4 dxMat;
-        //        XMStoreFloat4x4(&dxMat, DXMatrix);
 
-        //        FMatrix WorldMatrix;
-        //        for (int32 Row = 0; Row < 4; ++Row)
-        //        {
-        //            for (int32 Col = 0; Col < 4; ++Col)
-        //            {
-        //                WorldMatrix.M[Row][Col] = *(&dxMat._11 + Row * 4 + Col);
-        //            }
-        //        }
-
-        //        BonePoseContext.Pose[BI->BoneIndex] = FTransform(WorldMatrix) * GetComponentTransform().Inverse();
-
-        //    }
-        //}
-        
         CPUSkinning();
     }
 }
@@ -564,16 +550,21 @@ void USkeletalMeshComponent::CreatePhysXGameObject()
     // BodyInstance 생성
     const auto& Skeleton = SkeletalMeshAsset->GetSkeleton()->GetReferenceSkeleton();
     TArray<UBodySetup*> BodySetups = SkeletalMeshAsset->GetPhysicsAsset()->BodySetups;
+    const FVector CompScale = GetComponentScale3D();
+
     for (int i = 0; i < BodySetups.Num(); i++)
     {
         FBodyInstance* NewBody = new FBodyInstance(this);
 
         for (const auto& GeomAttribute : BodySetups[i]->GeomAttributes)
         {
-            PxVec3 Offset = PxVec3(GeomAttribute.Offset.X, GeomAttribute.Offset.Y, GeomAttribute.Offset.Z);
+
+            FVector ScaledOffset = GeomAttribute.Offset * CompScale;
+            PxVec3 Offset = PxVec3(ScaledOffset.X, ScaledOffset.Y, ScaledOffset.Z);
             FQuat GeomQuat = GeomAttribute.Rotation.Quaternion();
             PxQuat GeomPQuat = PxQuat(GeomQuat.X, GeomQuat.Y, GeomQuat.Z, GeomQuat.W);
-            PxVec3 Extent = PxVec3(GeomAttribute.Extent.X, GeomAttribute.Extent.Y, GeomAttribute.Extent.Z);
+            FVector ScaledExtent = GeomAttribute.Extent * CompScale;
+            PxVec3 Extent = PxVec3(ScaledExtent.X, ScaledExtent.Y, ScaledExtent.Z);
 
             switch (GeomAttribute.GeomType)
             {
