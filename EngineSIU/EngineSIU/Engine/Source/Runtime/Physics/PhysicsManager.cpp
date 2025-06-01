@@ -685,15 +685,19 @@ PxShape* FPhysicsManager::CreateSphereShape(const PxVec3& Pos, const PxQuat& Qua
     return Result;
 }
 
-PxShape* FPhysicsManager::CreateCapsuleShape(const PxVec3& Pos, const PxQuat& Quat, float Radius, float HalfHeight) const
+PxShape* FPhysicsManager::CreateCapsuleShape(const PxVec3& Pos, const PxQuat& UnrealQuatZ, float Radius, float HalfHeight) const
 {
-    // Capsule 모양 생성
+    // 1. Unreal Z축 정렬 → PhysX Y축 정렬로 회전
+    PxQuat ToPhysXRot = PxQuat(PxPi / 2.0f, PxVec3(0,1, 0)); // -90도 y 회전
+    PxQuat PhysXQuat = ToPhysXRot * UnrealQuatZ;
+
+    // 2. Capsule 생성 (PhysX는 Y축 기준)
     PxShape* Result = Physics->createShape(PxCapsuleGeometry(Radius, HalfHeight), *Material);
-    
-    // 위치와 회전을 모두 적용한 Transform 생성
-    PxTransform LocalTransform(Pos, Quat);
+
+    // 3. 위치 및 방향 적용
+    PxTransform LocalTransform(Pos, PhysXQuat);
     Result->setLocalPose(LocalTransform);
-    
+
     return Result;
 }
 
