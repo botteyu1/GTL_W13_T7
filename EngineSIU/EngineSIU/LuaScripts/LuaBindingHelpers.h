@@ -1,4 +1,4 @@
-﻿
+
 #pragma once
 #include <sol/sol.hpp>
 #include "Runtime/Core/Math/Vector.h"
@@ -165,7 +165,8 @@ namespace LuaBindingHelpers
             [](const std::string& Key, const std::function<void(float)>& Callback)
             {
                 //FString 주면 됨
-                GEngine->ActiveWorld->GetPlayerController()->BindAction(FString(Key), Callback);
+                if (GEngine->ActiveWorld->GetPlayerController())
+                    GEngine->ActiveWorld->GetPlayerController()->BindAction(FString(Key), Callback);
             }
         );
     }

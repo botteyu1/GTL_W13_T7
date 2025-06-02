@@ -35,7 +35,7 @@ public:
     void SetScriptPath(const FString& InScriptPath);
 
     FString GetDisplayName() const { return DisplayName; }
-    void SetDisplayName(const FString& InDisplayName) { DisplayName = InDisplayName; }
+    void SetDisplayName(const FString& InDisplayName);
 
     void OnPressSpacebar()
     {

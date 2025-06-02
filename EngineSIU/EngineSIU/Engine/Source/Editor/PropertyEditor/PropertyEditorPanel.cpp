@@ -351,7 +351,7 @@ void PropertyEditorPanel::RenderForActor(AActor* SelectedActor, USceneComponent*
     
     FString BasePath = FString(L"LuaScripts\\");
     FString LuaDisplayPath;
-    
+
     if (SelectedActor->GetComponentByClass<ULuaScriptComponent>())
     {
         LuaDisplayPath = SelectedActor->GetComponentByClass<ULuaScriptComponent>()->GetDisplayName();
@@ -374,7 +374,7 @@ void PropertyEditorPanel::RenderForActor(AActor* SelectedActor, USceneComponent*
             ULuaScriptComponent* NewScript = SelectedActor->AddComponent<ULuaScriptComponent>();
             FString LuaFilePath = NewScript->GetScriptPath();
             std::filesystem::path FilePath = std::filesystem::path(GetData(LuaFilePath));
-            
+
             try
             {
                 std::filesystem::path Dir = FilePath.parent_path();
@@ -407,8 +407,12 @@ void PropertyEditorPanel::RenderForActor(AActor* SelectedActor, USceneComponent*
             LuaDisplayPath = NewScript->GetDisplayName();
         }
     }
-    ImGui::InputText("Script File", GetData(LuaDisplayPath), IM_ARRAYSIZE(*LuaDisplayPath),
-        ImGuiInputTextFlags_ReadOnly);
+    static char LuaScript[256];
+    strcpy_s(LuaScript, *LuaDisplayPath);
+    if (ImGui::InputText("Script File", LuaScript, sizeof(LuaScript)))
+    {
+        SelectedActor->GetComponentByClass<ULuaScriptComponent>()->SetDisplayName(LuaScript);
+    }
 
     if (ImGui::TreeNodeEx("Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
     {
