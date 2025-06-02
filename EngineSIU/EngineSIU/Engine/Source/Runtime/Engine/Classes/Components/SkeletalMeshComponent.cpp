@@ -179,10 +179,8 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     BoneWorldMatrices.SetNum(BoneNum);
 
     bool bPoseChanged = false;
-    const bool bIsFirstPhysicsFrame = (PrevPhysicsBoneWorldMatrices.Num() != BoneNum);
+    constexpr float PoseChangeThresholdSqr = 0.1f;
 
-    // 이전 프레임과 비교해 이 거리 이상 움직였을 경우 Pose 변경으로 간주
-    constexpr float PoseChangeThresholdSqr = 0.001f;
     for (int32 i = 0; i < BoneNum; ++i)
     {
         bool bFoundBody = false;
@@ -191,6 +189,7 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
             if (BI->BoneIndex == i)
             {
                 BI->BIGameObject->UpdateFromPhysics(GEngine->PhysicsManager->GetScene(GEngine->ActiveWorld));
+
                 XMFLOAT4X4 dxMat;
                 XMStoreFloat4x4(&dxMat, BI->BIGameObject->WorldMatrix);
 
@@ -201,28 +200,6 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
 
                 FMatrix ScaledMatrix = FMatrix::CreateScaleMatrix(CompScale) * WorldMatrix;
                 BoneWorldMatrices[i] = ScaledMatrix;
-
-                // 비교
-                if (!bIsFirstPhysicsFrame)
-                {
-                    FVector Prev = PrevPhysicsBoneWorldMatrices[i].GetOrigin();
-                    FVector Curr = ScaledMatrix.GetOrigin();
-
-                    if ((Prev - Curr).SizeSquared() > PoseChangeThresholdSqr)
-                    {
-                        bPoseChanged = true;
-                    }
-                }
-                else
-                {
-                    // 첫 프레임이면 무조건 Pose가 변경된 것으로 처리
-                    bPoseChanged = true;
-                }
-                /*
-                else
-                {
-                    bPoseChanged = true;
-                }*/
 
                 bFoundBody = true;
                 break;
@@ -241,12 +218,33 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
         }
     }
 
-    // 모든 Bone이 동일하면 return
-    /*if (!bPoseChanged)
-        return;*/
+    // 기준 프레임 저장
+    StableReferenceFrameCount++;
+    if (StableReferenceFrameCount == StableFrameThreshold)
+    {
+        StablePhysicsBoneWorldMatrices = BoneWorldMatrices;
+    }
+
+    // 비교 시작은 기준 프레임 저장 이후
+    if (StableReferenceFrameCount >= StableFrameThreshold && StablePhysicsBoneWorldMatrices.Num() == BoneNum)
+    {
+        for (int32 i = 0; i < BoneNum; ++i)
+        {
+            FVector Curr = BoneWorldMatrices[i].GetOrigin();
+            FVector Ref = StablePhysicsBoneWorldMatrices[i].GetOrigin();
+
+            if ((Curr - Ref).SizeSquared() > PoseChangeThresholdSqr)
+            {
+                bPoseChanged = true;
+                break;
+            }
+        }
+    }
+
     // ✅ 한번이라도 물리 Pose가 변하면 이후 애니메이션 비활성화
     if (bPoseChanged)
-    bDisableAnimAfterHit++;
+        bDisableAnimAfterHit++;
+
     if (bDisableAnimAfterHit > bDisableAnimAfterHitMax)
     {
         if (!bPostAnimDisabledGravityApplied)
@@ -255,8 +253,8 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
             bPostAnimDisabledGravityApplied = true;
         }
     }
-    //if (bDisableAnimAfterHit < bDisableAnimAfterHitMax)return;
-    // 로컬 Pose 계산
+
+    // 애니메이션 비활성화 상태일 때에만 로컬 Pose 계산 적용
     for (int32 i = 0; i < BoneNum; ++i)
     {
         int32 ParentIndex = RefSkeleton.GetParentIndex(i);
@@ -266,13 +264,13 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
 
         FMatrix Local = BoneWorldMatrices[i] * FMatrix::Inverse(ParentMatrix);
         if (bDisableAnimAfterHit > bDisableAnimAfterHitMax)
-        BonePoseContext.Pose[i] = FTransform(Local);
+            BonePoseContext.Pose[i] = FTransform(Local);
     }
 
-    PrevPhysicsBoneWorldMatrices = BoneWorldMatrices;
 
     CPUSkinning();
 }
+
 
 void USkeletalMeshComponent::ApplyGravityToAllBodies()
 {
