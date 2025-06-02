@@ -140,6 +140,8 @@ void UInputComponent::ClearBindDelegate()
         Handler->OnRawMouseInputDelegate.Remove(Handle);
     }
     
+    KeyBindDelegate.Empty();
+    MouseBindDelegate.Empty();
     BindKeyDownDelegateHandles.Empty();
     BindKeyUpDelegateHandles.Empty();
     BindMouseDelegateHandles.Empty();

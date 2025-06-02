@@ -33,6 +33,22 @@ public:
 
     void ApplyForceToActors(float Angle, float Magnitude);
 
+    float GetVelocity() { return Velocity; }
+    void SetVelocity(float InVelocity) { Velocity = InVelocity; }
+
+    float GetFinalBoost() { return FinalBoost; }
+    void SetFinalBoost(float InBoost) { FinalBoost = InBoost; }
+
+    float GetSteerAngle() { return SteerAngle; }
+    void SetSteerAngle(float InAngle) { SteerAngle = InAngle; }
+
+    float GetSlopeAngle() {return FMath::DegreesToRadians(GetComponentRotation().Pitch); }
+    void SetSlopeAngle(float InAngle) { SlopeAngle = InAngle; }
+
+    bool IsBoosted() { return bBoosted; }
+    void SetBoosted(bool Value) { bBoosted = Value; }
+    void BoostCar();
+
 private:
     PxMaterial* DefaultMaterial = nullptr;
     GameObject* CarBody = nullptr;
@@ -41,7 +57,8 @@ private:
     PxRevoluteJoint* WheelJoints[4] = { nullptr }; //FR, FL, RR, RL
     PxRevoluteJoint* SteeringJoint = nullptr;
     float MaxSteerAngle = PxPi / 18.f;
-    float DeltaSteerAngle = PxPi / 18.f;
+    float DeltaSteerAngle = PxPi / 9.f;
+    float SteerAngle = 0.0f;
     float MaxDriveTorque = 1000.0f;
     float Velocity = 0.f;
     float MaxVelocity = 30.f;
