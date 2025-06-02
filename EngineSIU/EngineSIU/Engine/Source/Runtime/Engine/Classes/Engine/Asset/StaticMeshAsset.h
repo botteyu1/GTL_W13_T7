@@ -53,4 +53,24 @@ struct FStaticMeshRenderData
 
         ObjectName = ObjectNameStr.ToWideString();
     }
+
+    void ComputeBoundingBox()
+    {
+        FVector MinVector = { FLT_MAX, FLT_MAX, FLT_MAX };
+        FVector MaxVector = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+
+        for (int32 Idx = 0; Idx < Vertices.Num(); Idx++)
+        {
+            MinVector.X = std::min(MinVector.X, Vertices[Idx].X);
+            MinVector.Y = std::min(MinVector.Y, Vertices[Idx].Y);
+            MinVector.Z = std::min(MinVector.Z, Vertices[Idx].Z);
+
+            MaxVector.X = std::max(MaxVector.X, Vertices[Idx].X);
+            MaxVector.Y = std::max(MaxVector.Y, Vertices[Idx].Y);
+            MaxVector.Z = std::max(MaxVector.Z, Vertices[Idx].Z);
+        }
+
+        BoundingBoxMin = MinVector;
+        BoundingBoxMax = MaxVector;
+    }
 };

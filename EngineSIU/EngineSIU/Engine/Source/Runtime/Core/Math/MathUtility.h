@@ -559,12 +559,67 @@ struct FMath
 
         return fmodf(X, Y);
     }
+    static std::mt19937& GetRandGenerator()
+    {
+        thread_local static std::mt19937 RandGenerator(std::random_device{}());
+        return RandGenerator;
+    }
 
     [[nodiscard]]static int RandHelper(int max)
     {
         static std::mt19937 rng(std::random_device{}());
         std::uniform_int_distribution<int> dist(0, max - 1);
         return dist(rng);
+    }
+
+    /** [Min, Max] 범위의 정수 난수를 반환합니다. (Max 포함) */
+    [[nodiscard]] static int RandHelperInclusive(int Min, int Max)
+    {
+        if (Min > Max)
+        {
+            return Min;
+        }
+        std::uniform_int_distribution<int> dist(Min, Max);
+        return dist(GetRandGenerator());
+    }
+
+    /** [Min, Max) 범위의 float 난수를 반환합니다. (Max는 포함되지 않음) */
+    [[nodiscard]] static float RandRange(float Min, float Max)
+    {
+        if (Min >= Max)
+        {
+            return Min; 
+        }
+        std::uniform_real_distribution<float> dist(Min, Max);
+        return dist(GetRandGenerator());
+    }
+
+    /** [Min, Max) 범위의 double 난수를 반환합니다. (Max는 포함되지 않음) */
+    [[nodiscard]] static double RandRange(double Min, double Max)
+    {
+        if (Min >= Max)
+        {
+            return Min; 
+        }
+        std::uniform_real_distribution<double> dist(Min, Max);
+        return dist(GetRandGenerator());
+    }
+
+    /** [Min, Max] 범위의 int32 난수를 반환합니다. (Max 포함) */
+    [[nodiscard]] static int32 RandRange(int32 Min, int32 Max)
+    {
+        return RandHelperInclusive(Min, Max);
+    }
+
+    /** [Min, Max] 범위의 int64 난수를 반환합니다. (Max 포함) */
+    [[nodiscard]] static int64 RandRange(int64 Min, int64 Max)
+    {
+        if (Min > Max)
+        {
+            return Min;
+        }
+        std::uniform_int_distribution<int64> dist(Min, Max);
+        return dist(GetRandGenerator());
     }
 
     [[nodiscard]] static float PerlinNoise1D(float x)

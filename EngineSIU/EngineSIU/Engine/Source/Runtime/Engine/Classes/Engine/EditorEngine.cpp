@@ -853,7 +853,7 @@ USceneComponent* UEditorEngine::GetSelectedComponent() const
         return nullptr;
     }
     
-    return dynamic_cast<USceneComponent*>(PrivateEditorSelection::GSelectedActors.Last()->GetRootComponent());
+    return PrivateEditorSelection::GComponentSelected;
 }
 
 void UEditorEngine::HoverComponent(USceneComponent* InComponent)

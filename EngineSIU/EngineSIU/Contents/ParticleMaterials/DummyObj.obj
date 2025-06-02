@@ -4,3 +4,7 @@ usemtl Smoke
 usemtl SpriteBase
 usemtl Explosion
 usemtl Flame
+usemtl Torchfire1
+usemtl Torchfire2
+usemtl Torchfire3
+usemtl Torchfire4

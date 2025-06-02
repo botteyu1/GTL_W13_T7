@@ -403,7 +403,7 @@ bool FParticleSpriteEmitterInstance::FillReplayData(FDynamicEmitterReplayDataBas
 
     NewReplayData->MaxDrawCount = CurrentLODLevel->RequiredModule->bUseMaxDrawCount == true ? CurrentLODLevel->RequiredModule->MaxDrawCount : -1;
     // NewReplayData->ScreenAlignment	= CurrentLODLevel->RequiredModule->ScreenAlignment;
-    // NewReplayData->bUseLocalSpace = CurrentLODLevel->RequiredModule->bUseLocalSpace;
+    NewReplayData->bUseLocalSpace = CurrentLODLevel->RequiredModule->bUseLocalSpace;
     // NewReplayData->EmitterRenderMode = SpriteTemplate->EmitterRenderMode;
     // NewReplayData->DynamicParameterDataOffset = DynamicParameterDataOffset;
     // NewReplayData->LightDataOffset = LightDataOffset;
