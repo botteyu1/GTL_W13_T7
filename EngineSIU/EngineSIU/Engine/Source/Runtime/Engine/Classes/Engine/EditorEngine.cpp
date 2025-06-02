@@ -261,6 +261,7 @@ void UEditorEngine::StartPIE()
     
     ClearActorSelection(); // Editor World 기준 Select Actor 해제
     ClearComponentSelection();
+    ClearSelectedActors();
     
     FSlateAppMessageHandler* Handler = GEngineLoop.GetAppMessageHandler();
 
@@ -273,12 +274,13 @@ void UEditorEngine::StartPIE()
 
     PIEWorldContext.SetCurrentWorld(PIEWorld);
     ActiveWorld = PIEWorld;
+    
+    PIEWorld->BeginPlay();
 
     SetPhysXScene(PIEWorld);
     
     BindEssentialObjects();
     
-    PIEWorld->BeginPlay();
     // 여기서 Actor들의 BeginPlay를 해줄지 안에서 해줄 지 고민.
     // WorldList.Add(GetWorldContextFromWorld(PIEWorld));
 }

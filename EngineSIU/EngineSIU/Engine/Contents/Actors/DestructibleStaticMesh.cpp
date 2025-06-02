@@ -1,4 +1,4 @@
-#include "DestructibleWoodenBox.h"
+#include "DestructibleStaticMesh"
 
 #include "PhysicsManager.h"
 #include "Components/BoxComponent.h"
@@ -7,7 +7,7 @@
 #include "Engine/FObjLoader.h"
 #include "World/World.h"
 
-ADestructibleWoodenBox::ADestructibleWoodenBox()
+ADestructibleStaticMesh::ADestructibleStaticMesh()
 {
 
     IntactMeshComponent = AddComponent<UStaticMeshComponent>(TEXT("IntactMesh"));
@@ -25,33 +25,40 @@ ADestructibleWoodenBox::ADestructibleWoodenBox()
     // UBoxComponent를 사용한다고 가정
     PhysicsColliderComponent = AddComponent<UBoxComponent>(TEXT("PhysicsCollider"));
     PhysicsColliderComponent->bSimulate = true;
+    PhysicsColliderComponent->bApplyGravity = true; // 중력 적용
     PhysicsColliderComponent->RigidBodyType = ERigidBodyType::DYNAMIC; // 동적 리지드바디
-    PhysicsColliderComponent->AABB = IntactMeshComponent->GetBoundingBox(); // IntactMeshComponent의 AABB를 사용
     // PhysicsColliderComponent->SetNotifyRigidBodyCollision(true); // OnComponentHit을 받기 위해 필요
     // // 기타 필요한 설정: 크기, 상대 위치 등
 
     IntactMeshComponent->SetupAttachment(PhysicsColliderComponent); 
     RootComponent = PhysicsColliderComponent;
     
-    LoadFragmentMeshesByNamePattern(TEXT("Contents/Box/box1_Fragment"), 1, 10); 
+    
 }
 
-void ADestructibleWoodenBox::BeginPlay()
+void ADestructibleStaticMesh::BeginPlay()
 {
     Super::BeginPlay();
     
     PhysicsColliderComponent = GetComponentByClass<UBoxComponent>();
     IntactMeshComponent = GetComponentByClass<UStaticMeshComponent>();
-    
 
-    if (PhysicsColliderComponent)
+    if (IntactMeshComponent)
     {
-        // OnComponentHit 델리게이트에 함수 바인딩
-        PhysicsColliderComponent->OnComponentHit.AddUObject(this, &ADestructibleWoodenBox::OnBoxHit);
+        FString MeshName = IntactMeshComponent->GetStaticMesh()->GetRenderData()->ObjectName;
+        LoadFragmentMeshesByNamePattern(MeshName + TEXT("_Fragment"), 1, 10);
+        if (PhysicsColliderComponent)
+        {
+            PhysicsColliderComponent->AABB = IntactMeshComponent->GetBoundingBox(); // IntactMeshComponent의 AABB를 사용
+            // OnComponentHit 델리게이트에 함수 바인딩
+            PhysicsColliderComponent->OnComponentHit.AddUObject(this, &ADestructibleStaticMesh::OnBoxHit);
+        }
     }
+
+
 }
 
-void ADestructibleWoodenBox::LoadFragmentMeshesByNamePattern(const FString& BaseName, int32 StartIndex, int32 MaxAttempts)
+void ADestructibleStaticMesh::LoadFragmentMeshesByNamePattern(const FString& BaseName, int32 StartIndex, int32 MaxAttempts)
 {
     FragmentMeshes.Empty(); // 함수 호출 시 기존 목록을 비웁니다.
 
@@ -88,7 +95,7 @@ void ADestructibleWoodenBox::LoadFragmentMeshesByNamePattern(const FString& Base
     }
 }
 
-void ADestructibleWoodenBox::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void ADestructibleStaticMesh::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
     if (bIsDestroyed) // 이미 파괴되었다면 무시
     {
@@ -100,11 +107,11 @@ void ADestructibleWoodenBox::OnBoxHit(UPrimitiveComponent* HitComponent, AActor*
 
     if (ImpulseMagnitude > MinImpactForceToDestroy)
     {
-        TriggerDestruction(Hit.ImpactPoint, NormalImpulse.GetSafeNormal());
+        TriggerDestruction(Hit.ImpactPoint, NormalImpulse.GetSafeNormal(), ImpulseMagnitude);
     }
 }
 
-void ADestructibleWoodenBox::TriggerDestruction(FVector HitLocation, FVector ImpulseDirection)
+void ADestructibleStaticMesh::TriggerDestruction(FVector HitLocation, FVector ImpulseDirection, float ImpulseMagnitude)
 {
     if (bIsDestroyed || !GEngine || !GEngine->PhysicsManager || !GEngine->ActiveWorld)
     {
@@ -136,13 +143,13 @@ void ADestructibleWoodenBox::TriggerDestruction(FVector HitLocation, FVector Imp
     UWorld* World = GetWorld(); // AActor::GetWorld() 사용
     if (!World)
     {
-        UE_LOG(ELogLevel::Error, TEXT("ADestructibleWoodenBox::TriggerDestruction: GetWorld() returned null. Cannot spawn fragments."));
+        UE_LOG(ELogLevel::Error, TEXT("ADestructibleStaticMesh::TriggerDestruction: GetWorld() returned null. Cannot spawn fragments."));
         return;
     }
 
     if (FragmentMeshes.IsEmpty())
     {
-        UE_LOG(ELogLevel::Warning, TEXT("ADestructibleWoodenBox::TriggerDestruction: FragmentMeshes array is empty. No fragments to spawn."));
+        UE_LOG(ELogLevel::Warning, TEXT("ADestructibleStaticMesh::TriggerDestruction: FragmentMeshes array is empty. No fragments to spawn."));
         // 이 경우, 그냥 상자를 Destroy() 할 수도 있습니다.
         // Destroy();
         return;
@@ -192,7 +199,7 @@ void ADestructibleWoodenBox::TriggerDestruction(FVector HitLocation, FVector Imp
         FVector BoxExtent = (ScaledMax - ScaledMin) * 0.5f;
         
         FragmentCollider->SetBoxExtent(BoxExtent);
-        FragmentCollider->SetRelativeLocation(FVector::ZeroVector); // 메시 중심에
+        FragmentCollider->SetRelativeLocation(OriginalBoxLocation); 
 
         // 파편 물리 속성 설정
         FragmentCollider->bSimulate = true;
@@ -216,19 +223,20 @@ void ADestructibleWoodenBox::TriggerDestruction(FVector HitLocation, FVector Imp
             PxRigidDynamic* PhysXBody = FragmentCollider->BodyInstance->BIGameObject->DynamicRigidBody;
 
             // 충격 지점에서 파편 위치로 향하는 방향 + 기본 충격 방향 혼합
-            FVector ScatterDirection = (FragMeshComp->GetComponentLocation() - HitLocation).GetSafeNormal();
-            if (ScatterDirection.IsNearlyZero() || FVector::DotProduct(ScatterDirection, ImpulseDirection) < 0.2f) // 너무 가깝거나 방향이 많이 다르면
-            {
-                ScatterDirection = ImpulseDirection; // 기본 충격 방향 사용
-            }
+            FVector Location = FragMeshComp->GetComponentLocation() + GeomAttr.Offset ;
+            FVector ScatterDirection = (Location - HitLocation).GetSafeNormal();
+            // if (ScatterDirection.IsNearlyZero() || FVector::DotProduct(ScatterDirection, ImpulseDirection) < 0.2f) // 너무 가깝거나 방향이 많이 다르면
+            // {
+            //     ScatterDirection = ImpulseDirection; // 기본 충격 방향 사용
+            // }
             // 약간의 랜덤성 추가
             ScatterDirection += FVector(FMath::RandRange(-0.7f, 0.7f), FMath::RandRange(-0.7f, 0.7f), FMath::RandRange(0.1f, 0.8f));
             ScatterDirection.Normalize();
             
-            float FragmentImpulseStrength = MinImpactForceToDestroy * FMath::RandRange(0.1f, 0.5f); // 원래 충격량의 일부 + 랜덤
-            PxVec3 PxForce = PxVec3(ScatterDirection.X, ScatterDirection.Y, ScatterDirection.Z) * FragmentImpulseStrength;
+            float FragmentImpulseStrength = ImpulseMagnitude * FMath::RandRange(0.1f, 0.5f) * StrengthMultiplier; // 원래 충격량의 일부 + 랜덤
+            PxVec3 PxForce = PxVec3(ScatterDirection.X, ScatterDirection.Y, ScatterDirection.Z) * FragmentImpulseStrength ;
             
-            // PhysXBody->addForce(PxForce, PxForceMode::eIMPULSE);
+            PhysXBody->addForce(PxForce, PxForceMode::eIMPULSE);
             PxRigidBodyExt::addForceAtPos(*PhysXBody, PxForce, PxVec3(HitLocation.X, HitLocation.Y, HitLocation.Z), PxForceMode::eIMPULSE);
 
 

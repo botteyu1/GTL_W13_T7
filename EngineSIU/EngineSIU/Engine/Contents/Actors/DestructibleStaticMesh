@@ -7,13 +7,13 @@ class UStaticMesh;
 class UPrimitiveComponent;
 class UStaticMeshComponent;
 
-class ADestructibleWoodenBox : public AActor
+class ADestructibleStaticMesh : public AActor
 {
-    DECLARE_CLASS(ADestructibleWoodenBox, AActor)
+    DECLARE_CLASS(ADestructibleStaticMesh, AActor)
 
 public:
-    ADestructibleWoodenBox();
-    virtual ~ADestructibleWoodenBox() override = default;
+    ADestructibleStaticMesh();
+    virtual ~ADestructibleStaticMesh() override = default;
 
     UStaticMeshComponent* IntactMeshComponent = nullptr;
 
@@ -26,11 +26,13 @@ public:
 
     float MinImpactForceToDestroy = 100.0f;
 
+    const float StrengthMultiplier = 3.0f;
+
     bool bIsDestroyed = false;
 
     void OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
-    void TriggerDestruction(FVector HitLocation, FVector ImpulseDirection);
+    void TriggerDestruction(FVector HitLocation, FVector ImpulseDirection, float ImpulseMagnitude);
     
 protected:
     virtual void BeginPlay() override;
