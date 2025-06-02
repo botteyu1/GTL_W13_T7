@@ -154,6 +154,10 @@ private:
     TArray<FConstraintInstance*> Constraints;
 
     void CPUSkinning(bool bForceUpdate = false);
+    private:
+        //한번 충돌한 후에 애니메이션을 비활성화
+        TArray<FMatrix> PrevPhysicsBoneWorldMatrices;
+        int bDisableAnimAfterHit = 0;
 
 public:
     TSubclassOf<UAnimInstance> AnimClass;

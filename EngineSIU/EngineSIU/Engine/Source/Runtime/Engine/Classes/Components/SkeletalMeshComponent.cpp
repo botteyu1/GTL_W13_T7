@@ -160,7 +160,8 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
 
-    if(!bSimulate)
+    //bool로 하면 맨 처음부터 애니메이션이 안돌아감
+    if (bDisableAnimAfterHit<3)
     {
         TickPose(DeltaTime);
     }
@@ -168,85 +169,94 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
 
 void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
 {
-    if (bSimulate)
+    if (!bSimulate)
+        return;
+
+    const FReferenceSkeleton& RefSkeleton = SkeletalMeshAsset->GetSkeleton()->GetReferenceSkeleton();
+    const int32 BoneNum = RefSkeleton.GetRawBoneNum();
+    const FVector CompScale = GetComponentScale3D();
+
+    TArray<FMatrix> BoneWorldMatrices;
+    BoneWorldMatrices.SetNum(BoneNum);
+
+    bool bPoseChanged = false;
+
+    for (int32 i = 0; i < BoneNum; ++i)
     {
-        const FReferenceSkeleton& RefSkeleton = SkeletalMeshAsset->GetSkeleton()->GetReferenceSkeleton();
-        const FVector CompScale = GetComponentScale3D(); // ✅ 컴포넌트 스케일 보정 값
-
-        TArray<FMatrix> BoneWorldMatrices;
-        for (int32 i = 0; i < RefSkeleton.GetRawBoneNum(); ++i)
+        bool bFoundBody = false;
+        for (FBodyInstance* BI : Bodies)
         {
-            bool bFoundBodyInstance = false;
-            for (FBodyInstance* BI : Bodies)
+            if (BI->BoneIndex == i)
             {
-                if (BI->BoneIndex == i)
-                {
-                    // 바디 인스턴스의 월드 매트릭스를 PhysX에서 가져오기
-                    BI->BIGameObject->UpdateFromPhysics(GEngine->PhysicsManager->GetScene(GEngine->ActiveWorld));
-                    XMMATRIX DXMatrix = BI->BIGameObject->WorldMatrix;
-                    XMFLOAT4X4 dxMat;
-                    XMStoreFloat4x4(&dxMat, DXMatrix);
+                BI->BIGameObject->UpdateFromPhysics(GEngine->PhysicsManager->GetScene(GEngine->ActiveWorld));
+                XMFLOAT4X4 dxMat;
+                XMStoreFloat4x4(&dxMat, BI->BIGameObject->WorldMatrix);
 
-                    FMatrix WorldMatrix;
-                    for (int32 Row = 0; Row < 4; ++Row)
+                FMatrix WorldMatrix;
+                for (int r = 0; r < 4; ++r)
+                    for (int c = 0; c < 4; ++c)
+                        WorldMatrix.M[r][c] = *(&dxMat._11 + r * 4 + c);
+
+                FMatrix ScaledMatrix = FMatrix::CreateScaleMatrix(CompScale) * WorldMatrix;
+                BoneWorldMatrices[i] = ScaledMatrix;
+
+                // 비교
+                if (PrevPhysicsBoneWorldMatrices.Num() == BoneNum)
+                {
+                    FVector Prev = PrevPhysicsBoneWorldMatrices[i].GetOrigin();
+                    FVector Curr = ScaledMatrix.GetOrigin();
+
+                    if ((Prev - Curr).SizeSquared() > KINDA_SMALL_NUMBER)
                     {
-                        for (int32 Col = 0; Col < 4; ++Col)
-                        {
-                            WorldMatrix.M[Row][Col] = *(&dxMat._11 + Row * 4 + Col);
-                        }
+                        bPoseChanged = true;
                     }
-
-                    // ✅ 컴포넌트 스케일 보정 적용
-                    FMatrix ScaledMatrix = FMatrix::CreateScaleMatrix(CompScale) * WorldMatrix;
-                    BoneWorldMatrices.Add(ScaledMatrix);
-                    bFoundBodyInstance = true;
-                    break;
-                }
-            }
-
-            if (!bFoundBodyInstance)
-            {
-                const int32 ParentIndex = RefSkeleton.GetParentIndex(i);
-                FMatrix ParentWorldMatrix = FMatrix::Identity;
-                if (ParentIndex == INDEX_NONE)
-                {
-                    ParentWorldMatrix = GetComponentTransform().ToMatrixWithScale();
                 }
                 else
                 {
-                    ParentWorldMatrix = BoneWorldMatrices[ParentIndex];
+                    bPoseChanged = true;
                 }
 
-                const FMatrix CurrentLocalMatrix = RefSkeleton.GetRawRefBonePose()[i].ToMatrixWithScale();
-                const FMatrix CurrentWorldMatrix = CurrentLocalMatrix * ParentWorldMatrix;
-                BoneWorldMatrices.Add(CurrentWorldMatrix);
+                bFoundBody = true;
+                break;
             }
         }
 
-        // 본 로컬 포즈 재계산
-        for (int32 i = 0; i < RefSkeleton.GetRawBoneNum(); ++i)
+        if (!bFoundBody)
         {
-            const int32 ParentIndex = RefSkeleton.GetParentIndex(i);
-            FMatrix ParentMatrix = FMatrix::Identity;
-            if (ParentIndex == INDEX_NONE)
-            {
-                ParentMatrix = GetComponentTransform().ToMatrixWithScale();
-            }
-            else
-            {
-                ParentMatrix = BoneWorldMatrices[ParentIndex];
-            }
+            int32 ParentIndex = RefSkeleton.GetParentIndex(i);
+            FMatrix ParentMatrix = (ParentIndex == INDEX_NONE)
+                ? GetComponentTransform().ToMatrixWithScale()
+                : BoneWorldMatrices[ParentIndex];
 
-            const FMatrix CurrentWorldMatrix = BoneWorldMatrices[i];
-            const FMatrix CurrentLocalMatrix = CurrentWorldMatrix * FMatrix::Inverse(ParentMatrix);
-            FTransform LocalTransform = FTransform(CurrentLocalMatrix);
-
-            BonePoseContext.Pose[i] = LocalTransform;
+            FMatrix Local = RefSkeleton.GetRawRefBonePose()[i].ToMatrixWithScale();
+            BoneWorldMatrices[i] = Local * ParentMatrix;
         }
-
-        CPUSkinning();
     }
+
+    // 모든 Bone이 동일하면 return
+    if (!bPoseChanged)
+        return;
+    // ✅ 한번이라도 물리 Pose가 변하면 이후 애니메이션 비활성화
+
+    bDisableAnimAfterHit++;
+
+    // 로컬 Pose 계산
+    for (int32 i = 0; i < BoneNum; ++i)
+    {
+        int32 ParentIndex = RefSkeleton.GetParentIndex(i);
+        FMatrix ParentMatrix = (ParentIndex == INDEX_NONE)
+            ? GetComponentTransform().ToMatrixWithScale()
+            : BoneWorldMatrices[ParentIndex];
+
+        FMatrix Local = BoneWorldMatrices[i] * FMatrix::Inverse(ParentMatrix);
+        BonePoseContext.Pose[i] = FTransform(Local);
+    }
+
+    PrevPhysicsBoneWorldMatrices = BoneWorldMatrices;
+
+    CPUSkinning();
 }
+
 
 void USkeletalMeshComponent::TickPose(float DeltaTime)
 {

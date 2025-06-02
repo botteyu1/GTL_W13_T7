@@ -17,7 +17,7 @@ UObject* UCarComponent::Duplicate(UObject* InOuter)
 
 void UCarComponent::TickComponent(float DeltaTime)
 {
-    MoveCar();
+    
 }
 
 void UCarComponent::EndPhysicsTickComponent(float DeltaTime)
@@ -278,68 +278,18 @@ void UCarComponent::SetProperties(const TMap<FString, FString>& InProperties)
 
 void UCarComponent::MoveCar()
 {
-    float CarLocX = GetComponentLocation().X;
-    float EndLoc = 100 * FMath::Cos(SlopeAngle) + 1.5f;
-    if (CarLocX > EndLoc && !bBoosted)
-    {
-        ApplyForceToActors(SlopeAngle, FinalBoost);
-        UE_LOG(ELogLevel::Display, "Boosted!: %f", FinalBoost);
-        UE_LOG(ELogLevel::Display, "Car Loc: %f\nEnd Loc: %f", CarLocX, EndLoc);
-        bBoosted = true;
-        return;
-    }
-
     if (!Wheels[0] || bBoosted)
         return;
-    if (GetAsyncKeyState('W') & 0x8000)
-    {
-        if (Velocity < 0)
-            Velocity = 0;
-        Velocity += 0.1f;
-        FinalBoost += 20.f * Velocity/MaxVelocity;
-        //Velocity = 20.f;
-    }
-    //else if (GetAsyncKeyState('S') & 0x8000)
-    //{
-    //    //if (Velocity > 0)
-    //    //    Velocity = 0;
-    //    //Velocity -= 0.1f;
-    //    FinalBoost -= 2.5f;
-    //    Velocity = -20.f;
-    //}
-    else
-    {
-        if (Velocity > 0)
-            Velocity -= 0.1f;
-        else if (Velocity < 0)
-            Velocity += 0.1f;
-        if (FMath::Abs(Velocity) < 0.1f)
-            Velocity = 0.f;
-        FinalBoost -= 5.f;
-    }
-    FinalBoost = FMath::Clamp(FinalBoost, 0.f, MaxBoost);
+
     if (!bBoosted && FinalBoost > 0.f)
         UE_LOG(ELogLevel::Display, "Boost: %f", FinalBoost);        
-
-    Velocity = FMath::Clamp(Velocity, 0.f, MaxVelocity);
 
     for (int i = 0; i < 4; ++i)
     {
         WheelJoints[i]->setDriveVelocity(Velocity);
     }
 
-    if (GetAsyncKeyState('A') & 0x8000)
-    {
-        SteeringJoint->setDriveVelocity(DeltaSteerAngle * 3.f);
-    }
-    else if (GetAsyncKeyState('D') & 0x8000)
-    {
-        SteeringJoint->setDriveVelocity(-DeltaSteerAngle * 3.f);
-    }
-    else
-    {
-        SteeringJoint->setDriveVelocity(0.f);
-    }
+    SteeringJoint->setDriveVelocity(SteerAngle);
 }
 
 void UCarComponent::createWheelConvexData(float radius, float halfHeight, int segmentCount, const FVector& Scale, std::vector<PxVec3>& outPoints)
@@ -420,4 +370,12 @@ void UCarComponent::ApplyForceToActors(float Angle, float Magnitude)
     for (int i = 0; i < 4; ++i)
         Wheels[i]->DynamicRigidBody->addForce(Direction * Magnitude, PxForceMode::eIMPULSE);
     Hub[0]->DynamicRigidBody->addForce(Direction * Magnitude, PxForceMode::eIMPULSE);
+}
+
+void UCarComponent::BoostCar()
+{
+    ApplyForceToActors(SlopeAngle, FinalBoost);
+    UE_LOG(ELogLevel::Display, "Boosted!: %f", FinalBoost);
+    bBoosted = true;
+    return;
 }

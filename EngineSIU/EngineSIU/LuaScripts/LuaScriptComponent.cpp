@@ -4,6 +4,7 @@
 #include "World/World.h"
 #include "Engine/EditorEngine.h"
 #include "Runtime/Engine/Classes/GameFramework/Actor.h"
+#include <Components/CarComponent.h>
 // #include "Engine/Engine.h"
 
 ULuaScriptComponent::ULuaScriptComponent()
@@ -94,6 +95,21 @@ void ULuaScriptComponent::SetScriptPath(const FString& InScriptPath)
     bScriptValid = false;
 }
 
+void ULuaScriptComponent::SetDisplayName(const FString& InDisplayName)
+{
+    DisplayName = InDisplayName;
+    FString BasePath = FString(L"LuaScripts\\");
+    ScriptPath = BasePath + InDisplayName;
+    try {
+        LuaState.script_file((*ScriptPath));
+    }
+    catch (const sol::error& err) {
+        return;
+    }
+    InitializeLuaState();
+}
+
+
 void ULuaScriptComponent::InitializeLuaState()
 {
     /*if (ScriptPath.IsEmpty()) {
@@ -151,6 +167,38 @@ void ULuaScriptComponent::BindEngineAPI()
     
     // 프로퍼티 바인딩
     LuaState["actor"] = GetOwner();
+
+    if (UCarComponent* Car = Cast<UCarComponent>(GetOwner()->GetRootComponent()))
+    {
+        auto CarType = LuaState.new_usertype<UCarComponent>("Car",
+            sol::constructors<>(),
+            "Velocity", sol::property(
+                &UCarComponent::GetVelocity,
+                &UCarComponent::SetVelocity
+            ),
+            "SteerAngle", sol::property(
+                &UCarComponent::GetSteerAngle,
+                &UCarComponent::SetSteerAngle
+            ),
+            "Boost", sol::property(
+                &UCarComponent::GetFinalBoost,
+                &UCarComponent::SetFinalBoost
+            ),
+            "SlopeAngle", sol::property(
+                &UCarComponent::GetSlopeAngle,
+                &UCarComponent::SetSlopeAngle
+            ),
+            "IsBoosted", sol::property(
+                &UCarComponent::IsBoosted,
+                &UCarComponent::SetBoosted
+            ),
+            "BoostCar", &UCarComponent::BoostCar,
+            "Move", &UCarComponent::MoveCar
+        );
+
+        // 프로퍼티 바인딩
+        LuaState["Car"] = Car;
+    }
 
     // [2] 바인딩 후, 새로 추가된 글로벌 키만 자동 로그
     LuaDebugHelper::LogNewBindings(LuaState, Before);
