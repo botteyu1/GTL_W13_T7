@@ -17,7 +17,10 @@ UObject* UCarComponent::Duplicate(UObject* InOuter)
 
 void UCarComponent::TickComponent(float DeltaTime)
 {
-    
+    //if (GetAsyncKeyState('R') & 0x8000)
+    //{
+    //    Restart();
+    //}
 }
 
 void UCarComponent::EndPhysicsTickComponent(float DeltaTime)
@@ -233,18 +236,13 @@ void UCarComponent::CreatePhysXGameObject()
     SteeringJoint->setConstraintFlag(PxConstraintFlag::ePROJECTION, true);
     SteeringJoint->setConstraintFlag(physx::PxConstraintFlag::eVISUALIZATION, true);
 
-    ////Body-Hub (Rear);
-    //PxTransform RearHubT = Hub[1]->DynamicRigidBody->getGlobalPose();
-    //PxTransform RearJointT(RearHubT.p);
-    //PxTransform BodyLocalR = CarBodyT.getInverse() * RearJointT;
-    //PxTransform RearHubLocal = RearHubT.getInverse() * RearJointT;
-    //PxFixedJoint* FixedJoint = PxFixedJointCreate(
-    //    *Physics,
-    //    CarBody->DynamicRigidBody, BodyLocalR,
-    //    Hub[1]->DynamicRigidBody, RearHubLocal
-    //);
-    //FixedJoint->setConstraintFlag(PxConstraintFlag::eCOLLISION_ENABLED, false);
-    //FixedJoint->setConstraintFlag(PxConstraintFlag::eVISUALIZATION, true);
+    //초기위치 저장
+    InitialBodyT = CarBodyT;
+    InitialHubT = Hub[0]->DynamicRigidBody->getGlobalPose();
+    for (int i = 0; i < 4; ++i)
+    {
+        InitialWheelT[i] = Wheels[i]->DynamicRigidBody->getGlobalPose();
+    }
 }
 
 void UCarComponent::Spawn()
@@ -390,4 +388,29 @@ float UCarComponent::GetCurSteerAngle()
     FRotator BodyRotation = Quat.Rotator();
     HubRotation = BodyRotation - HubRotation;
     return HubRotation.Yaw;
+}
+
+float UCarComponent::GetCurSpeed()
+{
+    PxVec3 CurSpeed = CarBody->DynamicRigidBody->getLinearVelocity();
+    return CurSpeed.magnitude();
+}
+
+void UCarComponent::Restart()
+{
+    CarBody->DynamicRigidBody->setGlobalPose(InitialBodyT);
+    Hub[0]->DynamicRigidBody->setGlobalPose(InitialHubT);
+    for (int i = 0; i < 4; ++i)
+    {
+        Wheels[i]->DynamicRigidBody->setGlobalPose(InitialWheelT[i]);
+    }
+    Velocity = 0; 
+    bBoosted = 0;
+
+    CarBody->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
+    for (int i = 0; i < 4; ++i)
+    {
+        Wheels[i]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
+    }
+    Hub[0]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE); 
 }

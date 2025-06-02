@@ -51,6 +51,10 @@ public:
 
     float GetCurSteerAngle();
 
+    float GetCurSpeed();
+
+    void Restart();
+
 private:
     PxMaterial* DefaultMaterial = nullptr;
     GameObject* CarBody = nullptr;
@@ -89,4 +93,8 @@ private:
         {-4.65f, 2.5f, 0.5f}, //RR
         {-4.65f, -2.5f, 0.5f}  //RL
     };
+
+    PxTransform InitialBodyT;
+    PxTransform InitialWheelT[4];
+    PxTransform InitialHubT;
 };

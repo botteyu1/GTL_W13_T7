@@ -1,6 +1,7 @@
 IsWPressed = false
 IsTurningR = false
 IsTurningL = false
+IsRPressed = false
 MaxVelocity = 50
 MaxBoost = 4000
 DeltaSteerAngle = math.pi / 6
@@ -22,6 +23,7 @@ function InitializeLua()
     controller("S", OnPressS)
     controller("A", OnPressA)
     controller("D", OnPressD)
+    controller("R", OnPressR)
 end
 
 function OnPressW(dt)
@@ -40,6 +42,11 @@ function OnPressD(dt)
     IsTurningR = true
 end
 
+function OnPressR(dt)
+    print("R Pressed")
+    IsRPressed = true
+end
+
 function Clamp(x, lower, upper)
     if x < lower then
         return lower
@@ -55,6 +62,12 @@ function Tick(dt)
     local CarLocX = actor.Location.X;
     if CarLocX > EndLoc and not Car.IsBoosted then
         Car:BoostCar()
+    end
+
+    if(Car.IsBoosted and Car:Speed() < 0.1) then
+        if IsRPressed then
+            Car:Restart()
+        end
     end
 
     local Velocity = Car.Velocity
@@ -109,7 +122,7 @@ function Tick(dt)
     IsWPressed = false
     IsTurningR = false
     IsTurningL = false
-    
+    IsRPressed = false
 end
 
 function BeginOverlap()

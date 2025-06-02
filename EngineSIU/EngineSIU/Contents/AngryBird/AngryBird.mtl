@@ -1,0 +1,22 @@
+# Blender 4.4.0 MTL File: 'None'
+# www.blender.org
+
+newmtl Material.001
+Ns 39.999996
+Ka 0.362319 0.362319 0.362319
+Ks 0.211594 0.211594 0.211594
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd Angry_Bird.png
+
+newmtl Ojos
+Ns 793.718994
+Ka 0.075955 0.075955 0.075955
+Ks 0.211594 0.211594 0.211594
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd Angry Bird.png
