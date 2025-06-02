@@ -44,7 +44,7 @@
 #include "Engine/Contents/Actors/SideViewCameraActor.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Actors/CarActor.h"
-#include "Engine/Contents/Actors/DestructibleWoodenBox.h"
+#include "Engine/Contents/Actors/DestructibleStaticMesh"
 
 ControlEditorPanel::ControlEditorPanel()
 {
@@ -396,7 +396,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             { .Label = "OBJECTVIEWCAMERACTOR",   .OBJ = OBJ_OBJECTVIEWCAMERACTOR },
             { .Label = "Car",   .OBJ = OBJ_CAR },
             { .Label = "FreeCamera",   .OBJ = OBJ_FREECAMERA },
-            { .Label = "WoodenBox",   .OBJ = OBJ_WOODENBOX },
+            { .Label = "DestructibleStaticMesh",   .OBJ = OBJ_DestructibleStaticMesh },
         };
 
         for (const auto& primitive : primitives)
@@ -545,10 +545,10 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     SpawnedActor->SetActorLabel(TEXT("OBJ_FREECAMERA"));
                 }
                     break;
-                case OBJ_WOODENBOX:
+                case OBJ_DestructibleStaticMesh:
                     {
-                        SpawnedActor = World->SpawnActor<ADestructibleWoodenBox>();
-                        SpawnedActor->SetActorLabel(TEXT("OBJ_WOODENBOX"));
+                        SpawnedActor = World->SpawnActor<ADestructibleStaticMesh>();
+                        SpawnedActor->SetActorLabel(TEXT("OBJ_DestructibleStaticMesh"));
                     }
                 case OBJ_CAMERA:
                 case OBJ_PLAYER:
