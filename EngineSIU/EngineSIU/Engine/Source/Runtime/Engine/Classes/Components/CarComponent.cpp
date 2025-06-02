@@ -113,7 +113,7 @@ void UCarComponent::CreatePhysXGameObject()
         Wheels[i] = new GameObject();
         Wheels[i]->DynamicRigidBody = Physics->createRigidDynamic(PxTransform(WheelPosition.ToPxVec3()));
         //Wheels[i]->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
-        PxShape* WheelShape = CreateWheelShape(Physics, Cooking, WheelScale, 32);
+        PxShape* WheelShape = CreateWheelShape(Physics, Cooking, WheelScale, 4096);
         WheelShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Wheel, 0xFFFF, 0, 0));
         Wheels[i]->DynamicRigidBody->attachShape(*WheelShape);
         WheelShape->release();
@@ -278,11 +278,11 @@ void UCarComponent::SetProperties(const TMap<FString, FString>& InProperties)
 
 void UCarComponent::MoveCar()
 {
-    if (!Wheels[0] || bBoosted)
+    if (!Wheels[0])
         return;
 
-    if (!bBoosted && FinalBoost > 0.f)
-        UE_LOG(ELogLevel::Display, "Boost: %f", FinalBoost);        
+    //if (!bBoosted && FinalBoost > 0.f)
+    //    UE_LOG(ELogLevel::Display, "Boost: %f", FinalBoost);        
 
     for (int i = 0; i < 4; ++i)
     {
@@ -378,4 +378,16 @@ void UCarComponent::BoostCar()
     UE_LOG(ELogLevel::Display, "Boosted!: %f", FinalBoost);
     bBoosted = true;
     return;
+}
+
+float UCarComponent::GetCurSteerAngle()
+{
+    PxQuat HubRot = Hub[0]->DynamicRigidBody->getGlobalPose().q;
+    FQuat Quat(HubRot.x, HubRot.y, HubRot.z, HubRot.w);
+    FRotator HubRotation = Quat.Rotator();
+    PxQuat BodyRot = CarBody->DynamicRigidBody->getGlobalPose().q;
+    Quat = FQuat(BodyRot.x, BodyRot.y, BodyRot.z, BodyRot.w);
+    FRotator BodyRotation = Quat.Rotator();
+    HubRotation = BodyRotation - HubRotation;
+    return HubRotation.Yaw;
 }
