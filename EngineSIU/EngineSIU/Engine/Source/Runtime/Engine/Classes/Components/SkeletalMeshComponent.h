@@ -160,6 +160,9 @@ private:
         int bDisableAnimAfterHit = 0;
 
 public:
+    UPROPERTY(EditAnywhere, FString, StateMachineFileName, = "LuaScripts/Animations/DefaultStateMachine.lua");
+
+public:
     TSubclassOf<UAnimInstance> AnimClass;
     
     UAnimInstance* AnimScriptInstance;
