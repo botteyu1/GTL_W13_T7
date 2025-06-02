@@ -3,7 +3,7 @@ IsTurningR = false
 IsTurningL = false
 MaxVelocity = 30
 MaxBoost = 4000
-DeltaSteerAngle = math.pi / 9
+DeltaSteerAngle = math.pi / 18
 
 function BeginPlay()
     SlopeAngle = Car.SlopeAngle
@@ -65,7 +65,7 @@ function Tick(dt)
         Velocity = 0
         end
         Velocity = Velocity + 0.1
-        Boost = Boost + 20 * Velocity/MaxVelocity
+        Boost = Boost + 10 * Velocity/MaxVelocity
     else
         if Velocity > 0 then
             Velocity = Velocity - 0.1
@@ -73,8 +73,8 @@ function Tick(dt)
         if math.abs(Velocity) < 0.1 then
             Velocity = 0
         end
-        if Car.IsBoosted then
-            Boost = Boost - 5
+        if not Car.IsBoosted then
+            Boost = Boost - 2.5
         end
     end
 
