@@ -514,6 +514,9 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     {
                         SpawnedActor = World->SpawnActor<ASkeletalMeshActor>();
                         SpawnedActor->SetActorTickInEditor(true);
+                        auto* MeshComp = SpawnedActor->AddComponent<USkeletalMeshComponent>();
+                        SpawnedActor->SetRootComponent(MeshComp);
+                        SpawnedActor->SetActorLabel(TEXT("OBJ_SKELETALMESH"));
                     }
                     break;
                 case OBJ_SEQUENCERPLAYER:
