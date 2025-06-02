@@ -644,7 +644,7 @@ void FEditorViewportClient::UpdateViewMatrix()
             break;
         }
     }
-    if (GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE&&false) //여기 false 있으면 꼭 수정!!!
+    if (GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE && false) //여기 false 있으면 꼭 수정!!!
     {
         if (Car)
         {

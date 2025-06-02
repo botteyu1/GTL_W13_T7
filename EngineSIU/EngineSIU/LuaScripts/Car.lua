@@ -28,6 +28,8 @@ end
 
 function OnPressW(dt)
     IsWPressed = true
+    print("W")
+    --
 end
 
 function OnPressS(dt)

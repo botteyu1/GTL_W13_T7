@@ -76,7 +76,7 @@ private:
 
     bool bHasBody = false;
 
-    FVector CarBodyPos = FVector(0, 0, 1.5f);
+    FVector CarBodyPos = FVector(0, 0, 0);
     FVector BodyExtent;
     float WheelRadius = 1.2f;
     float WheelWidth = 0.6f;
@@ -88,10 +88,10 @@ private:
 
     const FVector WheelPos[4] =
     {
-        {   4.f, 2.5f, 0.5f}, //FR
-        {   4.f, -2.5f, 0.5f}, //FL
-        {-4.65f, 2.5f, 0.5f}, //RR
-        {-4.65f, -2.5f, 0.5f}  //RL
+        { 0.35f,  0.4f,  0.1f}, //FR
+        { 0.35f, -0.4f,  0.1f}, //FL
+        {-0.35f,  0.45f, 0.15f}, //RR
+        {-0.35f, -0.45f, 0.15f}  //RL
     };
 
     PxTransform InitialBodyT;

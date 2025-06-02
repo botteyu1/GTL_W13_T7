@@ -79,9 +79,11 @@ void UCarComponent::CreatePhysXGameObject()
     PxQuat BodyQuat = GetComponentRotation().Quaternion().ToPxQuat();
 
     BodyExtent = (AABB.MaxLocation - AABB.MinLocation) * GetComponentScale3D() * 0.5f;
-    BodyExtent.Z *= 0.5f;
+    BodyExtent.Y *= 0.35f;
+    BodyExtent.Z *= 0.6f;
     PxBoxGeometry CarBodyGeom(BodyExtent.ToPxVec3());
-    CarBody->DynamicRigidBody = Physics->createRigidDynamic(PxTransform(GetComponentLocation().ToPxVec3(), BodyQuat));
+    BodyExtent.Z /= 0.6f;
+    CarBody->DynamicRigidBody = Physics->createRigidDynamic(PxTransform((GetComponentLocation() + FVector(0, 0, BodyExtent.Z)).ToPxVec3(), BodyQuat));
     //CarBody->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
     {
         PxShape* BodyShape = Physics->createShape(CarBodyGeom, *DefaultMaterial);
@@ -116,6 +118,9 @@ void UCarComponent::CreatePhysXGameObject()
         Wheels[i] = new GameObject();
         Wheels[i]->DynamicRigidBody = Physics->createRigidDynamic(PxTransform(WheelPosition.ToPxVec3()));
         //Wheels[i]->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
+        FVector WheelSize = (WheelComp[i]->AABB.MaxLocation - WheelComp[i]->AABB.MinLocation) * GetComponentScale3D() * 0.5f;
+        WheelRadius = WheelSize.X;
+        WheelHeight = WheelSize.Y;
         PxShape* WheelShape = CreateWheelShape(Physics, Cooking, WheelScale, 4096);
         WheelShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Wheel, 0xFFFF, 0, 0));
         Wheels[i]->DynamicRigidBody->attachShape(*WheelShape);
@@ -140,8 +145,8 @@ void UCarComponent::CreatePhysXGameObject()
     };
     PxVec3 HubSize[2] =
     {
-        PxVec3(0.2f, (WheelT[0].p.y - WheelT[1].p.y) * 0.5f, 0.2f),
-        PxVec3(0.2f, (WheelT[2].p.y - WheelT[3].p.y) * 0.5f, 0.2f)
+        PxVec3(0.02f, (WheelT[0].p.y - WheelT[1].p.y) * 0.5f, 0.02f),
+        PxVec3(0.02f, (WheelT[2].p.y - WheelT[3].p.y) * 0.5f, 0.02f)
     };
     for (int i = 0; i < 1; ++i)
     {
@@ -247,7 +252,8 @@ void UCarComponent::CreatePhysXGameObject()
 
 void UCarComponent::Spawn()
 {
-    SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/Car/Car_RemoveWheel.obj"));
+    //SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/Car/Car_RemoveWheel.obj"));
+    SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/MarioKart/MarioKartBody.obj"));
     FMatrix CarMatrix = GetWorldMatrix();
     SlopeAngle = FMath::DegreesToRadians(GetComponentRotation().Pitch);
     for (int i = 0; i < 4; ++i)
@@ -257,8 +263,11 @@ void UCarComponent::Spawn()
         AActor* Owner = GetOwner();
         WheelComp[i] = GetOwner()->AddComponent<UStaticMeshComponent>();
         WheelComp[i]->SetupAttachment(GetOwner()->GetRootComponent());
-        WheelComp[i]->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/Car/tire.obj"));
-        WheelComp[i]->SetRelativeTransform(FTransform(WheelPos[i] - FVector(0, 0, 1.5f)));
+        if(i<2)
+            WheelComp[i]->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/MarioKart/MarioKartFrontW.obj"));
+        else
+            WheelComp[i]->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/MarioKart/MarioKartRearW.obj"));
+        WheelComp[i]->SetRelativeTransform(FTransform(WheelPos[i]));
         //WheelComp[i]->SetRelativeRotation(WheelWorldMatrix.GetMatrixWithoutScale().ToQuat());
         //WheelComp[i]->SetWorldScale3D(WheelWorldMatrix.GetScaleVector());
     }
@@ -356,6 +365,9 @@ void UCarComponent::UpdateFromPhysics(GameObject* PhysicsActor, UStaticMeshCompo
     FVector Location = WorldMatrix.GetTranslationVector();
     FQuat Quat = WorldMatrix.GetMatrixWithoutScale().ToQuat();
     FVector Scale = WorldMatrix.GetScaleVector();
+
+    if (PhysicsActor == CarBody)
+        Location.Z -= BodyExtent.Z;
 
     ActualActor->SetWorldLocation(Location);
     ActualActor->SetWorldRotation(FRotator(Quat));
