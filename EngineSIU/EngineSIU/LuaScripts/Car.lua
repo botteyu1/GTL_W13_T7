@@ -1,9 +1,9 @@
 IsWPressed = false
 IsTurningR = false
 IsTurningL = false
-MaxVelocity = 30
+MaxVelocity = 50
 MaxBoost = 4000
-DeltaSteerAngle = math.pi / 18
+DeltaSteerAngle = math.pi / 6
 
 function BeginPlay()
     SlopeAngle = Car.SlopeAngle
@@ -62,7 +62,7 @@ function Tick(dt)
     local Boost = Car.Boost
     if IsWPressed then
         if Velocity < 0 then
-        Velocity = 0
+            Velocity = 0
         end
         Velocity = Velocity + 0.1
         Boost = Boost + 10 * Velocity/MaxVelocity
@@ -79,23 +79,37 @@ function Tick(dt)
     end
 
     if IsTurningL then
-        SteerAngle = SteerAngle + DeltaSteerAngle
+        SteerAngle = DeltaSteerAngle
     elseif IsTurningR then
-        SteerAngle = SteerAngle - DeltaSteerAngle
+        SteerAngle = -DeltaSteerAngle
     else
-        SteerAngle = 0
+        CurAngle = Car:CurSteerAngle()
+        if CurAngle > 0.1 then
+            SteerAngle = - DeltaSteerAngle
+        elseif CurAngle < -0.1 then
+            SteerAngle = DeltaSteerAngle
+        end
+        if math.abs(CurAngle)<0.01 then
+            SteerAngle = 0 
+        end
     end
     Velocity = Clamp(Velocity, 0, MaxVelocity)
     Boost = Clamp(Boost, 0, MaxBoost)
-    Car.Velocity = Velocity
-    Car.Boost = Boost
-    Car.SteerAngle = SteerAngle
+    
     if not Car.IsBoosted then
-        Car:Move()
+        Car.Velocity = Velocity
+        Car.SteerAngle = SteerAngle
+    else
+        Car.Velocity = 0
+        Car.SteerAngle = 0
     end
+    Car.Boost = Boost
+    
+    Car:Move()
     IsWPressed = false
     IsTurningR = false
     IsTurningL = false
+    
 end
 
 function BeginOverlap()

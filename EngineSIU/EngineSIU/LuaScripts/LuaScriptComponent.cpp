@@ -193,7 +193,8 @@ void ULuaScriptComponent::BindEngineAPI()
                 &UCarComponent::SetBoosted
             ),
             "BoostCar", &UCarComponent::BoostCar,
-            "Move", &UCarComponent::MoveCar
+            "Move", &UCarComponent::MoveCar,
+            "CurSteerAngle", &UCarComponent::GetCurSteerAngle 
         );
 
         // 프로퍼티 바인딩

@@ -1234,6 +1234,7 @@ UStaticMesh* FFbxLoader::CreateStaticMesh(FbxNode* MeshNode, int32 GlobalMeshIdx
     }
 
     CalculateTangents(RenderData->Vertices, RenderData->Indices);
+    RenderData->ComputeBoundingBox();
     
     UStaticMesh* StaticMesh = FObjectFactory::ConstructObject<UStaticMesh>(nullptr);
     StaticMesh->SetData(RenderData);

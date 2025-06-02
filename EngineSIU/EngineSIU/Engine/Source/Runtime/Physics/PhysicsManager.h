@@ -12,6 +12,7 @@
 #include "PhysicsEngine/PhysicsAsset.h"
 
 
+class FSimulationEventCallback;
 enum class ERigidBodyType : uint8;
 struct FBodyInstance;
 class UBodySetup;
@@ -59,8 +60,8 @@ public:
     void RemoveScene(UWorld* World) { SceneMap.Remove(World); }
     void SetCurrentScene(UWorld* World) { CurrentScene = SceneMap[World]; }
     void SetCurrentScene(PxScene* Scene) { CurrentScene = Scene; }
-    
-    void DestroyGameObject(GameObject* GameObject) const;
+
+    void MarkGameObjectForKill(GameObject* InGameObject);
     
     GameObject CreateBox(const PxVec3& Pos, const PxVec3& HalfExtents) const;
     GameObject* CreateGameObject(const PxVec3& Pos, const PxQuat& Rot, FBodyInstance* BodyInstance, UBodySetup* BodySetup, ERigidBodyType RigidBodyType =
@@ -96,6 +97,13 @@ private:
     PxPvd* Pvd;
     PxPvdTransport* Transport;
 
+    FSimulationEventCallback* SimEventCallback = nullptr;
+
+    
+    void DestroyGameObject(GameObject* GameObject) const;
+    void ProcessPendingKills(); // Simulate 후 또는 fetchResults 후에 호출
+    TMap< PxScene*, TArray<GameObject*>> PendingKillGameObjects; // 삭제 예정인 게임 오브젝트
+
     PxRigidDynamic* CreateDynamicRigidBody(const PxVec3& Pos, const PxQuat& Rot, FBodyInstance* BodyInstance, UBodySetup* BodySetups) const;
     PxRigidStatic* CreateStaticRigidBody(const PxVec3& Pos, const PxQuat& Rot, FBodyInstance* BodyInstance, UBodySetup* BodySetups) const;
     void AttachShapesToActor(PxRigidActor* Actor, UBodySetup* BodySetup) const;
@@ -104,6 +112,9 @@ private:
     void ApplyLockConstraints(PxRigidDynamic* DynamicBody, const FBodyInstance* BodyInstance) const;
     void ApplyCollisionSettings(const PxRigidActor* Actor, const FBodyInstance* BodyInstance) const;
     void ApplyShapeCollisionSettings(PxShape* Shape, const FBodyInstance* BodyInstance) const;
+
+    void EnableGravityForAllBodies(UWorld* World);
+
 };
 
 enum ECollisionChannel

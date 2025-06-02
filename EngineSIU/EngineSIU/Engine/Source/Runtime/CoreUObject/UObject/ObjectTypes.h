@@ -23,6 +23,7 @@ enum OBJECTS : uint8
     OBJ_SIDEVIEWCAMERA,
     OBJ_OBJECTVIEWCAMERACTOR,
     OBJ_FREECAMERA,
+    OBJ_DestructibleStaticMesh,
     OBJ_CAR,
     OBJ_END
 };

@@ -49,6 +49,8 @@ public:
     void SetBoosted(bool Value) { bBoosted = Value; }
     void BoostCar();
 
+    float GetCurSteerAngle();
+
 private:
     PxMaterial* DefaultMaterial = nullptr;
     GameObject* CarBody = nullptr;

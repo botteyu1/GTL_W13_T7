@@ -204,7 +204,7 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Engine\Contents\Actors\ADestructibleWoodenBox.cpp" />
+    <ClCompile Include="Engine\Contents\Actors\DestructibleStaticMesh.cpp" />
     <ClCompile Include="Engine\Contents\Actors\CameraActor.cpp" />
     <ClCompile Include="Engine\Contents\Actors\FreeCameraActor.cpp" />
     <ClCompile Include="Engine\Contents\Actors\ObjectViewCameraActor.cpp" />
@@ -396,6 +396,7 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     <ClCompile Include="Engine\Source\Runtime\Launch\Launch.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Physics\CollisionManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Physics\PhysicsManager.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Physics\SimulationEventCallback.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\BillboardRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\CompositingPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\DepthPrePass.cpp" />
@@ -530,7 +531,7 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Engine\Contents\Actors\ADestructibleWoodenBox.h" />
+    <ClInclude Include="Engine\Contents\Actors\DestructibleStaticMesh" />
     <ClInclude Include="Engine\Contents\Actors\CameraActor.h" />
     <ClInclude Include="Engine\Contents\Actors\FreeCameraActor.h" />
     <ClInclude Include="Engine\Contents\Actors\ObjectViewCameraActor.h" />
@@ -774,6 +775,7 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     <ClInclude Include="Engine\Source\Runtime\Launch\LightDefine.h" />
     <ClInclude Include="Engine\Source\Runtime\Physics\CollisionManager.h" />
     <ClInclude Include="Engine\Source\Runtime\Physics\PhysicsManager.h" />
+    <ClInclude Include="Engine\Source\Runtime\Physics\SimulationEventCallback.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\BillboardRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\CompositingPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\DepthPrePass.h" />

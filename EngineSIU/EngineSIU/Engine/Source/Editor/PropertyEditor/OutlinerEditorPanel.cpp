@@ -66,7 +66,7 @@ void OutlinerEditorPanel::Render()
             if (ImGui::IsItemClicked())
             {
                 Engine->SelectActor(InComp->GetOwner());
-                // Engine->SelectComponent(InComp);
+                Engine->SelectComponent(InComp);
             }
 
             if (NodeOpen)
@@ -90,7 +90,7 @@ void OutlinerEditorPanel::Render()
         if (ImGui::IsItemClicked())
         {
             Engine->SelectActor(Actor);
-            // Engine->DeselectComponent(Engine->GetSelectedComponent());
+            Engine->DeselectComponent(Engine->GetSelectedComponent());
         }
 
         if (NodeOpen)
