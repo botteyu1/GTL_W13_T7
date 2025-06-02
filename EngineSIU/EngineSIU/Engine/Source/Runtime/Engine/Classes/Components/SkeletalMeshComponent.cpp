@@ -161,7 +161,7 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
     Super::TickComponent(DeltaTime);
 
     //bool로 하면 맨 처음부터 애니메이션이 안돌아감
-    if (bDisableAnimAfterHit<3)
+    if (bDisableAnimAfterHit<bDisableAnimAfterHitMax)
     {
         TickPose(DeltaTime);
     }
@@ -175,12 +175,12 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     const FReferenceSkeleton& RefSkeleton = SkeletalMeshAsset->GetSkeleton()->GetReferenceSkeleton();
     const int32 BoneNum = RefSkeleton.GetRawBoneNum();
     const FVector CompScale = GetComponentScale3D();
-
     TArray<FMatrix> BoneWorldMatrices;
     BoneWorldMatrices.SetNum(BoneNum);
 
     bool bPoseChanged = false;
-
+    // 이전 프레임과 비교해 이 거리 이상 움직였을 경우 Pose 변경으로 간주
+    constexpr float PoseChangeThresholdSqr = 0.1f;
     for (int32 i = 0; i < BoneNum; ++i)
     {
         bool bFoundBody = false;
@@ -206,7 +206,7 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
                     FVector Prev = PrevPhysicsBoneWorldMatrices[i].GetOrigin();
                     FVector Curr = ScaledMatrix.GetOrigin();
 
-                    if ((Prev - Curr).SizeSquared() > KINDA_SMALL_NUMBER)
+                    if ((Prev - Curr).SizeSquared() > PoseChangeThresholdSqr)
                     {
                         bPoseChanged = true;
                     }
@@ -234,12 +234,12 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     }
 
     // 모든 Bone이 동일하면 return
-    if (!bPoseChanged)
-        return;
+    /*if (!bPoseChanged)
+        return;*/
     // ✅ 한번이라도 물리 Pose가 변하면 이후 애니메이션 비활성화
 
     bDisableAnimAfterHit++;
-
+    if (bDisableAnimAfterHit < bDisableAnimAfterHitMax)return;
     // 로컬 Pose 계산
     for (int32 i = 0; i < BoneNum; ++i)
     {
@@ -615,17 +615,17 @@ void USkeletalMeshComponent::CreatePhysXGameObject()
         //FVector Location = GetComponentLocation();
         PxVec3 Pos = PxVec3(Location.X, Location.Y, Location.Z);
         PxQuat Quat = PxQuat(Rotation.X, Rotation.Y, Rotation.Z, Rotation.W);
+        NewBody->BodyInstanceName = BodySetups[i]->BoneName;
+        NewBody->BoneIndex = BoneIndex;
         GameObject* Obj = GEngine->PhysicsManager->CreateGameObject(Pos, Quat, NewBody, BodySetups[i], RigidBodyType);
-
-        if (RigidBodyType != ERigidBodyType::STATIC)
+        //PhysicsManager ApplyBodyInstanceSettings에서 처리중
+        /*if (RigidBodyType != ERigidBodyType::STATIC)
         {
             Obj->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, !bApplyGravity);
             //Obj->DynamicRigidBody->addTorque(PxVec3(100.0f, 0.0f, 0.0f), PxForceMode::eIMPULSE);
-        }
+        }*/
 
         NewBody->SetGameObject(Obj);
-        NewBody->BodyInstanceName = BodySetups[i]->BoneName;
-        NewBody->BoneIndex = BoneIndex;
 
         Bodies.Add(NewBody);
     }

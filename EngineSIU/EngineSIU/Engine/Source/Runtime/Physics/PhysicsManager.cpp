@@ -293,54 +293,80 @@ void FPhysicsManager::ApplyMassAndInertiaSettings(PxRigidDynamic* DynamicBody, c
 void FPhysicsManager::ApplyBodyInstanceSettings(PxRigidActor* Actor, const FBodyInstance* BodyInstance) const
 {
     PxRigidDynamic* DynamicBody = Actor->is<PxRigidDynamic>();
-    
+
     if (DynamicBody)
     {
-        // === 시뮬레이션 설정 ===
-        
-        // 물리 시뮬레이션 활성화/비활성화
+        // === 중력 설정 (Toe 포함 시에만 켬) ===
+        bool bGravityAllowed = BodyInstance->bEnableGravity;
+        FString BoneNameStr = BodyInstance->BodyInstanceName.ToString();
+        if (bGravityAllowed && BoneNameStr.Contains(TEXT("Toe")))
+        {
+            DynamicBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, false); // 중력 적용
+        }
+        else
+        {
+            DynamicBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);  // 중력 비활성화
+        }
+        //DynamicBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);  // 중력 비활성화
+
+        // 기존 코드 유지
         if (!BodyInstance->bSimulatePhysics)
         {
             DynamicBody->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
         }
-        
-        // 중력 설정
-        DynamicBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, !BodyInstance->bEnableGravity);
-        
-        // 시작 상태 설정
+
         if (!BodyInstance->bStartAwake)
         {
             DynamicBody->putToSleep();
         }
-        
-        // === 움직임 제한 설정 ===
+
         ApplyLockConstraints(DynamicBody, BodyInstance);
-        
-        // === 댐핑 설정 ===
         DynamicBody->setLinearDamping(BodyInstance->LinearDamping);
         DynamicBody->setAngularDamping(BodyInstance->AngularDamping);
-        
-        // === 고급 물리 설정 ===
-        
-        // 연속 충돌 검출 (CCD)
         DynamicBody->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, BodyInstance->bUseCCD);
-        
-        // 최대 각속도 제한
+
         if (BodyInstance->MaxAngularVelocity > 0.0f)
         {
             DynamicBody->setMaxAngularVelocity(BodyInstance->MaxAngularVelocity);
         }
-        
-        // 솔버 반복 횟수 설정
+
         DynamicBody->setSolverIterationCounts(
-            BodyInstance->PositionSolverIterationCount, 
+            BodyInstance->PositionSolverIterationCount,
             BodyInstance->VelocitySolverIterationCount
         );
     }
-    
-    // === 충돌 설정 (Static/Dynamic 공통) ===
+
     ApplyCollisionSettings(Actor, BodyInstance);
 }
+void FPhysicsManager::EnableGravityForAllBodies(UWorld* World)
+{
+    PxScene* Scene = nullptr;
+    if (PxScene** FoundScene = SceneMap.Find(World))
+    {
+        Scene = *FoundScene;
+    }
+    else
+    {
+        return; // 또는 nullptr 반환 대신 다른 처리
+    }
+
+    PxU32 ActorCount = Scene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC);
+    if (ActorCount == 0) return;
+
+    TArray<PxActor*> Actors;
+    Actors.SetNum(ActorCount); // SetNumUninitialized → SetNum 로 변경
+    Scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC, Actors.GetData(), ActorCount);
+
+    for (PxActor* Actor : Actors)
+    {
+        PxRigidDynamic* Dyn = Actor->is<PxRigidDynamic>();
+        if (Dyn)
+        {
+            Dyn->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, false); // 중력 활성화
+        }
+    }
+}
+
 
 // === 움직임 제한 적용 ===
 void FPhysicsManager::ApplyLockConstraints(PxRigidDynamic* DynamicBody, const FBodyInstance* BodyInstance) const

@@ -56,7 +56,7 @@ void FEditorViewportClient::Initialize(EViewScreenLocation InViewportIndex, cons
 void FEditorViewportClient::Tick(const float DeltaTime)
 {
     //주석 꼭 해제!!!
-    if (GEngine->ActiveWorld->WorldType != EWorldType::PIE)
+    //if (GEngine->ActiveWorld->WorldType != EWorldType::PIE)
     {
         UpdateEditorCameraMovement(DeltaTime);
     }
@@ -644,7 +644,7 @@ void FEditorViewportClient::UpdateViewMatrix()
             break;
         }
     }
-    if (GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE) //여기 false 있으면 꼭 수정!!!
+    if (GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE&&false) //여기 false 있으면 꼭 수정!!!
     {
         FVector Front = Car->GetForwardVector();
         FVector Pos = Car->GetComponentLocation() + Front * -20.f + FVector(0, 0, 7.5f);

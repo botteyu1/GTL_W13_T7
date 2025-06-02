@@ -158,6 +158,7 @@ private:
         //한번 충돌한 후에 애니메이션을 비활성화
         TArray<FMatrix> PrevPhysicsBoneWorldMatrices;
         int bDisableAnimAfterHit = 0;
+        const int bDisableAnimAfterHitMax = 1000; // 충돌 후 애니메이션 비활성화 횟수 제한
 
 public:
     TSubclassOf<UAnimInstance> AnimClass;
