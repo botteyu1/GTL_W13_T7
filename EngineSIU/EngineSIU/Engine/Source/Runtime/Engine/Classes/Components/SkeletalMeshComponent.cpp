@@ -278,6 +278,7 @@ void USkeletalMeshComponent::ApplyGravityToAllBodies()
     {
         if (BI && BI->BIGameObject && BI->BIGameObject->DynamicRigidBody)
         {
+            BI->MassInKg = 10.0f;
             BI->BIGameObject->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, false);
         }
     }

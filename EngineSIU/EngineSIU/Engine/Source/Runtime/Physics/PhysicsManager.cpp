@@ -313,7 +313,7 @@ void FPhysicsManager::ApplyBodyInstanceSettings(PxRigidActor* Actor, const FBody
         // === 중력 설정 (Toe 포함 시에만 켬) ===
         bool bGravityAllowed = BodyInstance->bEnableGravity;
         FString BoneNameStr = BodyInstance->BodyInstanceName.ToString();
-        if (bGravityAllowed && BoneNameStr.Contains(TEXT("Toe")))
+        if (bGravityAllowed && (!BoneNameStr.Contains(TEXT("mix"))||BoneNameStr.Contains(TEXT("Toe"))))
         {
             DynamicBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, false); // 중력 적용
         }
