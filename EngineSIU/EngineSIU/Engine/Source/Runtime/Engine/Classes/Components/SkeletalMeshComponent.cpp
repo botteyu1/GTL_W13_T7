@@ -182,7 +182,7 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     const bool bIsFirstPhysicsFrame = (PrevPhysicsBoneWorldMatrices.Num() != BoneNum);
 
     // 이전 프레임과 비교해 이 거리 이상 움직였을 경우 Pose 변경으로 간주
-    constexpr float PoseChangeThresholdSqr = 0.0001f;
+    constexpr float PoseChangeThresholdSqr = 0.001f;
     for (int32 i = 0; i < BoneNum; ++i)
     {
         bool bFoundBody = false;
@@ -649,10 +649,10 @@ void USkeletalMeshComponent::CreatePhysXGameObject()
                 Obj->StaticRigidBody->attachShape(*Shape);
         }
 
-        if (RigidBodyType != ERigidBodyType::STATIC && Obj->DynamicRigidBody)
+        /*if (RigidBodyType != ERigidBodyType::STATIC && Obj->DynamicRigidBody)
         {
             Obj->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, !bApplyGravity);
-        }
+        }*/
 
         NewBody->SetGameObject(Obj);
         Bodies.Add(NewBody);

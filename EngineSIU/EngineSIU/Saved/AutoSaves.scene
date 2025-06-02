@@ -40,6 +40,52 @@
             "Components": [
                 {
                     "ComponentClass": "UStaticMeshComponent",
+                    "ComponentID": "UStaticMeshComponent_267",
+                    "Properties": {
+                        "AABB_max": "X=1.209 Y=0.604 Z=1.201",
+                        "AABB_min": "X=-1.201 Y=-0.642 Z=-1.210",
+                        "AttachParentID": "Car",
+                        "ComponentClass": "UStaticMeshComponent",
+                        "ComponentName": "UStaticMeshComponent_267",
+                        "ComponentOwner": "ACarActor_264",
+                        "ComponentOwnerClass": "ACarActor",
+                        "RelativeLocation": "X=4.000 Y=2.500 Z=-1.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "RigidBodyType": "1",
+                        "StaticMeshPath": "Contents/Car/tire.obj",
+                        "bApplyGravity": "false",
+                        "bAutoActive": "true",
+                        "bIsActive": "true",
+                        "bSimulate": "false",
+                        "m_Type": ""
+                    }
+                },
+                {
+                    "ComponentClass": "UCarComponent",
+                    "ComponentID": "Car",
+                    "Properties": {
+                        "AABB_max": "X=7.246 Y=4.111 Z=2.677",
+                        "AABB_min": "X=-7.733 Y=-4.240 Z=-1.910",
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "UCarComponent",
+                        "ComponentName": "Car",
+                        "ComponentOwner": "ACarActor_264",
+                        "ComponentOwnerClass": "ACarActor",
+                        "RelativeLocation": "X=26.546 Y=-2.551 Z=15.769",
+                        "RelativeRotation": "Pitch=34.700 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "RigidBodyType": "1",
+                        "StaticMeshPath": "Contents/Car/Car_RemoveWheel.obj",
+                        "bApplyGravity": "false",
+                        "bAutoActive": "true",
+                        "bIsActive": "true",
+                        "bSimulate": "true",
+                        "m_Type": ""
+                    }
+                },
+                {
+                    "ComponentClass": "UStaticMeshComponent",
                     "ComponentID": "UStaticMeshComponent_273",
                     "Properties": {
                         "AABB_max": "X=1.209 Y=0.604 Z=1.201",
@@ -85,29 +131,6 @@
                     }
                 },
                 {
-                    "ComponentClass": "UCarComponent",
-                    "ComponentID": "Car",
-                    "Properties": {
-                        "AABB_max": "X=7.246 Y=4.111 Z=2.677",
-                        "AABB_min": "X=-7.733 Y=-4.240 Z=-1.910",
-                        "AttachParentID": "nullptr",
-                        "ComponentClass": "UCarComponent",
-                        "ComponentName": "Car",
-                        "ComponentOwner": "ACarActor_264",
-                        "ComponentOwnerClass": "ACarActor",
-                        "RelativeLocation": "X=26.546 Y=-2.551 Z=15.769",
-                        "RelativeRotation": "Pitch=34.700 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "RigidBodyType": "1",
-                        "StaticMeshPath": "Contents/Car/Car_RemoveWheel.obj",
-                        "bApplyGravity": "false",
-                        "bAutoActive": "true",
-                        "bIsActive": "true",
-                        "bSimulate": "true",
-                        "m_Type": ""
-                    }
-                },
-                {
                     "ComponentClass": "ULuaScriptComponent",
                     "ComponentID": "ULuaScriptComponent_248",
                     "Properties": {
@@ -119,29 +142,6 @@
                         "ScriptPath": "LuaScripts\\Car.lua",
                         "bAutoActive": "true",
                         "bIsActive": "true"
-                    }
-                },
-                {
-                    "ComponentClass": "UStaticMeshComponent",
-                    "ComponentID": "UStaticMeshComponent_267",
-                    "Properties": {
-                        "AABB_max": "X=1.209 Y=0.604 Z=1.201",
-                        "AABB_min": "X=-1.201 Y=-0.642 Z=-1.210",
-                        "AttachParentID": "Car",
-                        "ComponentClass": "UStaticMeshComponent",
-                        "ComponentName": "UStaticMeshComponent_267",
-                        "ComponentOwner": "ACarActor_264",
-                        "ComponentOwnerClass": "ACarActor",
-                        "RelativeLocation": "X=4.000 Y=2.500 Z=-1.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "RigidBodyType": "1",
-                        "StaticMeshPath": "Contents/Car/tire.obj",
-                        "bApplyGravity": "false",
-                        "bAutoActive": "true",
-                        "bIsActive": "true",
-                        "bSimulate": "false",
-                        "m_Type": ""
                     }
                 },
                 {
@@ -166,29 +166,6 @@
                         "bSimulate": "false",
                         "m_Type": ""
                     }
-                },
-                {
-                    "ComponentClass": "UStaticMeshComponent",
-                    "ComponentID": "UStaticMeshComponent_267",
-                    "Properties": {
-                        "AABB_max": "X=1.209 Y=0.604 Z=1.201",
-                        "AABB_min": "X=-1.201 Y=-0.642 Z=-1.210",
-                        "AttachParentID": "Car",
-                        "ComponentClass": "UStaticMeshComponent",
-                        "ComponentName": "UStaticMeshComponent_267",
-                        "ComponentOwner": "ACarActor_264",
-                        "ComponentOwnerClass": "ACarActor",
-                        "RelativeLocation": "X=4.000 Y=2.500 Z=-1.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "RigidBodyType": "1",
-                        "StaticMeshPath": "Contents/Car/tire.obj",
-                        "bApplyGravity": "false",
-                        "bAutoActive": "true",
-                        "bIsActive": "true",
-                        "bSimulate": "false",
-                        "m_Type": ""
-                    }
                 }
             ],
             "RootComponentID": "Car"
@@ -201,11 +178,11 @@
             "Components": [
                 {
                     "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_229",
+                    "ComponentID": "USceneComponent_433",
                     "Properties": {
                         "AttachParentID": "USkeletalMeshComponent_249",
                         "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_229",
+                        "ComponentName": "USceneComponent_433",
                         "ComponentOwner": "AActor_247",
                         "ComponentOwnerClass": "AActor",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
@@ -217,11 +194,43 @@
                 },
                 {
                     "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_433",
+                    "ComponentID": "USceneComponent_278",
                     "Properties": {
                         "AttachParentID": "USkeletalMeshComponent_249",
                         "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_433",
+                        "ComponentName": "USceneComponent_278",
+                        "ComponentOwner": "AActor_247",
+                        "ComponentOwnerClass": "AActor",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "USceneComponent",
+                    "ComponentID": "USceneComponent_228",
+                    "Properties": {
+                        "AttachParentID": "USkeletalMeshComponent_249",
+                        "ComponentClass": "USceneComponent",
+                        "ComponentName": "USceneComponent_228",
+                        "ComponentOwner": "AActor_247",
+                        "ComponentOwnerClass": "AActor",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "USceneComponent",
+                    "ComponentID": "USceneComponent_248",
+                    "Properties": {
+                        "AttachParentID": "USkeletalMeshComponent_249",
+                        "ComponentClass": "USceneComponent",
+                        "ComponentName": "USceneComponent_248",
                         "ComponentOwner": "AActor_247",
                         "ComponentOwnerClass": "AActor",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
@@ -265,43 +274,11 @@
                 },
                 {
                     "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_248",
+                    "ComponentID": "USceneComponent_229",
                     "Properties": {
                         "AttachParentID": "USkeletalMeshComponent_249",
                         "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_248",
-                        "ComponentOwner": "AActor_247",
-                        "ComponentOwnerClass": "AActor",
-                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
-                    "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_228",
-                    "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_249",
-                        "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_228",
-                        "ComponentOwner": "AActor_247",
-                        "ComponentOwnerClass": "AActor",
-                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
-                    "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_278",
-                    "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_249",
-                        "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_278",
+                        "ComponentName": "USceneComponent_229",
                         "ComponentOwner": "AActor_247",
                         "ComponentOwnerClass": "AActor",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
@@ -386,22 +363,6 @@
             "Components": [
                 {
                     "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_489",
-                    "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_296",
-                        "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_489",
-                        "ComponentOwner": "AActor_294",
-                        "ComponentOwnerClass": "AActor",
-                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
-                    "ComponentClass": "USceneComponent",
                     "ComponentID": "USceneComponent_448",
                     "Properties": {
                         "AttachParentID": "USkeletalMeshComponent_296",
@@ -418,34 +379,18 @@
                 },
                 {
                     "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_300",
+                    "ComponentID": "USceneComponent_295",
                     "Properties": {
-                        "AABB_max": "X=17.174 Y=90.257 Z=180.888",
-                        "AABB_min": "X=-14.896 Y=-90.257 Z=-0.035",
-                        "AnimClass": "None",
-                        "AnimToPlay": "Contents/Human/Idle",
-                        "AnimationMode": "1",
-                        "AttachParentID": "nullptr",
-                        "ComponentClass": "USkeletalMeshComponent",
-                        "ComponentName": "USkeletalMeshComponent_296",
+                        "AttachParentID": "USkeletalMeshComponent_296",
+                        "ComponentClass": "USceneComponent",
+                        "ComponentName": "USceneComponent_295",
                         "ComponentOwner": "AActor_294",
                         "ComponentOwnerClass": "AActor",
-                        "LoopEndFrame": "250",
-                        "LoopStartFrame": "0",
-                        "PlayRate": "1.000000",
-                        "RelativeLocation": "X=21.853 Y=-160.201 Z=1.000",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
                         "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=0.010 Y=0.010 Z=0.010",
-                        "RigidBodyType": "1",
-                        "SkeletalMeshKey": "Contents/Human/Human",
-                        "bApplyGravity": "true",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
                         "bAutoActive": "true",
-                        "bIsActive": "true",
-                        "bLooping": "true",
-                        "bPlaying": "true",
-                        "bReverse": "false",
-                        "bSimulate": "true",
-                        "m_Type": ""
+                        "bIsActive": "true"
                     }
                 },
                 {
@@ -498,6 +443,22 @@
                 },
                 {
                     "ComponentClass": "USceneComponent",
+                    "ComponentID": "USceneComponent_300",
+                    "Properties": {
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "USceneComponent",
+                        "ComponentName": "USceneComponent_300",
+                        "ComponentOwner": "AActor_294",
+                        "ComponentOwnerClass": "AActor",
+                        "RelativeLocation": "X=21.853 Y=-160.201 Z=1.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=0.010 Y=0.010 Z=0.010",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "USceneComponent",
                     "ComponentID": "USceneComponent_299",
                     "Properties": {
                         "AttachParentID": "USkeletalMeshComponent_296",
@@ -514,11 +475,11 @@
                 },
                 {
                     "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_295",
+                    "ComponentID": "USceneComponent_489",
                     "Properties": {
                         "AttachParentID": "USkeletalMeshComponent_296",
                         "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_295",
+                        "ComponentName": "USceneComponent_489",
                         "ComponentOwner": "AActor_294",
                         "ComponentOwnerClass": "AActor",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
@@ -541,7 +502,7 @@
                     "ComponentClass": "USceneComponent",
                     "ComponentID": "USceneComponent_799",
                     "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_794",
+                        "AttachParentID": "nullptr",
                         "ComponentClass": "USceneComponent",
                         "ComponentName": "USceneComponent_799",
                         "ComponentOwner": "AActor_792",
@@ -557,7 +518,7 @@
                     "ComponentClass": "USceneComponent",
                     "ComponentID": "USceneComponent_458",
                     "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_794",
+                        "AttachParentID": "nullptr",
                         "ComponentClass": "USceneComponent",
                         "ComponentName": "USceneComponent_458",
                         "ComponentOwner": "AActor_792",
@@ -571,25 +532,9 @@
                 },
                 {
                     "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_797",
-                    "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_794",
-                        "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_797",
-                        "ComponentOwner": "AActor_792",
-                        "ComponentOwnerClass": "AActor",
-                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
-                    "ComponentClass": "USceneComponent",
                     "ComponentID": "USceneComponent_800",
                     "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_794",
+                        "AttachParentID": "nullptr",
                         "ComponentClass": "USceneComponent",
                         "ComponentName": "USceneComponent_800",
                         "ComponentOwner": "AActor_792",
@@ -605,10 +550,10 @@
                     "ComponentClass": "USceneComponent",
                     "ComponentID": "USceneComponent_241",
                     "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_296",
+                        "AttachParentID": "nullptr",
                         "ComponentClass": "USceneComponent",
                         "ComponentName": "USceneComponent_241",
-                        "ComponentOwner": "AActor_294",
+                        "ComponentOwner": "AActor_792",
                         "ComponentOwnerClass": "AActor",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
                         "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
@@ -621,10 +566,26 @@
                     "ComponentClass": "USceneComponent",
                     "ComponentID": "USceneComponent_300",
                     "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_296",
+                        "AttachParentID": "nullptr",
                         "ComponentClass": "USceneComponent",
                         "ComponentName": "USceneComponent_300",
-                        "ComponentOwner": "AActor_294",
+                        "ComponentOwner": "AActor_792",
+                        "ComponentOwnerClass": "AActor",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "USceneComponent",
+                    "ComponentID": "USceneComponent_797",
+                    "Properties": {
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "USceneComponent",
+                        "ComponentName": "USceneComponent_797",
+                        "ComponentOwner": "AActor_792",
                         "ComponentOwnerClass": "AActor",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
                         "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
@@ -634,7 +595,7 @@
                     }
                 }
             ],
-            "RootComponentID": "USkeletalMeshComponent_296"
+            "RootComponentID": "USceneComponent_458"
         },
         {
             "ActorClass": "AActor",
@@ -644,59 +605,11 @@
             "Components": [
                 {
                     "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_499",
+                    "ComponentID": "USceneComponent_465",
                     "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_503",
+                        "AttachParentID": "USkeletalMeshComponent_794",
                         "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_499",
-                        "ComponentOwner": "AActor_497",
-                        "ComponentOwnerClass": "AActor",
-                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
-                    "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_498",
-                    "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_503",
-                        "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_498",
-                        "ComponentOwner": "AActor_497",
-                        "ComponentOwnerClass": "AActor",
-                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
-                    "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_502",
-                    "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_503",
-                        "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_502",
-                        "ComponentOwner": "AActor_497",
-                        "ComponentOwnerClass": "AActor",
-                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
-                    "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_500",
-                    "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_503",
-                        "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_500",
+                        "ComponentName": "USceneComponent_465",
                         "ComponentOwner": "AActor_497",
                         "ComponentOwnerClass": "AActor",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
@@ -718,7 +631,7 @@
                         "AttachParentID": "nullptr",
                         "ComponentClass": "USkeletalMeshComponent",
                         "ComponentName": "USkeletalMeshComponent_794",
-                        "ComponentOwner": "AActor_792",
+                        "ComponentOwner": "AActor_497",
                         "ComponentOwnerClass": "AActor",
                         "LoopEndFrame": "250",
                         "LoopStartFrame": "0",
@@ -740,12 +653,12 @@
                 },
                 {
                     "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_798",
+                    "ComponentID": "USceneComponent_499",
                     "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_794",
+                        "AttachParentID": "nullptr",
                         "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_798",
-                        "ComponentOwner": "AActor_792",
+                        "ComponentName": "USceneComponent_499",
+                        "ComponentOwner": "AActor_497",
                         "ComponentOwnerClass": "AActor",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
                         "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
@@ -761,7 +674,71 @@
                         "AttachParentID": "USkeletalMeshComponent_794",
                         "ComponentClass": "USceneComponent",
                         "ComponentName": "USceneComponent_793",
-                        "ComponentOwner": "AActor_792",
+                        "ComponentOwner": "AActor_497",
+                        "ComponentOwnerClass": "AActor",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "USceneComponent",
+                    "ComponentID": "USceneComponent_498",
+                    "Properties": {
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "USceneComponent",
+                        "ComponentName": "USceneComponent_498",
+                        "ComponentOwner": "AActor_497",
+                        "ComponentOwnerClass": "AActor",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "USceneComponent",
+                    "ComponentID": "USceneComponent_500",
+                    "Properties": {
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "USceneComponent",
+                        "ComponentName": "USceneComponent_500",
+                        "ComponentOwner": "AActor_497",
+                        "ComponentOwnerClass": "AActor",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "USceneComponent",
+                    "ComponentID": "USceneComponent_798",
+                    "Properties": {
+                        "AttachParentID": "USkeletalMeshComponent_794",
+                        "ComponentClass": "USceneComponent",
+                        "ComponentName": "USceneComponent_798",
+                        "ComponentOwner": "AActor_497",
+                        "ComponentOwnerClass": "AActor",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "USceneComponent",
+                    "ComponentID": "USceneComponent_502",
+                    "Properties": {
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "USceneComponent",
+                        "ComponentName": "USceneComponent_502",
+                        "ComponentOwner": "AActor_497",
                         "ComponentOwnerClass": "AActor",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
                         "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
