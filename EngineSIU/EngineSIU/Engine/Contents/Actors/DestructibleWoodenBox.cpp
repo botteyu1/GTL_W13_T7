@@ -184,11 +184,13 @@ void ADestructibleWoodenBox::TriggerDestruction(FVector HitLocation, FVector Imp
         
         FragmentActor->SetRootComponent(FragmentCollider); // 루트로 설정
 
-        // 파편 콜라이더 크기 설정 (파편 메시의 바운딩 박스나 미리 정해진 값 사용)
-        // 예시: 메시 바운딩 박스의 절반 크기 (GetBoundingBox().GetExtent()가 있다면)
-        // FVector BoxExtent = FragmentMesh->GetBoundingBox().GetExtent() * 0.5f;
-        // 임시로 작은 크기 설정
-        FVector BoxExtent = FVector(10.f + FMath::RandRange(0.f, 5.f), 10.f + FMath::RandRange(0.f, 5.f), 5.f + FMath::RandRange(0.f, 5.f));
+        // 파편 콜라이더 크기 설정 
+        FVector ScaledMin = FragMeshComp->AABB.MinLocation * FragMeshComp->GetComponentScale3D();
+        FVector ScaledMax = FragMeshComp->AABB.MaxLocation * FragMeshComp->GetComponentScale3D();
+
+        FVector BoxCenter = (ScaledMin + ScaledMax) * 0.5f;
+        FVector BoxExtent = (ScaledMax - ScaledMin) * 0.5f;
+        
         FragmentCollider->SetBoxExtent(BoxExtent);
         FragmentCollider->SetRelativeLocation(FVector::ZeroVector); // 메시 중심에
 
@@ -203,7 +205,7 @@ void ADestructibleWoodenBox::TriggerDestruction(FVector HitLocation, FVector Imp
         AggregateGeomAttributes GeomAttr;
         GeomAttr.GeomType = EGeomType::EBox;
         GeomAttr.Extent = BoxExtent; // SetBoxExtent로 설정한 값
-        GeomAttr.Offset = FVector::ZeroVector; // 로컬 오프셋
+        GeomAttr.Offset = BoxCenter; // 로컬 오프셋
         FragmentCollider->GeomAttributes.Add(GeomAttr);
         
         FragmentCollider->CreatePhysXGameObject(); // PhysX 객체 생성

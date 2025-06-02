@@ -1,0 +1,93 @@
+{
+    "Actors": [
+        {
+            "ActorClass": "ACube",
+            "ActorID": "ACube_470",
+            "ActorLabel": "ACube470",
+            "ActorTickInEditor": "false",
+            "Components": [
+                {
+                    "ComponentClass": "UStaticMeshComponent",
+                    "ComponentID": "StaticMeshComponent_0",
+                    "Properties": {
+                        "AABB_max": "X=1.287 Y=1.199 Z=2.555",
+                        "AABB_min": "X=-1.287 Y=-1.199 Z=-0.000",
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "UStaticMeshComponent",
+                        "ComponentName": "StaticMeshComponent_0",
+                        "ComponentOwner": "ACube_470",
+                        "ComponentOwnerClass": "ACube",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=-3.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1000.000 Y=1000.000 Z=1.000",
+                        "RigidBodyType": "0",
+                        "StaticMeshPath": "Contents/Reference/Reference.obj",
+                        "bApplyGravity": "false",
+                        "bAutoActive": "true",
+                        "bIsActive": "true",
+                        "bSimulate": "true",
+                        "m_Type": ""
+                    }
+                }
+            ],
+            "RootComponentID": "StaticMeshComponent_0"
+        },
+        {
+            "ActorClass": "ADestructibleWoodenBox",
+            "ActorID": "ADestructibleWoodenBox_455",
+            "ActorLabel": "OBJ_WOODENBOX_455",
+            "ActorTickInEditor": "false",
+            "Components": [
+                {
+                    "ComponentClass": "UStaticMeshComponent",
+                    "ComponentID": "IntactMesh",
+                    "Properties": {
+                        "AABB_max": "X=12.450 Y=14.212 Z=27.663",
+                        "AABB_min": "X=-12.450 Y=-12.060 Z=0.446",
+                        "AttachParentID": "PhysicsCollider",
+                        "ComponentClass": "UStaticMeshComponent",
+                        "ComponentName": "IntactMesh",
+                        "ComponentOwner": "ADestructibleWoodenBox_455",
+                        "ComponentOwnerClass": "ADestructibleWoodenBox",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "RigidBodyType": "1",
+                        "StaticMeshPath": "Contents/Box/box1",
+                        "bApplyGravity": "false",
+                        "bAutoActive": "true",
+                        "bIsActive": "true",
+                        "bSimulate": "false",
+                        "m_Type": ""
+                    }
+                },
+                {
+                    "ComponentClass": "UBoxComponent",
+                    "ComponentID": "PhysicsCollider",
+                    "Properties": {
+                        "AABB_max": "X=12.450 Y=14.212 Z=27.663",
+                        "AABB_min": "X=-12.450 Y=-12.060 Z=0.446",
+                        "AttachParentID": "nullptr",
+                        "BoxExtent": "X=1.000 Y=1.000 Z=1.000",
+                        "ComponentClass": "UBoxComponent",
+                        "ComponentName": "PhysicsCollider",
+                        "ComponentOwner": "ADestructibleWoodenBox_455",
+                        "ComponentOwnerClass": "ADestructibleWoodenBox",
+                        "RelativeLocation": "X=49.807 Y=0.000 Z=59.750",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "RigidBodyType": "1",
+                        "bApplyGravity": "false",
+                        "bAutoActive": "true",
+                        "bIsActive": "true",
+                        "bSimulate": "true",
+                        "m_Type": ""
+                    }
+                }
+            ],
+            "RootComponentID": "PhysicsCollider"
+        }
+    ],
+    "NextUUID": 0,
+    "Version": 1
+}
