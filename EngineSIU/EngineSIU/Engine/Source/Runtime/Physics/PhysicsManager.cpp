@@ -240,6 +240,7 @@ PxRigidStatic* FPhysicsManager::CreateStaticRigidBody(const PxVec3& Pos, const P
 // === Shape 추가 헬퍼 함수 ===
 void FPhysicsManager::AttachShapesToActor(PxRigidActor* Actor, UBodySetup* BodySetup) const
 {
+    if (!BodySetup)return;
     // Sphere 추가
     for (const auto& Sphere : BodySetup->AggGeom.SphereElems)
     {

@@ -583,7 +583,6 @@ void USkeletalMeshComponent::CreatePhysXGameObject()
         RigidBodyType = ERigidBodyType::KINEMATIC;
     }
 
-    // BodyInstance 생성
     const auto& Skeleton = SkeletalMeshAsset->GetSkeleton()->GetReferenceSkeleton();
     TArray<UBodySetup*> BodySetups = SkeletalMeshAsset->GetPhysicsAsset()->BodySetups;
     const FVector CompScale = GetComponentScale3D();
@@ -591,10 +590,11 @@ void USkeletalMeshComponent::CreatePhysXGameObject()
     for (int i = 0; i < BodySetups.Num(); i++)
     {
         FBodyInstance* NewBody = new FBodyInstance(this);
+        NewBody->BodyInstanceName = BodySetups[i]->BoneName;
+        NewBody->BoneIndex = Skeleton.FindBoneIndex(BodySetups[i]->BoneName);
 
         for (const auto& GeomAttribute : BodySetups[i]->GeomAttributes)
         {
-
             FVector ScaledOffset = GeomAttribute.Offset * CompScale;
             PxVec3 Offset = PxVec3(ScaledOffset.X, ScaledOffset.Y, ScaledOffset.Z);
             FQuat GeomQuat = GeomAttribute.Rotation.Quaternion();
@@ -602,86 +602,83 @@ void USkeletalMeshComponent::CreatePhysXGameObject()
             FVector ScaledExtent = GeomAttribute.Extent * CompScale;
             PxVec3 Extent = PxVec3(ScaledExtent.X, ScaledExtent.Y, ScaledExtent.Z);
 
+            PxShape* Shape = nullptr;
+
             switch (GeomAttribute.GeomType)
             {
             case EGeomType::ESphere:
-            {
-                PxShape* PxSphere = GEngine->PhysicsManager->CreateSphereShape(Offset, GeomPQuat, Extent.x);
-                BodySetups[i]->AggGeom.SphereElems.Add(PxSphere);
+                Shape = GEngine->PhysicsManager->CreateSphereShape(Offset, GeomPQuat, Extent.x);
                 break;
-            }
             case EGeomType::EBox:
-            {
-                PxShape* PxBox = GEngine->PhysicsManager->CreateBoxShape(Offset, GeomPQuat, Extent);
-                BodySetups[i]->AggGeom.BoxElems.Add(PxBox);
+                Shape = GEngine->PhysicsManager->CreateBoxShape(Offset, GeomPQuat, Extent);
                 break;
-            }
             case EGeomType::ECapsule:
-            {
-                PxShape* PxCapsule = GEngine->PhysicsManager->CreateCapsuleShape(Offset, GeomPQuat, Extent.x, Extent.z);
-                BodySetups[i]->AggGeom.SphereElems.Add(PxCapsule);
+                Shape = GEngine->PhysicsManager->CreateCapsuleShape(Offset, GeomPQuat, Extent.x, Extent.z);
                 break;
             }
+
+            if (Shape)
+            {
+                NewBody->Shapes.Add(Shape);
             }
         }
 
-        int BoneIndex = Skeleton.FindBoneIndex(BodySetups[i]->BoneName);
+        // 본 위치 계산
         TArray<FMatrix> CurrentGlobalBoneMatrices;
         GetCurrentGlobalBoneMatrices(CurrentGlobalBoneMatrices);
         FMatrix CompToWorld = GetComponentTransform().ToMatrixWithScale();
-        const FReferenceSkeleton& RefSkeleton = SkeletalMeshAsset->GetSkeleton()->GetReferenceSkeleton();
-        const int32 BoneNum = RefSkeleton.RawRefBoneInfo.Num();
-        for (int32 i = 0; i < BoneNum; ++i)
+        for (FMatrix& Mat : CurrentGlobalBoneMatrices)
         {
-            // 컴포넌트 공간 → 월드 공간
-            CurrentGlobalBoneMatrices[i] = CurrentGlobalBoneMatrices[i] * CompToWorld;
+            Mat = Mat * CompToWorld;
         }
-        FVector Location = CurrentGlobalBoneMatrices[BoneIndex].GetTranslationVector();
-        FQuat Rotation = FTransform(CurrentGlobalBoneMatrices[BoneIndex]).GetRotation();
-        //FVector Location = GetComponentLocation();
-        PxVec3 Pos = PxVec3(Location.X, Location.Y, Location.Z);
-        PxQuat Quat = PxQuat(Rotation.X, Rotation.Y, Rotation.Z, Rotation.W);
-        NewBody->BodyInstanceName = BodySetups[i]->BoneName;
-        NewBody->BoneIndex = BoneIndex;
-        GameObject* Obj = GEngine->PhysicsManager->CreateGameObject(Pos, Quat, NewBody, BodySetups[i], RigidBodyType);
-        //PhysicsManager ApplyBodyInstanceSettings에서 처리중
-        /*if (RigidBodyType != ERigidBodyType::STATIC)
+
+        FVector Location = CurrentGlobalBoneMatrices[NewBody->BoneIndex].GetTranslationVector();
+        FQuat Rotation = FTransform(CurrentGlobalBoneMatrices[NewBody->BoneIndex]).GetRotation();
+
+        PxVec3 Pos(Location.X, Location.Y, Location.Z);
+        PxQuat Quat(Rotation.X, Rotation.Y, Rotation.Z, Rotation.W);
+
+        GameObject* Obj = GEngine->PhysicsManager->CreateGameObject(Pos, Quat, NewBody, nullptr, RigidBodyType);
+
+        // Custom Attach
+        for (PxShape* Shape : NewBody->Shapes)
+        {
+            if (Obj->DynamicRigidBody)
+                Obj->DynamicRigidBody->attachShape(*Shape);
+            else if (Obj->StaticRigidBody)
+                Obj->StaticRigidBody->attachShape(*Shape);
+        }
+
+        if (RigidBodyType != ERigidBodyType::STATIC && Obj->DynamicRigidBody)
         {
             Obj->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, !bApplyGravity);
-            //Obj->DynamicRigidBody->addTorque(PxVec3(100.0f, 0.0f, 0.0f), PxForceMode::eIMPULSE);
-        }*/
+        }
 
         NewBody->SetGameObject(Obj);
-
         Bodies.Add(NewBody);
     }
 
-    // Constraint Instance 생성
-    TArray<FConstraintSetup*> ConstraintSetups = SkeletalMeshAsset->GetPhysicsAsset()->ConstraintSetups;
-    for (int i = 0; i < ConstraintSetups.Num(); i++)
+    // Constraint 생성
+    const auto& ConstraintSetups = SkeletalMeshAsset->GetPhysicsAsset()->ConstraintSetups;
+    for (FConstraintSetup* Setup : ConstraintSetups)
     {
         FConstraintInstance* NewConstraintInstance = new FConstraintInstance;
-        FBodyInstance* BodyInstance1 = nullptr;
-        FBodyInstance* BodyInstance2 = nullptr;
+        FBodyInstance* Body1 = nullptr;
+        FBodyInstance* Body2 = nullptr;
 
-        for (int j = 0; j < Bodies.Num(); j++)
+        for (FBodyInstance* Body : Bodies)
         {
-            if (ConstraintSetups[i]->ConstraintBone1 == Bodies[j]->BodyInstanceName.ToString())
-            {
-                BodyInstance1 = Bodies[j];
-            }
-            if (ConstraintSetups[i]->ConstraintBone2 == Bodies[j]->BodyInstanceName.ToString())
-            {
-                BodyInstance2 = Bodies[j];
-            }
+            if (Body->BodyInstanceName.ToString() == Setup->ConstraintBone1)
+                Body1 = Body;
+            if (Body->BodyInstanceName.ToString() == Setup->ConstraintBone2)
+                Body2 = Body;
         }
 
-        if (BodyInstance1 && BodyInstance2)
+        if (Body1 && Body2)
         {
-            GEngine->PhysicsManager->CreateJoint(BodyInstance1->BIGameObject, BodyInstance2->BIGameObject, NewConstraintInstance, ConstraintSetups[i]);
+            GEngine->PhysicsManager->CreateJoint(Body1->BIGameObject, Body2->BIGameObject, NewConstraintInstance, Setup);
+            Constraints.Add(NewConstraintInstance);
         }
-
-        Constraints.Add(NewConstraintInstance);
     }
 }
 
