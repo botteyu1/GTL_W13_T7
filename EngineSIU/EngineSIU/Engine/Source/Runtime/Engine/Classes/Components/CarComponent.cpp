@@ -307,6 +307,15 @@ void UCarComponent::MoveCar()
     //    FinalBoost -= 2.5f;
     //    Velocity = -20.f;
     //}
+    else if (bBoosted)
+    {
+        if (Velocity > 0)
+            Velocity -= 0.1f;
+        else if (Velocity < 0)
+            Velocity += 0.1f;
+        if (FMath::Abs(Velocity) < 0.1f)
+            Velocity = 0.f;
+    }
     else
     {
         if (Velocity > 0)

@@ -46,7 +46,7 @@ private:
     float Velocity = 0.f;
     float MaxVelocity = 30.f;
     float FinalBoost = 0.f;
-    float MaxBoost = 7500.f;
+    float MaxBoost = 4000.f;
     bool bBoosted = false;
 
     UStaticMeshComponent* WheelComp[4] = { nullptr };
