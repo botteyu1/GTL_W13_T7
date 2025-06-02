@@ -7,6 +7,8 @@
 #include "World/World.h"
 #include <thread>
 
+#include "SimulationEventCallback.h"
+
 
 void GameObject::SetRigidBodyType(ERigidBodyType RigidBodyType) const
 {
@@ -90,6 +92,12 @@ PxScene* FPhysicsManager::CreateScene(UWorld* World)
     SceneDesc.flags |= PxSceneFlag::eENABLE_ACTIVE_ACTORS;
     SceneDesc.flags |= PxSceneFlag::eENABLE_CCD;
     SceneDesc.flags |= PxSceneFlag::eENABLE_PCM;
+
+    if (!SimEventCallback) // SimEventCallback은 FPhysicsManager의 멤버 변수
+    {
+        SimEventCallback = new FSimulationEventCallback();
+    }
+    SceneDesc.simulationEventCallback = SimEventCallback; // 콜백 등록
     
     PxScene* NewScene = Physics->createScene(SceneDesc);
     SceneMap.Add(World, NewScene);
@@ -140,6 +148,7 @@ bool FPhysicsManager::ConnectPVD()
     return connected;
 }
 
+
 GameObject FPhysicsManager::CreateBox(const PxVec3& Pos, const PxVec3& HalfExtents) const
 {
     GameObject Obj;
@@ -148,6 +157,10 @@ GameObject FPhysicsManager::CreateBox(const PxVec3& Pos, const PxVec3& HalfExten
     Obj.DynamicRigidBody = Physics->createRigidDynamic(Pose);
     
     PxShape* Shape = Physics->createShape(PxBoxGeometry(HalfExtents), *Material);
+    physx::PxFilterData defaultFilterData;
+    defaultFilterData.word0 = 0xFFFFFFFF; // 모든 그룹에 속함 (또는 특정 '일반 객체' 그룹)
+    defaultFilterData.word1 = 0xFFFFFFFF; // 모든 그룹과 충돌함
+    Shape->setSimulationFilterData(defaultFilterData);
     Obj.DynamicRigidBody->attachShape(*Shape);
     
     PxRigidBodyExt::updateMassAndInertia(*Obj.DynamicRigidBody, 10.0f);
@@ -414,6 +427,12 @@ void FPhysicsManager::ApplyShapeCollisionSettings(PxShape* Shape, const FBodyIns
         // 복잡한 메시를 단순 충돌로 사용하는 로직
         // (구체적인 구현은 메시 충돌 시스템에 따라 다름)
     }
+
+    //일단 모든 충돌 활성화
+    physx::PxFilterData defaultFilterData;
+    defaultFilterData.word0 = 0xFFFFFFFF; // 모든 그룹에 속함 (또는 특정 '일반 객체' 그룹)
+    defaultFilterData.word1 = 0xFFFFFFFF; // 모든 그룹과 충돌함
+    Shape->setSimulationFilterData(defaultFilterData);
     
     Shape->setFlags(ShapeFlags);
 }
@@ -649,6 +668,15 @@ void FPhysicsManager::CreateJoint(const GameObject* Obj1, const GameObject* Obj2
     ConstraintInstance->ConstraintData = Joint;
 }
 
+void FPhysicsManager::MarkGameObjectForKill(GameObject* InGameObject)
+{
+    if (InGameObject)
+    {
+        PendingKillGameObjects.FindOrAdd(CurrentScene).AddUnique(InGameObject); // 중복 추가 방지
+    }
+}
+
+
 void FPhysicsManager::DestroyGameObject(GameObject* GameObject) const
 {
     // TODO: StaticRigidBody 분기 처리 필요
@@ -659,6 +687,15 @@ void FPhysicsManager::DestroyGameObject(GameObject* GameObject) const
         GameObject->DynamicRigidBody = nullptr;
     }
     delete GameObject;
+}
+
+void FPhysicsManager::ProcessPendingKills()
+{
+    for (GameObject* go : PendingKillGameObjects.FindOrAdd(CurrentScene))
+    {
+        DestroyGameObject(go); // 실제 제거
+    }
+    PendingKillGameObjects.Empty();
 }
 
 PxShape* FPhysicsManager::CreateBoxShape(const PxVec3& Pos, const PxQuat& Quat, const PxVec3& HalfExtents) const
@@ -708,6 +745,7 @@ void FPhysicsManager::Simulate(float DeltaTime)
         QUICK_SCOPE_CYCLE_COUNTER(SimulatePass_CPU)
         CurrentScene->simulate(DeltaTime);
         CurrentScene->fetchResults(true);
+        ProcessPendingKills();
     }
 }
 
@@ -738,6 +776,11 @@ void FPhysicsManager::ShutdownPhysX()
         Foundation->release();
         Foundation = nullptr;
     }
+    if(SimEventCallback)
+    {
+        delete SimEventCallback;
+        SimEventCallback = nullptr;
+    }
 }
 
 void FPhysicsManager::CleanupPVD() {
@@ -765,29 +808,43 @@ void FPhysicsManager::CleanupScene()
 
 PxFilterFlags MySimulationFilterShader(PxFilterObjectAttributes attributes0, PxFilterData filterData0, PxFilterObjectAttributes attributes1, PxFilterData filterData1, PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
 {
-    // 1) 기본 시뮬레이션 필터링
-    PxFilterFlags flags = PxDefaultSimulationFilterShader(
-        attributes0, filterData0,
-        attributes1, filterData1,
-        pairFlags, constantBlock, constantBlockSize);
-
-    // 2) 충돌 이벤트를 꼭 받아오도록 플래그 추가
-    pairFlags = PxPairFlag::eCONTACT_DEFAULT
-        | PxPairFlag::eNOTIFY_TOUCH_FOUND
-        | PxPairFlag::eNOTIFY_TOUCH_LOST
-        | PxPairFlag::eNOTIFY_CONTACT_POINTS
-        | PxPairFlag::eNOTIFY_TOUCH_PERSISTS
-        ;
-
+    // 1. 자동차 부품 간의 충돌은 항상 억제 (가장 먼저 처리)
+    // PxFilterData의 word0에 충돌 채널(타입) 정보가 있다고 가정합니다.
     bool bIsCarBodyWheel = ((filterData0.word0 == ECC_CarBody && filterData1.word0 == ECC_Wheel) ||
-        (filterData0.word0 == ECC_Wheel && filterData1.word0 == ECC_CarBody));
+                            (filterData0.word0 == ECC_Wheel && filterData1.word0 == ECC_CarBody));
     bool bIsCarHub = ((filterData0.word0 == ECC_CarBody && filterData1.word0 == ECC_Hub) ||
-        (filterData0.word0 == ECC_Hub && filterData1.word0 == ECC_CarBody));
+                      (filterData0.word0 == ECC_Hub && filterData1.word0 == ECC_CarBody));
     bool bIsWheelHub = ((filterData0.word0 == ECC_Wheel && filterData1.word0 == ECC_Hub) ||
-        (filterData0.word0 == ECC_Hub && filterData1.word0 == ECC_Wheel));
+                        (filterData0.word0 == ECC_Hub && filterData1.word0 == ECC_Wheel));
 
     if (bIsCarBodyWheel || bIsCarHub || bIsWheelHub)
-        return PxFilterFlag::eSUPPRESS;
+    {
+        pairFlags = PxPairFlags(); // 이 쌍에 대한 모든 상호작용 플래그를 끔
+        return PxFilterFlag::eSUPPRESS; // 이 쌍의 충돌을 완전히 억제
+    }
 
-    return flags;
+    // 2. 그 외의 경우에는 PxDefaultSimulationFilterShader를 호출하여 기본적인 필터링 결정
+    //    (충돌 여부, 트리거 여부, 기본 pairFlags 설정 등)
+    PxFilterFlags defaultFilterFlags = PxDefaultSimulationFilterShader(
+        attributes0, filterData0,
+        attributes1, filterData1,
+        pairFlags, constantBlock, constantBlockSize); // 여기서 pairFlags가 기본 설정됨
+
+    // 3. PxDefaultSimulationFilterShader가 충돌을 억제하지 않았고 (eSUPPRESS가 아니고),
+    //    물리적 충돌을 해결하도록 설정된 경우 (eSOLVE_CONTACT),
+    //    추가적인 알림 플래그를 설정합니다.
+    if (defaultFilterFlags != PxFilterFlag::eSUPPRESS && (pairFlags & PxPairFlag::eSOLVE_CONTACT))
+    {
+        // PxDefaultSimulationFilterShader가 설정한 pairFlags에 필요한 알림 플래그들을 추가 (OR 연산)
+        pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+        pairFlags |= PxPairFlag::eNOTIFY_TOUCH_LOST;    // 필요하다면 추가
+        pairFlags |= PxPairFlag::eNOTIFY_CONTACT_POINTS; // OnComponentHit에서 impulse 값을 얻기 위해 중요
+        // pairFlags |= PxPairFlag::eNOTIFY_TOUCH_PERSISTS; // 지속적인 접촉 알림 (필요에 따라)
+                                                        // eNOTIFY_TOUCH_PERSISTS는 성능에 영향을 줄 수 있으므로 신중히 사용
+    }
+    // 만약 PxDefaultSimulationFilterShader가 트리거로 처리하도록 pairFlags를 설정했다면 (예: pairFlags = PxPairFlag::eTRIGGER_DEFAULT),
+    // 위의 if 조건 ((pairFlags & PxPairFlag::eSOLVE_CONTACT)) 에 걸리지 않으므로,
+    // 트리거에 대한 pairFlags는 그대로 유지됩니다. (eNOTIFY_CONTACT_POINTS 등은 추가되지 않음)
+
+    return defaultFilterFlags; // PxDefaultSimulationFilterShader의 최종 결정(eDEFAULT, eSUPPRESS 등)을 반환
 }

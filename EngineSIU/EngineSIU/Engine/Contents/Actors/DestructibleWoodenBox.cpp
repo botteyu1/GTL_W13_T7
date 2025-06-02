@@ -11,7 +11,7 @@ ADestructibleWoodenBox::ADestructibleWoodenBox()
 {
 
     IntactMeshComponent = AddComponent<UStaticMeshComponent>(TEXT("IntactMesh"));
-    RootComponent = IntactMeshComponent;
+    
 
     FString MeshName = TEXT("Contents/Box/box1");
 
@@ -24,11 +24,14 @@ ADestructibleWoodenBox::ADestructibleWoodenBox()
     // PhysicsColliderComponent 생성 및 설정
     // UBoxComponent를 사용한다고 가정
     PhysicsColliderComponent = AddComponent<UBoxComponent>(TEXT("PhysicsCollider"));
-    PhysicsColliderComponent->SetupAttachment(IntactMeshComponent); // IntactMesh에 붙이거나, 루트로 직접 사용 가능
     PhysicsColliderComponent->bSimulate = true;
     PhysicsColliderComponent->RigidBodyType = ERigidBodyType::DYNAMIC; // 동적 리지드바디
+    PhysicsColliderComponent->AABB = IntactMeshComponent->GetBoundingBox(); // IntactMeshComponent의 AABB를 사용
     // PhysicsColliderComponent->SetNotifyRigidBodyCollision(true); // OnComponentHit을 받기 위해 필요
     // // 기타 필요한 설정: 크기, 상대 위치 등
+
+    IntactMeshComponent->SetupAttachment(PhysicsColliderComponent); 
+    RootComponent = PhysicsColliderComponent;
     
     LoadFragmentMeshesByNamePattern(TEXT("Contents/Box/box1_Fragment"), 1, 10); 
 }
@@ -36,6 +39,10 @@ ADestructibleWoodenBox::ADestructibleWoodenBox()
 void ADestructibleWoodenBox::BeginPlay()
 {
     Super::BeginPlay();
+    
+    PhysicsColliderComponent = GetComponentByClass<UBoxComponent>();
+    IntactMeshComponent = GetComponentByClass<UStaticMeshComponent>();
+    
 
     if (PhysicsColliderComponent)
     {
@@ -118,7 +125,7 @@ void ADestructibleWoodenBox::TriggerDestruction(FVector HitLocation, FVector Imp
         // PhysX 객체 제거
         if (PhysicsColliderComponent->BodyInstance && PhysicsColliderComponent->BodyInstance->BIGameObject)
         {
-            GEngine->PhysicsManager->DestroyGameObject(PhysicsColliderComponent->BodyInstance->BIGameObject);
+            GEngine->PhysicsManager->MarkGameObjectForKill(PhysicsColliderComponent->BodyInstance->BIGameObject);
             PhysicsColliderComponent->BodyInstance->BIGameObject = nullptr; // 중요: 포인터 정리
         }
         PhysicsColliderComponent->SetVisibility(false); // 콜라이더 컴포넌트도 숨김
@@ -169,12 +176,13 @@ void ADestructibleWoodenBox::TriggerDestruction(FVector HitLocation, FVector Imp
         // 파편 메시 컴포넌트 추가
         UStaticMeshComponent* FragMeshComp = FragmentActor->AddComponent<UStaticMeshComponent>(TEXT("FragmentMesh"));
         FragMeshComp->SetStaticMesh(FragmentMesh);
-        FragmentActor->SetRootComponent(FragMeshComp); // 루트로 설정
         // FragMeshComp->RegisterComponent(); // SpawnActor에서 처리될 수 있음. 엔진 구현 확인.
 
         // 파편 물리 콜라이더 컴포넌트 추가 (UBoxComponent 사용)
         UBoxComponent* FragmentCollider = FragmentActor->AddComponent<UBoxComponent>(TEXT("FragmentCollider"));
-        FragmentCollider->SetupAttachment(FragMeshComp); // 메시 컴포넌트에 붙임
+        FragMeshComp->SetupAttachment(FragmentCollider); // 메시 컴포넌트에 붙임
+        
+        FragmentActor->SetRootComponent(FragmentCollider); // 루트로 설정
 
         // 파편 콜라이더 크기 설정 (파편 메시의 바운딩 박스나 미리 정해진 값 사용)
         // 예시: 메시 바운딩 박스의 절반 크기 (GetBoundingBox().GetExtent()가 있다면)
@@ -188,6 +196,7 @@ void ADestructibleWoodenBox::TriggerDestruction(FVector HitLocation, FVector Imp
         FragmentCollider->bSimulate = true;
         FragmentCollider->RigidBodyType = ERigidBodyType::DYNAMIC;
         FragmentCollider->bApplyGravity = true;
+        FragmentCollider-> BodyInstance = new FBodyInstance(FragmentCollider);
         FragmentCollider->BodyInstance->MassInKg = FMath::RandRange(0.5f, 2.0f); // 파편 질량 랜덤화
 
         // 파편 콜라이더의 GeomAttributes 설정

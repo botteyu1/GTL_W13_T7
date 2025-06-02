@@ -51,6 +51,8 @@ public:
     FGPUTimingManager GPUTimingManager;
     FEngineProfiler EngineProfiler;
 
+    float GetDeltaTime() const { return DeltaTime; }
+
 private:
     UImGuiManager* UIManager;
     //TODO: GWorld 제거, Editor들 EditorEngine으로 넣기
@@ -63,6 +65,8 @@ private:
     bool bIsExit = false;
     // @todo Option으로 선택 가능하도록
     int32 TargetFPS = 999;
+
+    float DeltaTime = 0.f;
 
 public:
     SLevelEditor* GetLevelEditor() const { return LevelEditor; }
