@@ -179,8 +179,10 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     BoneWorldMatrices.SetNum(BoneNum);
 
     bool bPoseChanged = false;
+    const bool bIsFirstPhysicsFrame = (PrevPhysicsBoneWorldMatrices.Num() != BoneNum);
+
     // 이전 프레임과 비교해 이 거리 이상 움직였을 경우 Pose 변경으로 간주
-    constexpr float PoseChangeThresholdSqr = 0.1f;
+    constexpr float PoseChangeThresholdSqr = 0.0001f;
     for (int32 i = 0; i < BoneNum; ++i)
     {
         bool bFoundBody = false;
@@ -201,7 +203,7 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
                 BoneWorldMatrices[i] = ScaledMatrix;
 
                 // 비교
-                if (PrevPhysicsBoneWorldMatrices.Num() == BoneNum)
+                if (!bIsFirstPhysicsFrame)
                 {
                     FVector Prev = PrevPhysicsBoneWorldMatrices[i].GetOrigin();
                     FVector Curr = ScaledMatrix.GetOrigin();
@@ -213,8 +215,14 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
                 }
                 else
                 {
+                    // 첫 프레임이면 무조건 Pose가 변경된 것으로 처리
                     bPoseChanged = true;
                 }
+                /*
+                else
+                {
+                    bPoseChanged = true;
+                }*/
 
                 bFoundBody = true;
                 break;
@@ -237,9 +245,9 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     /*if (!bPoseChanged)
         return;*/
     // ✅ 한번이라도 물리 Pose가 변하면 이후 애니메이션 비활성화
-
+    if (bPoseChanged)
     bDisableAnimAfterHit++;
-    if (bDisableAnimAfterHit < bDisableAnimAfterHitMax)return;
+    //if (bDisableAnimAfterHit < bDisableAnimAfterHitMax)return;
     // 로컬 Pose 계산
     for (int32 i = 0; i < BoneNum; ++i)
     {
@@ -249,6 +257,7 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
             : BoneWorldMatrices[ParentIndex];
 
         FMatrix Local = BoneWorldMatrices[i] * FMatrix::Inverse(ParentMatrix);
+        if (bDisableAnimAfterHit > bDisableAnimAfterHitMax)
         BonePoseContext.Pose[i] = FTransform(Local);
     }
 
