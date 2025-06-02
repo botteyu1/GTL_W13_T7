@@ -46,7 +46,7 @@ void ADestructibleStaticMesh::BeginPlay()
     if (IntactMeshComponent)
     {
         FString MeshName = IntactMeshComponent->GetStaticMesh()->GetRenderData()->ObjectName;
-        LoadFragmentMeshesByNamePattern(MeshName + TEXT("_Fragment"), 1, 10);
+        LoadFragmentMeshesByNamePattern(MeshName + TEXT("_Fragment"), 0, 15);
         if (PhysicsColliderComponent)
         {
             PhysicsColliderComponent->AABB = IntactMeshComponent->GetBoundingBox(); // IntactMeshComponent의 AABB를 사용
@@ -68,7 +68,15 @@ void ADestructibleStaticMesh::LoadFragmentMeshesByNamePattern(const FString& Bas
     {
         int32 CurrentIndex = StartIndex + i;
         // FString::Printf를 사용하여 이름 생성
-        FString FragmentMeshName = FString::Printf(TEXT("%s%d"), *BaseName, CurrentIndex);
+        FString FragmentMeshName ;
+        if (CurrentIndex == 0)
+        {
+            FragmentMeshName = BaseName;
+        }
+        else
+        {
+            FragmentMeshName = FString::Printf(TEXT("%s%d"), *BaseName, CurrentIndex);
+        }
 
         UStaticMesh* LoadedMesh = UAssetManager::Get().GetStaticMesh(FragmentMeshName);
 
