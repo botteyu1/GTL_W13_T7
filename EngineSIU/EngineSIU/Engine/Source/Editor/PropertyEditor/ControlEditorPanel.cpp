@@ -38,13 +38,16 @@
 #include "GameFramework/PlayerController.h"
 #include "Renderer/CompositingPass.h"
 #include <Engine/FbxLoader.h>
+
+#include "Animation/SkeletalMeshActor.h"
 #include "Engine/Classes/Engine/AssetManager.h"
 #include "Engine/Contents/Actors/FreeCameraActor.h"
 #include "Engine/Contents/Actors/ObjectViewCameraActor.h"
 #include "Engine/Contents/Actors/SideViewCameraActor.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Actors/CarActor.h"
-#include "Engine/Contents/Actors/DestructibleWoodenBox.h"
+#include "Engine/Contents/Actors/DestructibleStaticMesh"
+
 
 ControlEditorPanel::ControlEditorPanel()
 {
@@ -396,7 +399,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             { .Label = "OBJECTVIEWCAMERACTOR",   .OBJ = OBJ_OBJECTVIEWCAMERACTOR },
             { .Label = "Car",   .OBJ = OBJ_CAR },
             { .Label = "FreeCamera",   .OBJ = OBJ_FREECAMERA },
-            { .Label = "WoodenBox",   .OBJ = OBJ_WOODENBOX },
+            { .Label = "DestructibleStaticMesh",   .OBJ = OBJ_DestructibleStaticMesh },
         };
 
         for (const auto& primitive : primitives)
@@ -509,7 +512,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                 }
                 case OBJ_SKELETALMESH:
                     {
-                        SpawnedActor = World->SpawnActor<AActor>();
+                        SpawnedActor = World->SpawnActor<ASkeletalMeshActor>();
                         SpawnedActor->SetActorTickInEditor(true);
                         auto* MeshComp = SpawnedActor->AddComponent<USkeletalMeshComponent>();
                         SpawnedActor->SetRootComponent(MeshComp);
@@ -545,10 +548,10 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     SpawnedActor->SetActorLabel(TEXT("OBJ_FREECAMERA"));
                 }
                     break;
-                case OBJ_WOODENBOX:
+                case OBJ_DestructibleStaticMesh:
                     {
-                        SpawnedActor = World->SpawnActor<ADestructibleWoodenBox>();
-                        SpawnedActor->SetActorLabel(TEXT("OBJ_WOODENBOX"));
+                        SpawnedActor = World->SpawnActor<ADestructibleStaticMesh>();
+                        SpawnedActor->SetActorLabel(TEXT("OBJ_DestructibleStaticMesh"));
                     }
                 case OBJ_CAMERA:
                 case OBJ_PLAYER:

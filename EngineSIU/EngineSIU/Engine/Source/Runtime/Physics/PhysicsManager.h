@@ -112,6 +112,9 @@ private:
     void ApplyLockConstraints(PxRigidDynamic* DynamicBody, const FBodyInstance* BodyInstance) const;
     void ApplyCollisionSettings(const PxRigidActor* Actor, const FBodyInstance* BodyInstance) const;
     void ApplyShapeCollisionSettings(PxShape* Shape, const FBodyInstance* BodyInstance) const;
+
+    void EnableGravityForAllBodies(UWorld* World);
+
 };
 
 enum ECollisionChannel

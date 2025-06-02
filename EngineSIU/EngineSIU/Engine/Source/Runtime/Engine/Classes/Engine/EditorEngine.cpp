@@ -261,6 +261,7 @@ void UEditorEngine::StartPIE()
     
     ClearActorSelection(); // Editor World 기준 Select Actor 해제
     ClearComponentSelection();
+    ClearSelectedActors();
     
     FSlateAppMessageHandler* Handler = GEngineLoop.GetAppMessageHandler();
 
@@ -273,12 +274,13 @@ void UEditorEngine::StartPIE()
 
     PIEWorldContext.SetCurrentWorld(PIEWorld);
     ActiveWorld = PIEWorld;
+    
+    BindEssentialObjects();
+
+    PIEWorld->BeginPlay();
 
     SetPhysXScene(PIEWorld);
     
-    BindEssentialObjects();
-    
-    PIEWorld->BeginPlay();
     // 여기서 Actor들의 BeginPlay를 해줄지 안에서 해줄 지 고민.
     // WorldList.Add(GetWorldContextFromWorld(PIEWorld));
 }
@@ -603,10 +605,13 @@ void UEditorEngine::EndPIE()
         PIEWorld = nullptr;
 
         // TODO: PIE에서 EditorWorld로 돌아올 때, 기존 선택된 Picking이 유지되어야 함. 현재는 에러를 막기위해 임시조치.
-        ClearActorSelection();
-        ClearComponentSelection();
+
         PhysicsManager->CleanupScene();
     }
+
+    ClearActorSelection();
+    ClearSelectedActors();
+    ClearComponentSelection();
 
     FSlateAppMessageHandler* Handler = GEngineLoop.GetAppMessageHandler();
 

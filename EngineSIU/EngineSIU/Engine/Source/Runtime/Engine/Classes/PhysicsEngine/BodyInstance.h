@@ -15,6 +15,10 @@ enum class ECollisionEnabled
 
 struct FBodyInstance
 {
+    ~FBodyInstance()
+    {
+        ReleaseShapes();
+    }
     DECLARE_STRUCT(FBodyInstance)
     FBodyInstance(UPrimitiveComponent* InOwner); // TODO: 초기값 설정?
 
@@ -115,10 +119,23 @@ struct FBodyInstance
     // PhysX 객체 참조
     physx::PxRigidActor* RigidActorSync;   // 동기 액터
     physx::PxRigidActor* RigidActorAsync;  // 비동기 액터
+    TArray<physx::PxShape*> Shapes;
 
     GameObject* BIGameObject;
 
     UPrimitiveComponent* OwnerComponent;
     
     int32 BoneIndex;
+    void ReleaseShapes()
+    {
+        for (physx::PxShape* Shape : Shapes)
+        {
+            if (Shape)
+            {
+                Shape->release();
+            }
+        }
+        Shapes.Empty();
+    }
+
 };
