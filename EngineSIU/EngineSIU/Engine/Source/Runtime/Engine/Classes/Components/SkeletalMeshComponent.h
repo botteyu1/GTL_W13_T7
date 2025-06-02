@@ -159,6 +159,8 @@ private:
         TArray<FMatrix> PrevPhysicsBoneWorldMatrices;
         int bDisableAnimAfterHit = 0;
         const int bDisableAnimAfterHitMax = 10; // 충돌 후 애니메이션 비활성화 횟수 제한
+        bool bPostAnimDisabledGravityApplied = false;//애니메이션 비활성화 시 1회 중력 적용
+        void ApplyGravityToAllBodies();
 
 public:
     TSubclassOf<UAnimInstance> AnimClass;

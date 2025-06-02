@@ -247,6 +247,14 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     // ✅ 한번이라도 물리 Pose가 변하면 이후 애니메이션 비활성화
     if (bPoseChanged)
     bDisableAnimAfterHit++;
+    if (bDisableAnimAfterHit > bDisableAnimAfterHitMax)
+    {
+        if (!bPostAnimDisabledGravityApplied)
+        {
+            ApplyGravityToAllBodies();
+            bPostAnimDisabledGravityApplied = true;
+        }
+    }
     //if (bDisableAnimAfterHit < bDisableAnimAfterHitMax)return;
     // 로컬 Pose 계산
     for (int32 i = 0; i < BoneNum; ++i)
@@ -266,7 +274,16 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     CPUSkinning();
 }
 
-
+void USkeletalMeshComponent::ApplyGravityToAllBodies()
+{
+    for (FBodyInstance* BI : Bodies)
+    {
+        if (BI && BI->BIGameObject && BI->BIGameObject->DynamicRigidBody)
+        {
+            BI->BIGameObject->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, false);
+        }
+    }
+}
 void USkeletalMeshComponent::TickPose(float DeltaTime)
 {
     if (!ShouldTickAnimation())
