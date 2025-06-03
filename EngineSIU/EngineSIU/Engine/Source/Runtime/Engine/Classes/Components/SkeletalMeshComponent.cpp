@@ -72,6 +72,15 @@ void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InPrope
         {
             SetSkeletalMeshAsset(SkelMesh);
         }
+
+        if (InProperties.Contains("PhysicsAssetKey"))
+        {
+            FName PhysicsAssetKey = FName(InProperties["PhysicsAssetKey"]);
+            if (UPhysicsAsset* PhysicsAsset = Cast<UPhysicsAsset>(UAssetManager::Get().GetAsset(EAssetType::PhysicsAsset, PhysicsAssetKey)))
+            {
+                GetSkeletalMeshAsset()->SetPhysicsAsset(PhysicsAsset);
+            }
+        }
     }
     
     if (InProperties.Contains("AnimationMode"))
@@ -130,6 +139,15 @@ void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties
 
     const FName SkelMeshKey = UAssetManager::Get().GetAssetKeyByObject(EAssetType::SkeletalMesh, GetSkeletalMeshAsset());
     OutProperties.Add(TEXT("SkeletalMeshKey"), SkelMeshKey.ToString());
+
+    if (SkelMeshKey != NAME_None)
+    {
+        if (UPhysicsAsset* PhysicsAsset = GetSkeletalMeshAsset()->GetPhysicsAsset())
+        {
+            const FName AssetKey = UAssetManager::Get().GetAssetKeyByObject(EAssetType::PhysicsAsset, PhysicsAsset);
+            OutProperties.Add(TEXT("PhysicsAssetKey"), AssetKey.ToString());
+        }
+    }
 
     OutProperties.Add(TEXT("AnimationMode"), FString::FromInt(static_cast<uint8>(AnimationMode)));
 
