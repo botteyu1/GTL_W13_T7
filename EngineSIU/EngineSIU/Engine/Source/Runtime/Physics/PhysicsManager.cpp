@@ -158,8 +158,10 @@ GameObject FPhysicsManager::CreateBox(const PxVec3& Pos, const PxVec3& HalfExten
     
     PxShape* Shape = Physics->createShape(PxBoxGeometry(HalfExtents), *Material);
     physx::PxFilterData defaultFilterData;
-    defaultFilterData.word0 = 0xFFFFFFFF; // 모든 그룹에 속함 (또는 특정 '일반 객체' 그룹)
-    defaultFilterData.word1 = 0xFFFFFFFF; // 모든 그룹과 충돌함
+    defaultFilterData.word0 = 0; // 모든 그룹에 속함 (또는 특정 '일반 객체' 그룹)
+    defaultFilterData.word1 = 0; // 모든 그룹과 충돌함
+    defaultFilterData.word2 = 0; // 사용자 정의 필터링을 위한 비트
+    defaultFilterData.word3 = 0; // 사용자 정의 필터링을 위한 비트
     Shape->setSimulationFilterData(defaultFilterData);
     Obj.DynamicRigidBody->attachShape(*Shape);
     
@@ -457,8 +459,10 @@ void FPhysicsManager::ApplyShapeCollisionSettings(PxShape* Shape, const FBodyIns
 
     //일단 모든 충돌 활성화
     physx::PxFilterData defaultFilterData;
-    defaultFilterData.word0 = 0xFFFFFFFF; // 모든 그룹에 속함 (또는 특정 '일반 객체' 그룹)
-    defaultFilterData.word1 = 0xFFFFFFFF; // 모든 그룹과 충돌함
+    defaultFilterData.word0 = 0; // 모든 그룹에 속함 (또는 특정 '일반 객체' 그룹)
+    defaultFilterData.word1 = 0; // 모든 그룹과 충돌함
+    defaultFilterData.word2 = 0; // 사용자 정의 필터링을 위한 비트
+    defaultFilterData.word3 = 0; // 사용자 정의 필터링을 위한 비트
     Shape->setSimulationFilterData(defaultFilterData);
     
     Shape->setFlags(ShapeFlags);
