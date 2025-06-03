@@ -7,6 +7,11 @@
 struct FHitResult;
 struct FOverlapInfo;
 
+namespace sol
+{
+    class state;
+}
+
 class USceneComponent : public UActorComponent
 {
     DECLARE_CLASS(USceneComponent, UActorComponent)
@@ -77,6 +82,8 @@ public:
     bool MoveComponent(const FVector& Delta, const FRotator& NewRotation, bool bSweep, FHitResult* OutHit = nullptr);
 
     FTransform GetComponentToWorld() const { return ComponentToWorld; }
+
+    virtual void RegisterLua(sol::state& Lua) {}
 
 protected:
     /** 부모 컴포넌트로부터 상대적인 위치 */

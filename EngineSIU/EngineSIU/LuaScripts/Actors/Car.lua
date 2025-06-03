@@ -28,6 +28,8 @@ end
 
 function OnPressW(dt)
     IsWPressed = true
+    print("W")
+    --
 end
 
 function OnPressS(dt)
@@ -59,6 +61,7 @@ end
 
 
 function Tick(dt)
+    print("Tick")
     local CarLocX = actor.Location.X;
     if CarLocX > EndLoc and not Car.IsBoosted then
         Car:BoostCar()

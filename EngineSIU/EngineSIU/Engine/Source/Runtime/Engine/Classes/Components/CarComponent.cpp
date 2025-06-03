@@ -2,6 +2,9 @@
 #include "Engine/FObjLoader.h"
 #include "GameFramework/Actor.h"
 #include "Engine/Engine.h"
+#include "Lua/LuaScriptComponent.h"
+#include "Lua/LuaScriptManager.h"
+#include "Lua/LuaUtils/LuaTypeMacros.h"
 
 UCarComponent::UCarComponent()
 {
@@ -17,6 +20,7 @@ UObject* UCarComponent::Duplicate(UObject* InOuter)
 
 void UCarComponent::TickComponent(float DeltaTime)
 {
+    MoveCar();
     //if (GetAsyncKeyState('R') & 0x8000)
     //{
     //    Restart();
@@ -79,9 +83,11 @@ void UCarComponent::CreatePhysXGameObject()
     PxQuat BodyQuat = GetComponentRotation().Quaternion().ToPxQuat();
 
     BodyExtent = (AABB.MaxLocation - AABB.MinLocation) * GetComponentScale3D() * 0.5f;
-    BodyExtent.Z *= 0.5f;
+    BodyExtent.Y *= 0.35f;
+    BodyExtent.Z *= 0.25f;
+    BodyExtent.X *= 0.6f;
     PxBoxGeometry CarBodyGeom(BodyExtent.ToPxVec3());
-    CarBody->DynamicRigidBody = Physics->createRigidDynamic(PxTransform(GetComponentLocation().ToPxVec3(), BodyQuat));
+    CarBody->DynamicRigidBody = Physics->createRigidDynamic(PxTransform((GetComponentLocation() + GetUpVector() * BodyExtent.Z).ToPxVec3(), BodyQuat));
     //CarBody->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
     {
         PxShape* BodyShape = Physics->createShape(CarBodyGeom, *DefaultMaterial);
@@ -116,11 +122,16 @@ void UCarComponent::CreatePhysXGameObject()
         Wheels[i] = new GameObject();
         Wheels[i]->DynamicRigidBody = Physics->createRigidDynamic(PxTransform(WheelPosition.ToPxVec3()));
         //Wheels[i]->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
+        FVector WheelSize = (WheelComp[i]->AABB.MaxLocation - WheelComp[i]->AABB.MinLocation) * GetComponentScale3D() * 0.5f;
+        WheelRadius = WheelSize.X;
+        WheelHeight = WheelSize.Y;
         PxShape* WheelShape = CreateWheelShape(Physics, Cooking, WheelScale, 4096);
         WheelShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Wheel, 0xFFFF, 0, 0));
         Wheels[i]->DynamicRigidBody->attachShape(*WheelShape);
         WheelShape->release();
-        PxRigidBodyExt::updateMassAndInertia(*Wheels[i]->DynamicRigidBody, 20.f);
+        PxReal WheelMass = 50.f;
+        PxReal WheelVolume = WheelRadius * WheelRadius * PxPi * 2 * WheelHeight;
+        PxRigidBodyExt::updateMassAndInertia(*Wheels[i]->DynamicRigidBody, WheelMass / WheelVolume);
         Wheels[i]->DynamicRigidBody->setLinearDamping(0.05f);
         Wheels[i]->DynamicRigidBody->setAngularDamping(0.05f);
         Wheels[i]->DynamicRigidBody->setSolverIterationCounts(
@@ -140,8 +151,8 @@ void UCarComponent::CreatePhysXGameObject()
     };
     PxVec3 HubSize[2] =
     {
-        PxVec3(0.2f, (WheelT[0].p.y - WheelT[1].p.y) * 0.5f, 0.2f),
-        PxVec3(0.2f, (WheelT[2].p.y - WheelT[3].p.y) * 0.5f, 0.2f)
+        PxVec3(0.02f, (WheelT[0].p.y - WheelT[1].p.y) * 0.5f, 0.02f),
+        PxVec3(0.02f, (WheelT[2].p.y - WheelT[3].p.y) * 0.5f, 0.02f)
     };
     for (int i = 0; i < 1; ++i)
     {
@@ -153,7 +164,7 @@ void UCarComponent::CreatePhysXGameObject()
         HubShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Hub, 0xFFFF, 0, 0));
         Hub[i]->DynamicRigidBody->attachShape(*HubShape);
         PxReal HubVolume = 8 * HubSize[0].x * HubSize[0].y * HubSize[0].z;
-        PxReal HubMass = 150.f;
+        PxReal HubMass = 200.f;
         PxRigidBodyExt::updateMassAndInertia(*Hub[i]->DynamicRigidBody, HubMass/HubVolume);
         Hub[i]->DynamicRigidBody->setLinearDamping(0.05f);
         Hub[i]->DynamicRigidBody->setAngularDamping(0.05f);
@@ -247,7 +258,8 @@ void UCarComponent::CreatePhysXGameObject()
 
 void UCarComponent::Spawn()
 {
-    SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/Car/Car_RemoveWheel.obj"));
+    //SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/Car/Car_RemoveWheel.obj"));
+    SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/MarioKart/MarioKartBody.obj"));
     FMatrix CarMatrix = GetWorldMatrix();
     SlopeAngle = FMath::DegreesToRadians(GetComponentRotation().Pitch);
     for (int i = 0; i < 4; ++i)
@@ -257,8 +269,11 @@ void UCarComponent::Spawn()
         AActor* Owner = GetOwner();
         WheelComp[i] = GetOwner()->AddComponent<UStaticMeshComponent>();
         WheelComp[i]->SetupAttachment(GetOwner()->GetRootComponent());
-        WheelComp[i]->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/Car/tire.obj"));
-        WheelComp[i]->SetRelativeTransform(FTransform(WheelPos[i] - FVector(0, 0, 1.5f)));
+        if(i<2)
+            WheelComp[i]->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/MarioKart/MarioKartFrontW.obj"));
+        else
+            WheelComp[i]->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/MarioKart/MarioKartRearW.obj"));
+        WheelComp[i]->SetRelativeTransform(FTransform(WheelPos[i]));
         //WheelComp[i]->SetRelativeRotation(WheelWorldMatrix.GetMatrixWithoutScale().ToQuat());
         //WheelComp[i]->SetWorldScale3D(WheelWorldMatrix.GetScaleVector());
     }
@@ -276,17 +291,91 @@ void UCarComponent::SetProperties(const TMap<FString, FString>& InProperties)
 
 void UCarComponent::MoveCar()
 {
+    float CarLocX = GetComponentLocation().X;
+    float EndLoc = 100 * FMath::Cos(SlopeAngle) + 1.f;
+    if (CarLocX > EndLoc && !bBoosted)
+    {
+        ApplyForceToActors(SlopeAngle, FinalBoost);
+        UE_LOG(ELogLevel::Display, "Boosted!: %f", FinalBoost);
+        bBoosted = true;
+        return;
+    }
+
     if (!Wheels[0])
         return;
+    if (!bBoosted)
+    {
+        if (GetAsyncKeyState('W') & 0x8000)
+        {
+            if (Velocity < 0)
+                Velocity = 0;
+            Velocity += 0.1f;
+            FinalBoost += 20.f * Velocity / MaxVelocity;
+            //Velocity = 20.f;
+        }
+        else
+        {
+            if (Velocity > 0)
+                Velocity -= 0.1f;
+            else if (Velocity < 0)
+                Velocity += 0.1f;
+            if (FMath::Abs(Velocity) < 0.1f)
+                Velocity = 0.f;
+            FinalBoost -= 5.f;
+        }
 
-    //if (!bBoosted && FinalBoost > 0.f)
-    //    UE_LOG(ELogLevel::Display, "Boost: %f", FinalBoost);        
+        if (GetAsyncKeyState('A') & 0x8000)
+        {
+            SteerAngle = DeltaSteerAngle;
+        }
+        else if (GetAsyncKeyState('D') & 0x8000)
+        {
+            SteerAngle = -DeltaSteerAngle;
+        }
+        else
+        {
+            float CurSteerAngle = GetCurSteerAngle();
+            if (CurSteerAngle > 0.1f)
+                SteerAngle = -DeltaSteerAngle;
+            else if (CurSteerAngle < -0.1f)
+                SteerAngle = DeltaSteerAngle;
+            if (FMath::Abs(CurSteerAngle) < 0.01)
+                SteerAngle = 0;
+        }
+    }
+    else
+    {
+        if (Velocity > 0)
+            Velocity -= 0.1f;
+        else if (Velocity < 0)
+            Velocity += 0.1f;
+        if (FMath::Abs(Velocity) < 0.1f)
+            Velocity = 0.f;
+
+        float CurSteerAngle = GetCurSteerAngle();
+        if (CurSteerAngle > 0.1f)
+            SteerAngle = -DeltaSteerAngle * 3.f;
+        else if (CurSteerAngle < -0.1f)
+            SteerAngle = DeltaSteerAngle * 3.f;
+        if (FMath::Abs(CurSteerAngle) < 0.01)
+            SteerAngle = 0;
+
+        if (GetCurSpeed() < 0.1f)
+        {
+            if (GetAsyncKeyState('R') & 0x8000)
+                Restart();
+        }
+    }
+    FinalBoost = FMath::Clamp(FinalBoost, 0.f, MaxBoost);
+    if (!bBoosted && FinalBoost > 0.f)
+        UE_LOG(ELogLevel::Display, "Boost: %f", FinalBoost);
+
+    Velocity = FMath::Clamp(Velocity, 0.f, MaxVelocity);
 
     for (int i = 0; i < 4; ++i)
     {
         WheelJoints[i]->setDriveVelocity(Velocity);
     }
-
     SteeringJoint->setDriveVelocity(SteerAngle);
 }
 
@@ -357,6 +446,9 @@ void UCarComponent::UpdateFromPhysics(GameObject* PhysicsActor, UStaticMeshCompo
     FQuat Quat = WorldMatrix.GetMatrixWithoutScale().ToQuat();
     FVector Scale = WorldMatrix.GetScaleVector();
 
+    if (PhysicsActor == CarBody)
+        Location.Z -= BodyExtent.Z;
+
     ActualActor->SetWorldLocation(Location);
     ActualActor->SetWorldRotation(FRotator(Quat));
 }
@@ -405,7 +497,8 @@ void UCarComponent::Restart()
         Wheels[i]->DynamicRigidBody->setGlobalPose(InitialWheelT[i]);
     }
     Velocity = 0; 
-    bBoosted = 0;
+    bBoosted = false;
+    FinalBoost = 0;
 
     CarBody->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
     for (int i = 0; i < 4; ++i)
@@ -413,4 +506,35 @@ void UCarComponent::Restart()
         Wheels[i]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
     }
     Hub[0]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE); 
+}
+
+void UCarComponent::RegisterLua(sol::state& Lua)
+{
+    DEFINE_LUA_TYPE_NO_PARENT(UCarComponent,
+        "Velocity", sol::property(
+            &UCarComponent::GetVelocity,
+            &UCarComponent::SetVelocity
+        ),
+        "SteerAngle", sol::property(
+            &UCarComponent::GetSteerAngle,
+            &UCarComponent::SetSteerAngle
+        ),
+        "Boost", sol::property(
+            &UCarComponent::GetFinalBoost,
+            &UCarComponent::SetFinalBoost
+        ),
+        "SlopeAngle", sol::property(
+            &UCarComponent::GetSlopeAngle,
+            &UCarComponent::SetSlopeAngle
+        ),
+        "IsBoosted", sol::property(
+            &UCarComponent::IsBoosted,
+            &UCarComponent::SetBoosted
+        ),
+        "BoostCar", &UCarComponent::BoostCar,
+        "Move", &UCarComponent::MoveCar,
+        "CurSteerAngle", &UCarComponent::GetCurSteerAngle,
+        "Speed", &UCarComponent::GetCurSpeed,
+        "Restart", &UCarComponent::Restart
+    )
 }
