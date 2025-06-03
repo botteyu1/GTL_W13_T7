@@ -205,17 +205,17 @@ void UInputComponent::InputKey(const FKeyEvent& InKeyEvent)
             break;
         }
     case 'R':
-    {
-        if (InKeyEvent.GetInputEvent() == IE_Pressed)
         {
-            PressedKeys.Add(EKeys::R);
+            if (InKeyEvent.GetInputEvent() == IE_Pressed)
+            {
+                PressedKeys.Add(EKeys::R);
+            }
+            else if (InKeyEvent.GetInputEvent() == IE_Released)
+            {
+                PressedKeys.Remove(EKeys::R);
+            }
+            break;
         }
-        else if (InKeyEvent.GetInputEvent() == IE_Released)
-        {
-            PressedKeys.Remove(EKeys::R);
-        }
-        break;
-    }
     case 'Z':
         {
             if (InKeyEvent.GetInputEvent() == IE_Pressed)

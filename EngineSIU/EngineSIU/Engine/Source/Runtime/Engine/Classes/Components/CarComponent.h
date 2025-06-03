@@ -55,6 +55,8 @@ public:
 
     void Restart();
 
+    virtual void RegisterLua(sol::state& Lua) override;
+
 private:
     PxMaterial* DefaultMaterial = nullptr;
     GameObject* CarBody = nullptr;
@@ -63,20 +65,20 @@ private:
     PxRevoluteJoint* WheelJoints[4] = { nullptr }; //FR, FL, RR, RL
     PxRevoluteJoint* SteeringJoint = nullptr;
     float MaxSteerAngle = PxPi / 18.f;
-    float DeltaSteerAngle = PxPi / 9.f;
+    float DeltaSteerAngle = PxPi / 6.f;
     float SteerAngle = 0.0f;
     float MaxDriveTorque = 1000.0f;
     float Velocity = 0.f;
-    float MaxVelocity = 30.f;
+    float MaxVelocity = 50.f;
     float FinalBoost = 0.f;
-    float MaxBoost = 4000.f;
+    float MaxBoost = 3000.f;
     bool bBoosted = false;
 
     UStaticMeshComponent* WheelComp[4] = { nullptr };
 
     bool bHasBody = false;
 
-    FVector CarBodyPos = FVector(0, 0, 1.5f);
+    FVector CarBodyPos = FVector(0, 0, 0);
     FVector BodyExtent;
     float WheelRadius = 1.2f;
     float WheelWidth = 0.6f;
@@ -88,10 +90,10 @@ private:
 
     const FVector WheelPos[4] =
     {
-        {   4.f, 2.5f, 0.5f}, //FR
-        {   4.f, -2.5f, 0.5f}, //FL
-        {-4.65f, 2.5f, 0.5f}, //RR
-        {-4.65f, -2.5f, 0.5f}  //RL
+        {  0.7f,  0.8f, -0.2f}, //FR
+        {  0.7f, -0.8f, -0.2f}, //FL
+        {-0.95f,  0.9f, -0.1f}, //RR
+        {-0.95f, -0.9f, -0.1f}  //RL
     };
 
     PxTransform InitialBodyT;
