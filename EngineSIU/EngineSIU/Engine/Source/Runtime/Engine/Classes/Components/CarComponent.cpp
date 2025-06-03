@@ -179,6 +179,7 @@ void UCarComponent::CreatePhysXGameObject()
             /*minPositionIters=*/8,
             /*minVelocityIters=*/4
         );
+        
         Scene->addActor(*Wheels[i]->DynamicRigidBody);
     }
     //허브
@@ -214,6 +215,10 @@ void UCarComponent::CreatePhysXGameObject()
         Hub[i]->DynamicRigidBody->setSolverIterationCounts(
             /*minPositionIters=*/12,
             /*minVelocityIters=*/6
+        );
+        Hub[i]->DynamicRigidBody->setRigidDynamicLockFlags(
+            PxRigidDynamicLockFlag::eLOCK_ANGULAR_X |
+            PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z
         );
         Scene->addActor(*Hub[i]->DynamicRigidBody);
     }

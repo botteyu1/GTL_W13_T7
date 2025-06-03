@@ -68,7 +68,7 @@ private:
     GameObject* Wheels[4] = { nullptr }; //FR, FL, RR, RL
     PxRevoluteJoint* WheelJoints[4] = { nullptr }; //FR, FL, RR, RL
     PxRevoluteJoint* SteeringJoint = nullptr;
-    float MaxSteerAngle = PxPi / 18.f;
+    float MaxSteerAngle = PxPi / 6.f;
     float DeltaSteerAngle = PxPi / 6.f;
     float SteerAngle = 0.0f;
     float MaxDriveTorque = 50000.0f;
