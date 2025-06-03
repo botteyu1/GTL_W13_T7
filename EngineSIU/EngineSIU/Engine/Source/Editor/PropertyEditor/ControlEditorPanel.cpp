@@ -38,6 +38,8 @@
 #include "GameFramework/PlayerController.h"
 #include "Renderer/CompositingPass.h"
 #include <Engine/FbxLoader.h>
+
+#include "Animation/SkeletalMeshActor.h"
 #include "Engine/Classes/Engine/AssetManager.h"
 #include "Engine/Contents/Actors/FreeCameraActor.h"
 #include "Engine/Contents/Actors/ObjectViewCameraActor.h"
@@ -45,6 +47,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Actors/CarActor.h"
 #include "Engine/Contents/Actors/DestructibleStaticMesh"
+
 
 ControlEditorPanel::ControlEditorPanel()
 {
@@ -509,7 +512,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                 }
                 case OBJ_SKELETALMESH:
                     {
-                        SpawnedActor = World->SpawnActor<AActor>();
+                        SpawnedActor = World->SpawnActor<ASkeletalMeshActor>();
                         SpawnedActor->SetActorTickInEditor(true);
                         auto* MeshComp = SpawnedActor->AddComponent<USkeletalMeshComponent>();
                         SpawnedActor->SetRootComponent(MeshComp);

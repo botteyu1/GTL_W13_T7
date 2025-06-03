@@ -1,5 +1,4 @@
 #include "GameMode.h"
-#include "LuaScripts/LuaScriptComponent.h"
 #include "EngineLoop.h"
 #include "SoundManager.h"
 #include "InputCore/InputCoreTypes.h"
@@ -52,8 +51,7 @@ AGameMode::~AGameMode()
 
 void AGameMode::InitializeComponent()
 {
-    //ULuaScriptComponent* LuaScriptComp = this->AddComponent<ULuaScriptComponent>();
-    //RootComponent = this->AddComponent<USceneComponent>("USceneComponent_0");
+
 }
 
 UObject* AGameMode::Duplicate(UObject* InOuter)

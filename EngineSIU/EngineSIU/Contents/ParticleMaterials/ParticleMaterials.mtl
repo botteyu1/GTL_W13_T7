@@ -12,6 +12,7 @@ newmtl Flame
 map_Kd Flame.png
 
 newmtl Torchfire1
+Ke 5.0 2.0 0
 map_Kd Torchfire_D.png
 
 newmtl Torchfire2

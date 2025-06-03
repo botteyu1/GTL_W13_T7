@@ -44,6 +44,13 @@ float4 main(PS_Input Input) : SV_TARGET
         Color *= MaterialTextures[TEXTURE_SLOT_DIFFUSE].Sample(MaterialSamplers[TEXTURE_SLOT_DIFFUSE], UV);        
     }
 
+    float3 E = Material.EmissiveColor;
+    
+    if (E.x != 0.f || E.y != 0.f || E.z != 0.f) // E의 x, y, z 중 하나라도 0이 아니면
+    {
+        Color *= float4(Material.EmissiveColor, 1.0f);
+    }
+
     FinalColor = Color;
     
     return FinalColor;
