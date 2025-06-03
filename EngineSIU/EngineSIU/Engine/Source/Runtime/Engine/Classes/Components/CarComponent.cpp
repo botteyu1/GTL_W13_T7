@@ -413,7 +413,7 @@ void UCarComponent::MoveCar()
         if (FMath::Abs(CurSteerAngle) < 0.01)
             SteerAngle = 0;
 
-        if (GetCurSpeed() < 5.f)
+        //if (GetCurSpeed() < 5.f)
         {
             if (GetAsyncKeyState('R') & 0x8000)
                 Restart();
@@ -582,6 +582,18 @@ void UCarComponent::Restart()
     }
     Hub[0]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
     Hub[1]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
+
+    CarBody->DynamicRigidBody->setLinearVelocity(PxVec3(0));
+    CarBody->DynamicRigidBody->setAngularVelocity(PxVec3(0));
+    for (int i = 0; i < 4; ++i)
+    {
+        Wheels[i]->DynamicRigidBody->setLinearVelocity(PxVec3(0));
+        Wheels[i]->DynamicRigidBody->setAngularVelocity(PxVec3(0));
+    }
+    Hub[0]->DynamicRigidBody->setLinearVelocity(PxVec3(0));
+    Hub[0]->DynamicRigidBody->setAngularVelocity(PxVec3(0));
+    Hub[1]->DynamicRigidBody->setLinearVelocity(PxVec3(0));
+    Hub[1]->DynamicRigidBody->setAngularVelocity(PxVec3(0));
 
     FireCount += 1;
 }
