@@ -644,14 +644,14 @@ void FEditorViewportClient::UpdateViewMatrix()
             break;
         }
     }
-    if (GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE && false) //여기 false 있으면 꼭 수정!!!
+    if (GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE) //여기 false 있으면 꼭 수정!!!
     {
         if (Car)
         {
-            FVector Front = Car->GetForwardVector();
-            FVector Pos = Car->GetComponentLocation() + Front * -20.f + FVector(0, 0, 7.5f);
+            FVector Front = FVector(1, 0, 0);
+            FVector Pos = Car->GetComponentLocation() + Front * -7.5f + FVector(0, 0, 7.5f);
             View = JungleMath::CreateViewMatrix(
-                Pos, Car->GetComponentLocation(), FVector(0, 0, 1)
+                Pos, Car->GetComponentLocation() + Front * 10.f, FVector(0, 0, 1)
             );
         }
 
