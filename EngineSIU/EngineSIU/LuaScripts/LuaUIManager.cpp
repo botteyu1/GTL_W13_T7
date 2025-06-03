@@ -7,6 +7,15 @@
 #include "Engine/Classes/Engine/Texture.h"
 #include "Engine/EditorEngine.h"
 #include "Engine/Engine.h"
+#include "Particles/ParticleSystemComponent.h"
+
+void LuaUIManager::UpdateAll(float DeltaTime)
+{
+    // 점수판 UI 업데이트
+
+    // TODO: 향후 추가적인 동적 UI 업데이트가 있다면 여기에 추가
+}
+
 
 void LuaUIManager::CreateUI(FName InName)
 {
@@ -144,7 +153,7 @@ void LuaUIManager::DrawLuaUIs()
 
 void LuaUIManager::TestCODE()
 {
-    CreateText("TestTEXT", RectTransform(0, 0, 100, 100, AnchorDirection::MiddleCenter), 10, FString("Chan GOOOD!"), FName("Default"), 30, FLinearColor(1, 0, 0, 1));
+    /*CreateText("TestTEXT", RectTransform(0, 0, 100, 100, AnchorDirection::MiddleCenter), 10, FString("Chan GOOOD!"), FName("Default"), 30, FLinearColor(1, 0, 0, 1));
     CreateImage("TestImage", RectTransform(-100, -100, 200, 200, AnchorDirection::MiddleCenter), 3, FName("ExplosionColor"), FLinearColor(1, 1, 1, 1));
     CreateButton("TestButton", RectTransform(-100, -100, 200, 200, AnchorDirection::MiddleCenter), 15, FString("TEstbutonFUn"));
 
@@ -154,13 +163,14 @@ void LuaUIManager::TestCODE()
 
     /*DeleteUI("TestTEXT");
     DeleteUI("TestImage");
-    DeleteUI("TestButton");*/
+    DeleteUI("TestButton");#1#
 
     auto GotText = GetTextUI("TestTEXT");
     auto GotImage = GetImageUI("TestImage");
-    auto GotButton = GetButtonUI("TestButton");
+    auto GotButton = GetButtonUI("TestButton");*/
 
 }
+
 
 void LuaUIManager::UpdateCanvasRectTransform(HWND hWnd)
 {

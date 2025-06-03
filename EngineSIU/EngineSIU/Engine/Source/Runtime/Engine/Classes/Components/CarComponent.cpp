@@ -5,6 +5,10 @@
 #include "Lua/LuaScriptComponent.h"
 #include "Lua/LuaScriptManager.h"
 #include "Lua/LuaUtils/LuaTypeMacros.h"
+#include <Camera/CameraComponent.h>
+#include <World/World.h>
+#include <Engine/Contents/Actors/FreeCameraActor.h>
+#include <GameFramework/SpringArmComponent.h>
 
 UCarComponent::UCarComponent()
 {
@@ -21,9 +25,34 @@ UObject* UCarComponent::Duplicate(UObject* InOuter)
 void UCarComponent::TickComponent(float DeltaTime)
 {
     MoveCar();
-    //if (GetAsyncKeyState('R') & 0x8000)
+    if (Camera)
+    {
+        FVector Pos = GetComponentLocation() + FVector(1, 0, 0) * -15.f + FVector(0, 0, 7.5f);
+        Camera->SetWorldLocation(Pos);
+        FVector Target = GetComponentLocation() + FVector(1, 0, 0) * 10.f;
+        Camera->SetLookTarget(Target);
+        Camera->SetWorldRotation(FQuat::Identity);
+    }
+    if (bBoosted)
+        bCarDriving = false;
+    else
+        bCarDriving = true;
+    UE_LOG(ELogLevel::Display, "Is Driving: %d", static_cast<int>(bCarDriving));
+    //if (bRestarted)
     //{
-    //    Restart();
+    //    RestartTime += DeltaTime;
+    //    if (RestartTime > 0.5f)
+    //    {
+    //        CarBody->DynamicRigidBody->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
+    //        Hub[0]->DynamicRigidBody->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
+    //        Hub[1]->DynamicRigidBody->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
+    //        for (int i = 0; i < 4; ++i)
+    //        {
+    //            Wheels[i]->DynamicRigidBody->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
+    //        }
+    //        RestartTime = 0.f;
+    //        bRestarted = false;
+    //    }
     //}
 }
 
@@ -65,6 +94,12 @@ void UCarComponent::CreatePhysXGameObject()
     }
     for (auto& Comp : DestroyComps)
     {
+        if (UCameraComponent* DuplicateCamera = Cast<UCameraComponent>(Comp))
+        {
+            Camera = DuplicateCamera;
+            Camera->SetRelativeLocation(FVector(1, 0, 0) * -15.f + FVector(0, 0, 7.5f));
+            continue;
+        }
         Comp->DestroyComponent();
     }
     Spawn();
@@ -73,7 +108,7 @@ void UCarComponent::CreatePhysXGameObject()
     PxCooking* Cooking = GEngine->PhysicsManager->GetCooking();
     PxScene* Scene = GEngine->PhysicsManager->GetScene(GEngine->ActiveWorld);
     if (!DefaultMaterial)
-        DefaultMaterial = Physics->createMaterial(1.f, 0.9f, 0.f);
+        DefaultMaterial = Physics->createMaterial(1.f, 0.7f, 0.f);
 
     PxQuat CarRotation = GetOwner()->GetActorRotation().Quaternion().ToPxQuat();
 
@@ -83,11 +118,12 @@ void UCarComponent::CreatePhysXGameObject()
     PxQuat BodyQuat = GetComponentRotation().Quaternion().ToPxQuat();
 
     BodyExtent = (AABB.MaxLocation - AABB.MinLocation) * GetComponentScale3D() * 0.5f;
-    BodyExtent.Y *= 0.35f;
-    BodyExtent.Z *= 0.25f;
-    BodyExtent.X *= 0.6f;
+    BodyExtent.Y *= 0.65f;
+    BodyExtent.Z *= 0.3f;
+    BodyExtent.X *= 0.45f;
     PxBoxGeometry CarBodyGeom(BodyExtent.ToPxVec3());
-    CarBody->DynamicRigidBody = Physics->createRigidDynamic(PxTransform((GetComponentLocation() + GetUpVector() * BodyExtent.Z).ToPxVec3(), BodyQuat));
+    CarBody->DynamicRigidBody = Physics->createRigidDynamic(
+        PxTransform((GetComponentLocation() + GetUpVector() * BodyExtent.Z - GetForwardVector() * BodyExtent.X * 0.3f).ToPxVec3(), BodyQuat));
     //CarBody->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
     {
         PxShape* BodyShape = Physics->createShape(CarBodyGeom, *DefaultMaterial);
@@ -95,20 +131,25 @@ void UCarComponent::CreatePhysXGameObject()
         CarBody->DynamicRigidBody->attachShape(*BodyShape);
         BodyShape->release();
         PxReal volume = 8 * BodyExtent.X * BodyExtent.Y * BodyExtent.Z;
-        PxReal density = 1000.f / volume;
+        PxReal density = 3000.f / volume;
         PxRigidBodyExt::updateMassAndInertia(*CarBody->DynamicRigidBody, density);
 
         //PxVec3 inertia = CarBody->DynamicRigidBody->getMassSpaceInertiaTensor();
-        //// 예시로 yaw축 관성만 50%로 줄이려면
         //inertia.z *= 0.5f;
         //CarBody->DynamicRigidBody->setMassSpaceInertiaTensor(inertia);
 
         CarBody->DynamicRigidBody->setLinearDamping(0.1f);
         CarBody->DynamicRigidBody->setAngularDamping(0.1f);
-        CarBody->DynamicRigidBody->setSolverIterationCounts(  
+        CarBody->DynamicRigidBody->setSolverIterationCounts(
             /*minPositionIters=*/12,
             /*minVelocityIters=*/6
         );
+        CarBody->DynamicRigidBody->setRigidDynamicLockFlags(
+            PxRigidDynamicLockFlag::eLOCK_ANGULAR_X
+        );
+        BodyInstance = new FBodyInstance(this);
+        CarBody->DynamicRigidBody->userData = BodyInstance;
+        BodyInstance->BIGameObject = CarBody;
         Scene->addActor(*CarBody->DynamicRigidBody);
     }
     if (!WheelComp[0])
@@ -129,32 +170,33 @@ void UCarComponent::CreatePhysXGameObject()
         WheelShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Wheel, 0xFFFF, 0, 0));
         Wheels[i]->DynamicRigidBody->attachShape(*WheelShape);
         WheelShape->release();
-        PxReal WheelMass = 50.f;
+        PxReal WheelMass = 100.f;
         PxReal WheelVolume = WheelRadius * WheelRadius * PxPi * 2 * WheelHeight;
         PxRigidBodyExt::updateMassAndInertia(*Wheels[i]->DynamicRigidBody, WheelMass / WheelVolume);
-        Wheels[i]->DynamicRigidBody->setLinearDamping(0.05f);
-        Wheels[i]->DynamicRigidBody->setAngularDamping(0.05f);
+        Wheels[i]->DynamicRigidBody->setLinearDamping(0.01f);
+        Wheels[i]->DynamicRigidBody->setAngularDamping(0.01f);
         Wheels[i]->DynamicRigidBody->setSolverIterationCounts(
             /*minPositionIters=*/8,
             /*minVelocityIters=*/4
         );
+        
         Scene->addActor(*Wheels[i]->DynamicRigidBody);
     }
     //허브
     PxTransform WheelT[4];
     for (int i = 0; i < 4; ++i)
         WheelT[i] = Wheels[i]->DynamicRigidBody->getGlobalPose();
-    PxVec3 HubPositions[2] = 
-    { 
+    PxVec3 HubPositions[2] =
+    {
         {(WheelT[0].p + WheelT[1].p) * 0.5f},
         {(WheelT[2].p + WheelT[3].p) * 0.5f}
     };
     PxVec3 HubSize[2] =
     {
-        PxVec3(0.02f, (WheelT[0].p.y - WheelT[1].p.y) * 0.5f, 0.02f),
-        PxVec3(0.02f, (WheelT[2].p.y - WheelT[3].p.y) * 0.5f, 0.02f)
+        PxVec3(0.05f, (WheelT[0].p.y - WheelT[1].p.y) * 0.5f, 0.05f),
+        PxVec3(0.05f, (WheelT[2].p.y - WheelT[3].p.y) * 0.5f, 0.05f)
     };
-    for (int i = 0; i < 1; ++i)
+    for (int i = 0; i < 2; ++i)
     {
         PxTransform HubT(HubPositions[i], CarRotation);
         Hub[i] = new GameObject();
@@ -163,14 +205,20 @@ void UCarComponent::CreatePhysXGameObject()
         PxShape* HubShape = Physics->createShape(PxBoxGeometry(HubSize[i]), *DefaultMaterial);
         HubShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Hub, 0xFFFF, 0, 0));
         Hub[i]->DynamicRigidBody->attachShape(*HubShape);
-        PxReal HubVolume = 8 * HubSize[0].x * HubSize[0].y * HubSize[0].z;
-        PxReal HubMass = 200.f;
-        PxRigidBodyExt::updateMassAndInertia(*Hub[i]->DynamicRigidBody, HubMass/HubVolume);
-        Hub[i]->DynamicRigidBody->setLinearDamping(0.05f);
-        Hub[i]->DynamicRigidBody->setAngularDamping(0.05f);
+        PxReal HubVolume = 8 * HubSize[i].x * HubSize[i].y * HubSize[i].z;
+        PxReal HubMass = 2000.f;
+        if (i == 1)
+            HubMass = 200.f;
+        PxRigidBodyExt::updateMassAndInertia(*Hub[i]->DynamicRigidBody, HubMass / HubVolume);
+        Hub[i]->DynamicRigidBody->setLinearDamping(0.01f);
+        Hub[i]->DynamicRigidBody->setAngularDamping(0.01f);
         Hub[i]->DynamicRigidBody->setSolverIterationCounts(
             /*minPositionIters=*/12,
             /*minVelocityIters=*/6
+        );
+        Hub[i]->DynamicRigidBody->setRigidDynamicLockFlags(
+            PxRigidDynamicLockFlag::eLOCK_ANGULAR_X |
+            PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z
         );
         Scene->addActor(*Hub[i]->DynamicRigidBody);
     }
@@ -181,26 +229,30 @@ void UCarComponent::CreatePhysXGameObject()
     //Wheel-Hub (Front)
     for (int i = 0; i < 2; ++i)
     {
-        /*PxTransform WheelT = Wheels[i]->DynamicRigidBody->getGlobalPose();
-        PxVec3 JointPos = WheelT.p;
-        PxTransform JointT(JointPos, XtoY);
-        PxTransform BodyLocal = CarBody->DynamicRigidBody->getGlobalPose().getInverse() * JointT;
-            PxTransform WheelLocal = WheelT.getInverse() * JointT;
-
-        WheelJoints[i] = PxRevoluteJointCreate(
-            *Physics,
-            CarBody->DynamicRigidBody, BodyLocal,
-            Wheels[i]->DynamicRigidBody, WheelLocal
-        );*/
         PxTransform WheelT = Wheels[i]->DynamicRigidBody->getGlobalPose();
         PxVec3 JointPos = WheelT.p;
         PxTransform JointT(JointPos, XtoY);
         PxTransform HubLocal = Hub[0]->DynamicRigidBody->getGlobalPose().getInverse() * JointT;
         PxTransform WheelLocal = WheelT.getInverse() * JointT;
-        
+
         WheelJoints[i] = PxRevoluteJointCreate(
             *Physics,
             Hub[0]->DynamicRigidBody, HubLocal,
+            Wheels[i]->DynamicRigidBody, WheelLocal
+        );
+    }
+    //Wheel-Hub (Rear)
+    for (int i = 2; i < 4; ++i)
+    {
+        PxTransform WheelT = Wheels[i]->DynamicRigidBody->getGlobalPose();
+        PxVec3 JointPos = WheelT.p;
+        PxTransform JointT(JointPos);
+        PxTransform HubLocal = Hub[1]->DynamicRigidBody->getGlobalPose().getInverse() * JointT;
+        PxTransform WheelLocal = WheelT.getInverse() * JointT;
+
+        PxFixedJoint* HubJoint = PxFixedJointCreate(
+            *Physics,
+            Hub[1]->DynamicRigidBody, HubLocal,
             Wheels[i]->DynamicRigidBody, WheelLocal
         );
     }
@@ -249,7 +301,8 @@ void UCarComponent::CreatePhysXGameObject()
 
     //초기위치 저장
     InitialBodyT = CarBodyT;
-    InitialHubT = Hub[0]->DynamicRigidBody->getGlobalPose();
+    InitialHubT[0] = Hub[0]->DynamicRigidBody->getGlobalPose();
+    InitialHubT[1] = Hub[1]->DynamicRigidBody->getGlobalPose();
     for (int i = 0; i < 4; ++i)
     {
         InitialWheelT[i] = Wheels[i]->DynamicRigidBody->getGlobalPose();
@@ -269,7 +322,7 @@ void UCarComponent::Spawn()
         AActor* Owner = GetOwner();
         WheelComp[i] = GetOwner()->AddComponent<UStaticMeshComponent>();
         WheelComp[i]->SetupAttachment(GetOwner()->GetRootComponent());
-        if(i<2)
+        if (i < 2)
             WheelComp[i]->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/MarioKart/MarioKartFrontW.obj"));
         else
             WheelComp[i]->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/MarioKart/MarioKartRearW.obj"));
@@ -292,26 +345,32 @@ void UCarComponent::SetProperties(const TMap<FString, FString>& InProperties)
 void UCarComponent::MoveCar()
 {
     float CarLocX = GetComponentLocation().X;
-    float EndLoc = 100 * FMath::Cos(SlopeAngle) + 1.f;
-    if (CarLocX > EndLoc && !bBoosted)
+    float EndLoc = 50 * FMath::Cos(SlopeAngle) + 130.f;
+
+    if (!Wheels[0])
+        return;
+
+    if (GetAsyncKeyState('Q') & 0x8000 && !bBoosted)
     {
-        ApplyForceToActors(SlopeAngle, FinalBoost);
+        ApplyForceToActors(SlopeAngle, MaxBoost);
         UE_LOG(ELogLevel::Display, "Boosted!: %f", FinalBoost);
         bBoosted = true;
         return;
     }
 
-    if (!Wheels[0])
-        return;
+    FVector Up = GetUpVector();
+    if (Up.Dot(FVector(0, 0, 1)) < 0)
+    {
+        bBoosted = true;
+    }
+
     if (!bBoosted)
     {
         if (GetAsyncKeyState('W') & 0x8000)
         {
             if (Velocity < 0)
                 Velocity = 0;
-            Velocity += 0.1f;
-            FinalBoost += 20.f * Velocity / MaxVelocity;
-            //Velocity = 20.f;
+            Velocity += 0.15f;
         }
         else
         {
@@ -321,7 +380,6 @@ void UCarComponent::MoveCar()
                 Velocity += 0.1f;
             if (FMath::Abs(Velocity) < 0.1f)
                 Velocity = 0.f;
-            FinalBoost -= 5.f;
         }
 
         if (GetAsyncKeyState('A') & 0x8000)
@@ -345,12 +403,7 @@ void UCarComponent::MoveCar()
     }
     else
     {
-        if (Velocity > 0)
-            Velocity -= 0.1f;
-        else if (Velocity < 0)
-            Velocity += 0.1f;
-        if (FMath::Abs(Velocity) < 0.1f)
-            Velocity = 0.f;
+        Velocity = 0.f;
 
         float CurSteerAngle = GetCurSteerAngle();
         if (CurSteerAngle > 0.1f)
@@ -360,7 +413,7 @@ void UCarComponent::MoveCar()
         if (FMath::Abs(CurSteerAngle) < 0.01)
             SteerAngle = 0;
 
-        if (GetCurSpeed() < 0.1f)
+        //if (GetCurSpeed() < 5.f)
         {
             if (GetAsyncKeyState('R') & 0x8000)
                 Restart();
@@ -447,7 +500,10 @@ void UCarComponent::UpdateFromPhysics(GameObject* PhysicsActor, UStaticMeshCompo
     FVector Scale = WorldMatrix.GetScaleVector();
 
     if (PhysicsActor == CarBody)
+    {
         Location.Z -= BodyExtent.Z;
+        Location.X += BodyExtent.X * 0.3f;
+    }
 
     ActualActor->SetWorldLocation(Location);
     ActualActor->SetWorldRotation(FRotator(Quat));
@@ -460,6 +516,17 @@ void UCarComponent::ApplyForceToActors(float Angle, float Magnitude)
     for (int i = 0; i < 4; ++i)
         Wheels[i]->DynamicRigidBody->addForce(Direction * Magnitude, PxForceMode::eIMPULSE);
     Hub[0]->DynamicRigidBody->addForce(Direction * Magnitude, PxForceMode::eIMPULSE);
+
+    for (auto It : TObjectRange<AFreeCameraActor>())
+    {
+        if (It->GetWorld() == GEngine->ActiveWorld)
+        {
+            APlayerController* PlayerController = GEngine->ActiveWorld->GetPlayerController();
+            FViewTargetTransitionParams TransitionParams;
+            TransitionParams.BlendTime = 0.f; // 0.5초 동안 부드럽게 전환
+            PlayerController->SetViewTarget(It, TransitionParams);
+        }
+    }
 }
 
 void UCarComponent::BoostCar()
@@ -490,13 +557,21 @@ float UCarComponent::GetCurSpeed()
 
 void UCarComponent::Restart()
 {
+    //CarBody->DynamicRigidBody->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+    //Hub[0]->DynamicRigidBody->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+    //Hub[1]->DynamicRigidBody->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+    //for (int i = 0; i < 4; ++i)
+    //{
+    //    Wheels[i]->DynamicRigidBody->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+    //}
     CarBody->DynamicRigidBody->setGlobalPose(InitialBodyT);
-    Hub[0]->DynamicRigidBody->setGlobalPose(InitialHubT);
+    Hub[0]->DynamicRigidBody->setGlobalPose(InitialHubT[0]);
+    Hub[1]->DynamicRigidBody->setGlobalPose(InitialHubT[1]);
     for (int i = 0; i < 4; ++i)
     {
         Wheels[i]->DynamicRigidBody->setGlobalPose(InitialWheelT[i]);
     }
-    Velocity = 0; 
+    Velocity = 0;
     bBoosted = false;
     FinalBoost = 0;
 
@@ -505,36 +580,20 @@ void UCarComponent::Restart()
     {
         Wheels[i]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
     }
-    Hub[0]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE); 
-}
+    Hub[0]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
+    Hub[1]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
 
-void UCarComponent::RegisterLua(sol::state& Lua)
-{
-    DEFINE_LUA_TYPE_NO_PARENT(UCarComponent,
-        "Velocity", sol::property(
-            &UCarComponent::GetVelocity,
-            &UCarComponent::SetVelocity
-        ),
-        "SteerAngle", sol::property(
-            &UCarComponent::GetSteerAngle,
-            &UCarComponent::SetSteerAngle
-        ),
-        "Boost", sol::property(
-            &UCarComponent::GetFinalBoost,
-            &UCarComponent::SetFinalBoost
-        ),
-        "SlopeAngle", sol::property(
-            &UCarComponent::GetSlopeAngle,
-            &UCarComponent::SetSlopeAngle
-        ),
-        "IsBoosted", sol::property(
-            &UCarComponent::IsBoosted,
-            &UCarComponent::SetBoosted
-        ),
-        "BoostCar", &UCarComponent::BoostCar,
-        "Move", &UCarComponent::MoveCar,
-        "CurSteerAngle", &UCarComponent::GetCurSteerAngle,
-        "Speed", &UCarComponent::GetCurSpeed,
-        "Restart", &UCarComponent::Restart
-    )
+    CarBody->DynamicRigidBody->setLinearVelocity(PxVec3(0));
+    CarBody->DynamicRigidBody->setAngularVelocity(PxVec3(0));
+    for (int i = 0; i < 4; ++i)
+    {
+        Wheels[i]->DynamicRigidBody->setLinearVelocity(PxVec3(0));
+        Wheels[i]->DynamicRigidBody->setAngularVelocity(PxVec3(0));
+    }
+    Hub[0]->DynamicRigidBody->setLinearVelocity(PxVec3(0));
+    Hub[0]->DynamicRigidBody->setAngularVelocity(PxVec3(0));
+    Hub[1]->DynamicRigidBody->setLinearVelocity(PxVec3(0));
+    Hub[1]->DynamicRigidBody->setAngularVelocity(PxVec3(0));
+
+    FireCount += 1;
 }

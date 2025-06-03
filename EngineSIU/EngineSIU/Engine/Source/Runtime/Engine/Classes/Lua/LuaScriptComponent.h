@@ -14,6 +14,7 @@ class ULuaScriptComponent : public UActorComponent
 
 public:
     ULuaScriptComponent();
+    ~ULuaScriptComponent();
 
     virtual UObject* Duplicate(UObject* InOuter) override;
 

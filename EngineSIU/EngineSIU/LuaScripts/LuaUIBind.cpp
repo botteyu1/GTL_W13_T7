@@ -18,7 +18,7 @@ void LuaUIBind::Bind(sol::table& Table)
             { "BottomLeft", AnchorDirection::BottomLeft },
             { "BottomCenter", AnchorDirection::BottomCenter },
             { "BottomRight", AnchorDirection::BottomRight }
-        } 
+        }
     );
 
     // RectTransform 바인딩

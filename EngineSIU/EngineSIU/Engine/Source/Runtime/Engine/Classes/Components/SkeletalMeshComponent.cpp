@@ -72,6 +72,15 @@ void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InPrope
         {
             SetSkeletalMeshAsset(SkelMesh);
         }
+
+        if (InProperties.Contains("PhysicsAssetKey"))
+        {
+            FName PhysicsAssetKey = FName(InProperties["PhysicsAssetKey"]);
+            if (UPhysicsAsset* PhysicsAsset = Cast<UPhysicsAsset>(UAssetManager::Get().GetAsset(EAssetType::PhysicsAsset, PhysicsAssetKey)))
+            {
+                GetSkeletalMeshAsset()->SetPhysicsAsset(PhysicsAsset);
+            }
+        }
     }
     
     if (InProperties.Contains("AnimationMode"))
@@ -131,6 +140,15 @@ void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties
     const FName SkelMeshKey = UAssetManager::Get().GetAssetKeyByObject(EAssetType::SkeletalMesh, GetSkeletalMeshAsset());
     OutProperties.Add(TEXT("SkeletalMeshKey"), SkelMeshKey.ToString());
 
+    if (SkelMeshKey != NAME_None)
+    {
+        if (UPhysicsAsset* PhysicsAsset = GetSkeletalMeshAsset()->GetPhysicsAsset())
+        {
+            const FName AssetKey = UAssetManager::Get().GetAssetKeyByObject(EAssetType::PhysicsAsset, PhysicsAsset);
+            OutProperties.Add(TEXT("PhysicsAssetKey"), AssetKey.ToString());
+        }
+    }
+
     OutProperties.Add(TEXT("AnimationMode"), FString::FromInt(static_cast<uint8>(AnimationMode)));
 
     FString AnimClassStr = FName().ToString();
@@ -161,8 +179,8 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
 
-    //bool로 하면 맨 처음부터 애니메이션이 안돌아감
-    if (bDisableAnimAfterHit<bDisableAnimAfterHitMax)
+    // 애니메이션은 레그돌 상태가 아닐 때만 계산
+    if (!IsInRagdollState())
     {
         TickPose(DeltaTime);
     }
@@ -180,7 +198,6 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     BoneWorldMatrices.SetNum(BoneNum);
 
     bool bPoseChanged = false;
-    constexpr float PoseChangeThresholdSqr = 0.1f;
 
     for (int32 i = 0; i < BoneNum; ++i)
     {
@@ -229,24 +246,31 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     // 비교 시작은 기준 프레임 저장 이후
     if (StableReferenceFrameCount >= StableFrameThreshold && StablePhysicsBoneWorldMatrices.Num() == BoneNum)
     {
+        float TotalDistanceSqr = 0.0f;
+
         for (int32 i = 0; i < BoneNum; ++i)
         {
             FVector Curr = BoneWorldMatrices[i].GetOrigin();
             FVector Ref = StablePhysicsBoneWorldMatrices[i].GetOrigin();
 
-            if ((Curr - Ref).SizeSquared() > PoseChangeThresholdSqr)
-            {
-                bPoseChanged = true;
-                break;
-            }
+            TotalDistanceSqr += (Curr - Ref).SizeSquared();
+        }
+
+        const float AvgDistanceSqr = TotalDistanceSqr / BoneNum;
+
+        if (AvgDistanceSqr > PoseChangeThresholdSqr)
+        {
+            bPoseChanged = true;
         }
     }
+
 
     // ✅ 한번이라도 물리 Pose가 변하면 이후 애니메이션 비활성화
     if (bPoseChanged)
         bDisableAnimAfterHit++;
 
-    if (bDisableAnimAfterHit > bDisableAnimAfterHitMax)
+    // ✅ 래그돌 상태 진입 시 중력 적용
+    if (IsInRagdollState())
     {
         if (!bPostAnimDisabledGravityApplied)
         {
@@ -255,7 +279,7 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
         }
     }
 
-    // 애니메이션 비활성화 상태일 때에만 로컬 Pose 계산 적용
+    // ✅ 애니메이션 비활성화 상태일 때에만 로컬 Pose 계산 적용
     for (int32 i = 0; i < BoneNum; ++i)
     {
         int32 ParentIndex = RefSkeleton.GetParentIndex(i);
@@ -264,10 +288,9 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
             : BoneWorldMatrices[ParentIndex];
 
         FMatrix Local = BoneWorldMatrices[i] * FMatrix::Inverse(ParentMatrix);
-        if (bDisableAnimAfterHit > bDisableAnimAfterHitMax)
+        if (IsInRagdollState())
             BonePoseContext.Pose[i] = FTransform(Local);
     }
-
 
     CPUSkinning();
 }
@@ -595,6 +618,7 @@ void USkeletalMeshComponent::CreatePhysXGameObject()
 
         for (const auto& GeomAttribute : BodySetups[i]->GeomAttributes)
         {
+            //버섯돌이에 비해 피직스 Cube가 더 커서
             FVector ScaledOffset = GeomAttribute.Offset * CompScale;
             PxVec3 Offset = PxVec3(ScaledOffset.X, ScaledOffset.Y, ScaledOffset.Z);
             FQuat GeomQuat = GeomAttribute.Rotation.Quaternion();
@@ -610,7 +634,7 @@ void USkeletalMeshComponent::CreatePhysXGameObject()
                 Shape = GEngine->PhysicsManager->CreateSphereShape(Offset, GeomPQuat, Extent.x);
                 break;
             case EGeomType::EBox:
-                Shape = GEngine->PhysicsManager->CreateBoxShape(Offset, GeomPQuat, Extent);
+                Shape = GEngine->PhysicsManager->CreateBoxShape(Offset, GeomPQuat, Extent*0.5f);
                 break;
             case EGeomType::ECapsule:
                 Shape = GEngine->PhysicsManager->CreateCapsuleShape(Offset, GeomPQuat, Extent.x, Extent.z);
@@ -795,6 +819,17 @@ void USkeletalMeshComponent::CPUSkinning(bool bForceUpdate)
      }
 }
 
+void USkeletalMeshComponent::OnHit(
+    UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit
+)
+{
+    float ImpulseMagnitude = NormalImpulse.Size();
+    if (ImpulseMagnitude > MinImpactForceToDestroy)
+    {
+        bDisableAnimAfterHit = 100.0f;
+    }
+}
+
 UAnimSingleNodeInstance* USkeletalMeshComponent::GetSingleNodeInstance() const
 {
     return Cast<UAnimSingleNodeInstance>(AnimScriptInstance);
@@ -853,6 +888,16 @@ UAnimationAsset* USkeletalMeshComponent::GetAnimation() const
         return SingleNodeInstance->GetAnimationAsset();
     }
     return nullptr;
+}
+
+void USkeletalMeshComponent::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (bSimulate)
+    {
+        OnComponentHit.AddUObject(this, &USkeletalMeshComponent::OnHit);
+    }
 }
 
 void USkeletalMeshComponent::Play(bool bLooping)
@@ -1007,4 +1052,8 @@ void USkeletalMeshComponent::SetLoopEndFrame(int32 InLoopEndFrame)
     {
         SingleNodeInstance->SetLoopEndFrame(InLoopEndFrame);
     }
+}
+bool USkeletalMeshComponent::IsInRagdollState() const
+{
+    return bDisableAnimAfterHit >= bDisableAnimAfterHitMax;
 }

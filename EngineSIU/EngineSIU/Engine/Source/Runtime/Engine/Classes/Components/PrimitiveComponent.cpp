@@ -174,6 +174,7 @@ UObject* UPrimitiveComponent::Duplicate(UObject* InOuter)
     NewComponent->bApplyGravity = bApplyGravity;
     NewComponent->GeomAttributes = GeomAttributes;
     NewComponent->RigidBodyType = RigidBodyType;
+    NewComponent->MinImpactForceToDestroy = MinImpactForceToDestroy;
 
     return NewComponent;
 }
@@ -279,6 +280,8 @@ void UPrimitiveComponent::GetProperties(TMap<FString, FString>& OutProperties) c
     OutProperties.Add(TEXT("bSimulate"), bSimulate ? TEXT("true") : TEXT("false"));
     OutProperties.Add(TEXT("bApplyGravity"), bApplyGravity ? TEXT("true") : TEXT("false"));
     OutProperties.Add(TEXT("RigidBodyType"), FString::FromInt(static_cast<uint8>(RigidBodyType)));
+    OutProperties.Add(TEXT("MinImpactForceToDestroy"), FString::SanitizeFloat(MinImpactForceToDestroy));
+    
 }
 
 void UPrimitiveComponent::SetProperties(const TMap<FString, FString>& InProperties)
@@ -322,6 +325,11 @@ void UPrimitiveComponent::SetProperties(const TMap<FString, FString>& InProperti
     if (InProperties.Contains(TEXT("RigidBodyType")))
     {
         RigidBodyType = static_cast<ERigidBodyType>(FString::ToInt(InProperties[TEXT("RigidBodyType")]));
+    }
+    TempStr = InProperties.Find(TEXT("MinImpactForceToDestroy"));
+    if (TempStr)
+    {
+        MinImpactForceToDestroy = FString::ToFloat(*TempStr);
     }
 }
 

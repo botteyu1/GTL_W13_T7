@@ -9,6 +9,11 @@ ULuaScriptComponent::ULuaScriptComponent()
 {
 }
 
+ULuaScriptComponent::~ULuaScriptComponent()
+{
+    FLuaScriptManager::Get().UnRegisterActiveLuaComponent(this);
+}
+
 UObject* ULuaScriptComponent::Duplicate(UObject* InOuter)
 {
     ULuaScriptComponent* NewComponent = Cast<ULuaScriptComponent>(Super::Duplicate(InOuter));
@@ -82,7 +87,7 @@ void ULuaScriptComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void ULuaScriptComponent::DestroyComponent(bool bPromoteChildren)
 {
-    FLuaScriptManager::Get().UnRigisterActiveLuaComponent(this);
+    FLuaScriptManager::Get().UnRegisterActiveLuaComponent(this);
     Super::DestroyComponent(bPromoteChildren);
     SelfTable.reset(); // Lua 테이블 초기화
 }

@@ -514,7 +514,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     {
                         SpawnedActor = World->SpawnActor<ASkeletalMeshActor>();
                         SpawnedActor->SetActorTickInEditor(true);
-                        auto* MeshComp = SpawnedActor->AddComponent<USkeletalMeshComponent>();
+                        auto* MeshComp = SpawnedActor->AddComponent<USkeletalMeshComponent>("SkelComp");
                         SpawnedActor->SetRootComponent(MeshComp);
                         SpawnedActor->SetActorLabel(TEXT("OBJ_SKELETALMESH"));
                     }

@@ -23,7 +23,7 @@ ADestructibleStaticMesh::ADestructibleStaticMesh()
     
     // PhysicsColliderComponent 생성 및 설정
     // UBoxComponent를 사용한다고 가정
-    PhysicsColliderComponent = AddComponent<UBoxComponent>(TEXT("PhysicsCollider"));
+    PhysicsColliderComponent = AddComponent<UPrimitiveComponent>(TEXT("PhysicsCollider"));
     PhysicsColliderComponent->bSimulate = true;
     PhysicsColliderComponent->bApplyGravity = true; // 중력 적용
     PhysicsColliderComponent->RigidBodyType = ERigidBodyType::DYNAMIC; // 동적 리지드바디
@@ -40,7 +40,7 @@ void ADestructibleStaticMesh::BeginPlay()
 {
     Super::BeginPlay();
     
-    PhysicsColliderComponent = GetComponentByClass<UBoxComponent>();
+    PhysicsColliderComponent = GetComponentByFName<UPrimitiveComponent>(TEXT("PhysicsCollider"));
     IntactMeshComponent = GetComponentByClass<UStaticMeshComponent>();
 
     if (IntactMeshComponent)
@@ -52,6 +52,20 @@ void ADestructibleStaticMesh::BeginPlay()
             PhysicsColliderComponent->AABB = IntactMeshComponent->GetBoundingBox(); // IntactMeshComponent의 AABB를 사용
             // OnComponentHit 델리게이트에 함수 바인딩
             PhysicsColliderComponent->OnComponentHit.AddUObject(this, &ADestructibleStaticMesh::OnBoxHit);
+
+
+            // FVector ScaledMin = PhysicsColliderComponent->AABB.MinLocation * PhysicsColliderComponent->GetComponentScale3D();
+            // FVector ScaledMax = PhysicsColliderComponent->AABB.MaxLocation * PhysicsColliderComponent->GetComponentScale3D();
+            //
+            // FVector BoxCenter = (ScaledMin + ScaledMax) * 0.5f;
+            // FVector BoxExtent = (ScaledMax - ScaledMin) * 0.5f;
+            // // 파편 콜라이더의 GeomAttributes 설정
+            // AggregateGeomAttributes GeomAttr;
+            // GeomAttr.GeomType = EGeomType::EBox;
+            // GeomAttr.Extent = BoxExtent; // SetBoxExtent로 설정한 값
+            // GeomAttr.Offset = BoxCenter; // 로컬 오프셋
+            // PhysicsColliderComponent->GeomAttributes.Add(GeomAttr);
+            
         }
     }
 
@@ -113,7 +127,7 @@ void ADestructibleStaticMesh::OnBoxHit(UPrimitiveComponent* HitComponent, AActor
     // 충격량 계산 (NormalImpulse는 충격 방향과 크기를 나타냄)
     float ImpulseMagnitude = NormalImpulse.Size();
 
-    if (ImpulseMagnitude > MinImpactForceToDestroy)
+    if (ImpulseMagnitude > PhysicsColliderComponent->MinImpactForceToDestroy)
     {
         TriggerDestruction(Hit.ImpactPoint, NormalImpulse.GetSafeNormal(), ImpulseMagnitude);
     }
@@ -194,10 +208,12 @@ void ADestructibleStaticMesh::TriggerDestruction(FVector HitLocation, FVector Im
         // FragMeshComp->RegisterComponent(); // SpawnActor에서 처리될 수 있음. 엔진 구현 확인.
 
         // 파편 물리 콜라이더 컴포넌트 추가 (UBoxComponent 사용)
-        UBoxComponent* FragmentCollider = FragmentActor->AddComponent<UBoxComponent>(TEXT("FragmentCollider"));
+        UPrimitiveComponent* FragmentCollider = FragmentActor->AddComponent<UPrimitiveComponent>(TEXT("FragmentCollider"));
         FragMeshComp->SetupAttachment(FragmentCollider); // 메시 컴포넌트에 붙임
         
         FragmentActor->SetRootComponent(FragmentCollider); // 루트로 설정
+
+        FragmentActor->SetActorScale(GetActorScale()); // 원래 상자의 스케일을 유지
 
         // 파편 콜라이더 크기 설정 
         FVector ScaledMin = FragMeshComp->AABB.MinLocation * FragMeshComp->GetComponentScale3D();
@@ -206,7 +222,7 @@ void ADestructibleStaticMesh::TriggerDestruction(FVector HitLocation, FVector Im
         FVector BoxCenter = (ScaledMin + ScaledMax) * 0.5f;
         FVector BoxExtent = (ScaledMax - ScaledMin) * 0.5f;
         
-        FragmentCollider->SetBoxExtent(BoxExtent);
+        //FragmentCollider->SetBoxExtent(BoxExtent);
         FragmentCollider->SetRelativeLocation(OriginalBoxLocation); 
 
         // 파편 물리 속성 설정
