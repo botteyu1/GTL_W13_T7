@@ -3,6 +3,8 @@
 #include "StaticMeshComponent.h"
 #include "Physics/PhysicsManager.h"
 
+class UCameraComponent;
+
 class UCarComponent : public UStaticMeshComponent
 {
     DECLARE_CLASS(UCarComponent, UStaticMeshComponent)
@@ -55,6 +57,10 @@ public:
 
     void Restart();
 
+    int GetFireCount() { return FireCount; }
+
+    bool IsDriving() { return bCarDriving; }
+
 private:
     PxMaterial* DefaultMaterial = nullptr;
     GameObject* CarBody = nullptr;
@@ -62,7 +68,7 @@ private:
     GameObject* Wheels[4] = { nullptr }; //FR, FL, RR, RL
     PxRevoluteJoint* WheelJoints[4] = { nullptr }; //FR, FL, RR, RL
     PxRevoluteJoint* SteeringJoint = nullptr;
-    float MaxSteerAngle = PxPi / 18.f;
+    float MaxSteerAngle = PxPi / 6.f;
     float DeltaSteerAngle = PxPi / 6.f;
     float SteerAngle = 0.0f;
     float MaxDriveTorque = 50000.0f;
@@ -71,8 +77,11 @@ private:
     float FinalBoost = 0.f;
     float MaxBoost = 18000.f;
     bool bBoosted = false;
+    bool bCarDriving = true;
 
     UStaticMeshComponent* WheelComp[4] = { nullptr };
+
+    UCameraComponent* Camera = nullptr;
 
     bool bHasBody = false;
 
@@ -83,6 +92,8 @@ private:
     float WheelHeight = 0.6f; //half height
 
     float SlopeAngle;
+
+    int FireCount = 0;
 
     FVector HubSize = FVector(0.2f, 0.5f, 0.2f);
 
