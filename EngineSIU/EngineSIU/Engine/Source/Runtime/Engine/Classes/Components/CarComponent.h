@@ -77,7 +77,7 @@ private:
     float SteerAngle = 0.0f;
     float MaxDriveTorque = 50000.0f;
     float Velocity = 0.f;
-    float MaxVelocity = 100.f;
+    float MaxVelocity = 70.f;
     float FinalBoost = 0.f;
     float MaxBoost = 18000.f;
     bool bBoosted = false;
