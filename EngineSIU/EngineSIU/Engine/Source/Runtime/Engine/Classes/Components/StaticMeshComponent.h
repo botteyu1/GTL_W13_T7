@@ -44,8 +44,12 @@ public:
             AABB = FBoundingBox(StaticMesh->GetRenderData()->BoundingBoxMin, StaticMesh->GetRenderData()->BoundingBoxMax);
         }
     }
+    
+    UPROPERTY_WITH_FLAGS(EditAnywhere, bool, bIsForceUnlit, = false)
 
 protected:
     UStaticMesh* StaticMesh = nullptr;
     int SelectedSubMeshIndex = -1;
+    TArray<UMaterial*> OverrideMaterials; // 머티리얼 오버라이드용
+
 };

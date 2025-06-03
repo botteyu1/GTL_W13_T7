@@ -128,7 +128,7 @@ float4 mainPS(PS_INPUT_CommonMesh Input) : SV_Target
     
     // Lighting
     float4 FinalPixelColor = float4(0.f, 0.f, 0.f, 1.f);
-    if (IsLit)
+    if (IsLit && !bIsForceUnlit)
     {
 #ifdef LIGHTING_MODEL_GOURAUD
         FinalPixelColor = float4(Input.Color.rgb, BaseAlpha);

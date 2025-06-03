@@ -461,7 +461,8 @@ struct FObjectConstantBuffer
     FVector4 UUIDColor;
     
     int bIsSelected;
-    FVector pad;
+    int bIsForceUnlit = 0;
+    FVector2D pad;
 };
 
 struct FCameraConstantBuffer

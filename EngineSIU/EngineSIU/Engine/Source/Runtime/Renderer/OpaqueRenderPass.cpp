@@ -137,6 +137,7 @@ void FOpaqueRenderPass::ChangeViewMode(EViewModeIndex ViewMode)
     }
     Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
 
+
     UpdateLitUnlitConstant(ViewMode < EViewModeIndex::VMI_Unlit);
 
     // Rasterizer
@@ -256,8 +257,9 @@ void FOpaqueRenderPass::RenderStaticMesh(const std::shared_ptr<FEditorViewportCl
         FMatrix WorldMatrix = Comp->GetWorldMatrix();
         FVector4 UUIDColor = Comp->EncodeUUID() / 255.0f;
         const bool bIsSelected = (Engine && TargetComponent == Comp);
+        const bool bIsForceUnlit = (Comp->bIsForceUnlit);
 
-        UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
+        UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected, bIsForceUnlit);
 
         RenderStaticMesh_Internal(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
 

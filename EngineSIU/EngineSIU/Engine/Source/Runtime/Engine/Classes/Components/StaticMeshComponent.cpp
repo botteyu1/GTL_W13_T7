@@ -16,6 +16,7 @@ UObject* UStaticMeshComponent::Duplicate(UObject* InOuter)
 
     NewComponent->StaticMesh = StaticMesh;
     NewComponent->SelectedSubMeshIndex = SelectedSubMeshIndex;
+    NewComponent->bIsForceUnlit = bIsForceUnlit;
 
     return NewComponent;
 }
@@ -43,6 +44,8 @@ void UStaticMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) 
     {
         OutProperties.Add(TEXT("StaticMeshPath"), TEXT("None")); // 메시 없음 명시
     }
+    
+    OutProperties.Add(TEXT("bIsForceUnlit"), FString::FromInt(bIsForceUnlit));
 }
 
 void UStaticMeshComponent::SetProperties(const TMap<FString, FString>& InProperties)
@@ -95,6 +98,17 @@ void UStaticMeshComponent::SetProperties(const TMap<FString, FString>& InPropert
         // 여기서는 기본값을 유지하거나, 안전하게 nullptr로 설정할 수 있습니다.
         // SetStaticMesh(nullptr); // 또는 아무것도 안 함
         UE_LOG(ELogLevel::Display, TEXT("StaticMeshPath key not found for %s, mesh unchanged."), *GetName());
+    }
+
+    TempStr = InProperties.Find(TEXT("bIsForceUnlit"));
+    if (TempStr)
+    {
+        bIsForceUnlit = (*TempStr == TEXT("true") || *TempStr == TEXT("1"));
+        UE_LOG(ELogLevel::Display, TEXT("Set bIsForceUnlit to %s for %s"), *FString(bIsForceUnlit ? TEXT("true") : TEXT("false")), *GetName());
+    }
+    else
+    {
+        UE_LOG(ELogLevel::Warning, TEXT("bIsForceUnlit key not found for %s, using default value."), *GetName());
     }
 }
 
