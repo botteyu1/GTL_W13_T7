@@ -46,7 +46,7 @@ void UParticleModuleLocation::Spawn(FParticleEmitterInstance* Owner, int32 Offse
         Location += Owner->Component->GetComponentToWorld().GetTranslation();
     }
 
-    ParticleBase->Location = Location;
+    ParticleBase->Location+= Location;
 }
 
 void UParticleModuleLocation::SerializeAsset(FArchive& Ar)

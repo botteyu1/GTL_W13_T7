@@ -10,6 +10,7 @@
 #include "UObject/Casts.h"
 
 #include "Engine/FObjLoader.h"
+#include "GameFramework/Actor.h"
 //#include "Particles/ParticleModuleRequired.h"
 
 void FParticleEmitterInstance::Initialize()
@@ -57,7 +58,7 @@ void FParticleEmitterInstance::Tick(float DeltaTime)
     {
         float Increment = (SpawnCount > 1) ? DeltaTime / (SpawnCount - 1) : 0.0f;
         float StartTime = AccumulatedTime - DeltaTime;
-        SpawnParticles(SpawnCount, StartTime, Increment, FVector::ZeroVector, FVector::ZeroVector);
+        SpawnParticles(SpawnCount, StartTime, Increment, FVector::ZeroVector+Component->GetComponentLocation(), FVector::ZeroVector);
     }
 
     UpdateModules(DeltaTime);

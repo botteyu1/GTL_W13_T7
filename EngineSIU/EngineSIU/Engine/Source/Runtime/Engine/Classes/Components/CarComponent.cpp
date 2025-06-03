@@ -364,7 +364,7 @@ void UCarComponent::Spawn()
     if (BoostParticleSystem)
     {
         BoostParticle->SetParticleSystem(BoostParticleSystem);
-        BoostParticle->SetRelativeTransform(FTransform(FRotator(90, 0, 0), FVector(-1.8f, -0.1f, 0.5f)));
+        BoostParticle->SetRelativeTransform(FTransform(FRotator(0, 0, 0), FVector(-1.8f, -0.1f, 0.5f)));
         BoostParticle->bEnabled = false;
     }
 

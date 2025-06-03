@@ -83,7 +83,8 @@ PS_Input main(VS_Input Input)
 
     // 5. 빌보딩(Billboarding) 및 최종 버텍스 위치 계산
     //    파티클의 월드 중심 위치를 뷰 공간으로 변환합니다.
-    float4 ParticleCenter_WS = mul(float4(Particle.Position, 1.0f), WorldMatrix);
+    //float4 ParticleCenter_WS = mul(float4(Particle.Position, 1.0f), WorldMatrix);
+    float4 ParticleCenter_WS = float4(Particle.Position, 1.0f);
     float4 ParticleCenter_VS = mul(ParticleCenter_WS, ViewMatrix);
 
     //    뷰 공간에서 2D 오프셋(회전 및 크기 적용됨)을 더합니다.
