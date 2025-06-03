@@ -10,6 +10,7 @@
 #include "UnrealEd/SceneManager.h"
 #include "GameFramework/GameMode.h"
 #include "Classes/Components/TextComponent.h"
+#include "LuaScripts/LuaUIManager.h"
 
 class UEditorEngine;
 
@@ -65,6 +66,7 @@ void UWorld::Tick(float DeltaTime)
         }
         PendingBeginPlayActors.Empty();
     }
+    LuaUIManager::Get().UpdateAll(DeltaTime);
 }
 
 void UWorld::BeginPlay()

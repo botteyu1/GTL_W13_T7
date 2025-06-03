@@ -75,11 +75,11 @@ public:
     void Stop();
 
     void SetPlaying(bool bPlaying);
-    
+
     bool IsPlaying() const;
 
     void SetReverse(bool bIsReverse);
-    
+
     bool IsReverse() const;
 
     void SetPlayRate(float Rate);
@@ -105,9 +105,9 @@ public:
     int32 GetLoopEndFrame() const;
 
     void SetLoopEndFrame(int32 InLoopEndFrame);
-    
+
     bool bIsAnimationEnabled() const { return bPlayAnimation; }
-    
+
     virtual int CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const override;
 
     const FSkeletalMeshRenderData* GetCPURenderData() const;
@@ -137,10 +137,10 @@ protected:
     bool NeedToSpawnAnimScriptInstance() const;
 
     EAnimationMode AnimationMode;
-    
+
 private:
     FPoseContext BonePoseContext;
-    
+
     USkeletalMesh* SkeletalMeshAsset;
 
     bool bPlayAnimation;
@@ -156,25 +156,26 @@ private:
     TArray<FConstraintInstance*> Constraints;
 
     void CPUSkinning(bool bForceUpdate = false);
-    private:
-        //한번 충돌한 후에 애니메이션을 비활성화
-        //TArray<FMatrix> PrevPhysicsBoneWorldMatrices;
-        int bDisableAnimAfterHit = 0;
-        const int bDisableAnimAfterHitMax = 5; // 충돌 후 애니메이션 비활성화 횟수 제한
-        bool bPostAnimDisabledGravityApplied = false;//애니메이션 비활성화 시 1회 중력 적용
-        int32 StableReferenceFrameCount = 0;
-        TArray<FMatrix> StablePhysicsBoneWorldMatrices;
-        constexpr static int32 StableFrameThreshold = 2; // 예: n프레임 이후를 기준 상태로 간주
+public:
+    bool IsInRagdollState() const;
+private:
+    //한번 충돌한 후에 애니메이션을 비활성화
+    //TArray<FMatrix> PrevPhysicsBoneWorldMatrices;
+    int bDisableAnimAfterHit = 0;
+    const int bDisableAnimAfterHitMax = 5; // 충돌 후 애니메이션 비활성화 횟수 제한
+    bool bPostAnimDisabledGravityApplied = false;//애니메이션 비활성화 시 1회 중력 적용
+    int32 StableReferenceFrameCount = 0;
+    TArray<FMatrix> StablePhysicsBoneWorldMatrices;
+    constexpr static int32 StableFrameThreshold = 2; // 예: n프레임 이후를 기준 상태로 간주
 
-        
-        void ApplyGravityToAllBodies();
+    void ApplyGravityToAllBodies();
 
 public:
     UPROPERTY(EditAnywhere, FString, StateMachineFileName, = "LuaScripts/Animations/DefaultStateMachine.lua");
 
 public:
     TSubclassOf<UAnimInstance> AnimClass;
-    
+
     UAnimInstance* AnimScriptInstance;
     
     void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
@@ -183,8 +184,8 @@ public:
     UAnimSingleNodeInstance* GetSingleNodeInstance() const;
 
     void SetAnimClass(UClass* NewClass);
-    
+
     UClass* GetAnimClass() const;
-    
+
     void SetAnimInstanceClass(class UClass* NewClass);
 };

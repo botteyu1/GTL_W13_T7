@@ -20,6 +20,7 @@ public:
         return Instance;
     }
 
+    void UpdateAll(float DeltaTime);
 
     void CreateUI(FName InName);
     // Text의 경우 크기는 FontSize에만 따라가도록 일단 구현

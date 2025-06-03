@@ -32,5 +32,6 @@ namespace LuaTypes
     template <> struct FBindLua<FQuat> { static void Bind(sol::table& Table); };
     template <> struct FBindLua<FMatrix> { static void Bind(sol::table& Table); };
     template <> struct FBindLua<FString> { static void Bind(sol::table& Table); };
+    void RegisterGlobalFunctions(sol::state& Lua);
 
 }

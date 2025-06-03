@@ -188,10 +188,20 @@ public:
     virtual void RegisterLuaType(sol::state& Lua); // Lua에 클래스 등록해주는 함수.
     virtual bool BindSelfLuaProperties(); // LuaEnv에서 사용할 멤버 변수 등록 함수.
     ULuaScriptComponent* GetLuaScriptComponent() const { return LuaScriptComponent; } 
-    
+    public:
+        /** Actor의 태그를 가져옵니다. */
+        FString GetTag() const;
+
+        /** Actor의 태그를 설정합니다. */
+        void SetTag(const FString& InTag);
+
+        /** 특정 태그와 일치하는지 확인합니다. */
+        bool HasTag(const FString& InTag) const;
 private:
     UPROPERTY(EditAnywhere | EditInline, ULuaScriptComponent*, LuaScriptComponent, = nullptr)
     UPROPERTY(EditAnywhere, bool, bUseScript, = true)
+
+    UPROPERTY(EditAnywhere, FString,Tag,="")
     
 };
 

@@ -86,8 +86,9 @@ struct FActorSaveData
 
     FString RootComponentID;               // 이 액터의 루트 컴포넌트 ID (아래 Components 리스트 내 ID 참조)
     TArray<FComponentSaveData> Components; // 이 액터가 소유한 컴포넌트 목록
+    FString ActorTag;
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(FActorSaveData, ActorID, ActorClass, ActorLabel, ActorTickInEditor, RootComponentID, Components)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(FActorSaveData, ActorID, ActorClass, ActorLabel,ActorTag, ActorTickInEditor, RootComponentID, Components)
 };
 
 struct FSceneData
@@ -166,12 +167,24 @@ bool SceneManager::SaveSceneToJsonFile(const std::filesystem::path& FilePath, co
 
     return true;
 }
-
 bool SceneManager::JsonToSceneData(const FString& InJsonString, FSceneData& OutSceneData)
 {
     try
     {
-        const json Json = json::parse(InJsonString.GetContainerPrivate()); // JSON 파일 읽기
+        json Json = json::parse(InJsonString.GetContainerPrivate());
+
+        // 🔧 Patch: Ensure all Actor entries have "ActorTag"
+        if (Json.contains("Actors") && Json["Actors"].is_array())
+        {
+            for (json& ActorJson : Json["Actors"])
+            {
+                if (!ActorJson.contains("ActorTag"))
+                {
+                    ActorJson["ActorTag"] = ""; // or "Default"
+                }
+            }
+        }
+
         OutSceneData = Json;
     }
     catch (const std::exception& e)
@@ -181,6 +194,7 @@ bool SceneManager::JsonToSceneData(const FString& InJsonString, FSceneData& OutS
     }
     return true;
 }
+
 
 bool SceneManager::SceneDataToJson(const FSceneData& InSceneData, FString& OutJsonString)
 {
@@ -213,6 +227,7 @@ FSceneData SceneManager::WorldToSceneData(const UWorld& InWorld)
         actorData.ActorID = Actor->GetName();
         actorData.ActorClass = Actor->GetClass()->GetName();
         actorData.ActorLabel = Actor->GetActorLabel();
+        actorData.ActorTag = Actor->GetTag();
         actorData.ActorTickInEditor = Actor->IsActorTickInEditor() ? "true" : "false";
 
         USceneComponent* RootComp = Actor->GetRootComponent();
@@ -299,6 +314,7 @@ bool SceneManager::LoadWorldFromData(const FSceneData& sceneData, UWorld* target
 
         SpawnedActor->SetActorLabel(actorData.ActorLabel, false); // 액터 레이블 설정
         SpawnedActor->SetActorTickInEditor(actorData.ActorTickInEditor == "true");
+        SpawnedActor->SetTag(actorData.ActorTag);
         SpawnedActorsMap.Add(actorData.ActorID, SpawnedActor); // 맵에 추가
 
         // 액터별 로컬 컴포넌트 맵: ComponentID -> 생성/재사용된 컴포넌트 포인터

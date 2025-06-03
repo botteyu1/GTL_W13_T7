@@ -161,8 +161,8 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
 
-    //bool로 하면 맨 처음부터 애니메이션이 안돌아감
-    if (bDisableAnimAfterHit<bDisableAnimAfterHitMax)
+    // 애니메이션은 레그돌 상태가 아닐 때만 계산
+    if (!IsInRagdollState())
     {
         TickPose(DeltaTime);
     }
@@ -246,7 +246,8 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     if (bPoseChanged)
         bDisableAnimAfterHit++;
 
-    if (bDisableAnimAfterHit > bDisableAnimAfterHitMax)
+    // ✅ 래그돌 상태 진입 시 중력 적용
+    if (IsInRagdollState())
     {
         if (!bPostAnimDisabledGravityApplied)
         {
@@ -255,7 +256,7 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
         }
     }
 
-    // 애니메이션 비활성화 상태일 때에만 로컬 Pose 계산 적용
+    // ✅ 애니메이션 비활성화 상태일 때에만 로컬 Pose 계산 적용
     for (int32 i = 0; i < BoneNum; ++i)
     {
         int32 ParentIndex = RefSkeleton.GetParentIndex(i);
@@ -264,10 +265,9 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
             : BoneWorldMatrices[ParentIndex];
 
         FMatrix Local = BoneWorldMatrices[i] * FMatrix::Inverse(ParentMatrix);
-        if (bDisableAnimAfterHit > bDisableAnimAfterHitMax)
+        if (IsInRagdollState())
             BonePoseContext.Pose[i] = FTransform(Local);
     }
-
 
     CPUSkinning();
 }
@@ -1028,4 +1028,8 @@ void USkeletalMeshComponent::SetLoopEndFrame(int32 InLoopEndFrame)
     {
         SingleNodeInstance->SetLoopEndFrame(InLoopEndFrame);
     }
+}
+bool USkeletalMeshComponent::IsInRagdollState() const
+{
+    return bDisableAnimAfterHit >= bDisableAnimAfterHitMax;
 }
