@@ -91,6 +91,8 @@ private:
 
     bool bHasBody = false;
 
+    bool bSoundCarEngine = false;
+
     FVector CarBodyPos = FVector(0, 0, 0);
     FVector BodyExtent;
     float WheelRadius = 1.2f;

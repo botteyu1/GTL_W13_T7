@@ -1,5 +1,7 @@
 ﻿#include "SGameUI.h"
 #include <algorithm>
+
+#include "SoundManager.h"
 #include "Engine/AssetManager.h"
 #include "Engine/EditorEngine.h"
 #include "GameFramework/GameMode.h"
@@ -116,9 +118,12 @@ void SGameUI::DrawButtons()
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
         if (Engine)
         {
+            FSoundManager::GetInstance().PlaySound("Select");
             Engine->StartPIE();
             GEngineLoop.bPendingGame = false;
             GEngineLoop.GetGameMode()->StartMatch();
+            FSoundManager::GetInstance().StopSound("Intro");
+            FSoundManager::GetInstance().PlaySound("Play");
             OnHandle.Add(GEngineLoop.GetGameMode()->OnGamePause.AddLambda([](bool bPaused)
             {
                 if (bPaused)
@@ -208,6 +213,7 @@ void SGameUI::DrawPause()
     ImGui::SetCursorPos(ImVec2(CenterX, StartY));
     if (ImGui::Button("Resume", ButtonSize))
     {
+        FSoundManager::GetInstance().PlaySound("Select");
         GEngineLoop.GetGameMode()->PauseMatch();
     }
 
@@ -218,6 +224,7 @@ void SGameUI::DrawPause()
     {
         // Restart 버튼 클릭 시 처리 로직
         // 예: RestartGame();
+        FSoundManager::GetInstance().PlaySound("Select");
     }
 
     // 9) 세 번째 버튼 배치: Y = SecondY + ButtonHeight + VerticalSpacing
@@ -232,6 +239,11 @@ void SGameUI::DrawPause()
         GEngineLoop.GetGameMode()->EndMatch(false);
         GEngineLoop.bPendingGame = true;
         GEngineLoop.bPauseGame = false;
+        FSoundManager::GetInstance().StopAllSounds();
+        FSoundManager::GetInstance().StopSound("Car_Engine");
+        FSoundManager::GetInstance().StopSound("Car_Idle");
+        FSoundManager::GetInstance().PlaySound("Select");
+        FSoundManager::GetInstance().PlaySound("Intro");
     }
 
     ImGui::End();

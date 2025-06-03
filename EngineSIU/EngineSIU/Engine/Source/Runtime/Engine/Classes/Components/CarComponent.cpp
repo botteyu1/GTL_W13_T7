@@ -11,6 +11,8 @@
 #include <World/World.h>
 #include <Engine/Contents/Actors/FreeCameraActor.h>
 #include <GameFramework/SpringArmComponent.h>
+
+#include "SoundManager.h"
 #include "Particles/ParticleSystem.h"
 
 UCarComponent::UCarComponent()
@@ -49,6 +51,28 @@ void UCarComponent::TickComponent(float DeltaTime)
     else
         bCarDriving = true;
     BoostParticle->bEnabled = bBoosted;
+
+    bool bShouldPlayEngineSound = (Velocity > 0.2f);
+
+    // 2. 현재 재생 중인 사운드 상태와 원하는 상태를 비교하여 필요할 때만 사운드 변경
+    if (bShouldPlayEngineSound && !bSoundCarEngine)
+    {
+        // 현재 상태: 아이들 사운드 재생 중 (또는 아무것도 재생 안함)
+        // 원하는 상태: 엔진 사운드 재생
+        // 변경: 아이들 -> 엔진
+        FSoundManager::GetInstance().StopSound("Car_Idle");
+        FSoundManager::GetInstance().PlaySound("Car_Engine"); // "Car_Engine"이 루핑 사운드라면, 멱등성으로 인해 이미 재생 중이면 새 인스턴스를 만들지 않음
+        bSoundCarEngine = true; // 현재 엔진 사운드가 재생 중임을 표시
+    }
+    else if (!bShouldPlayEngineSound && bSoundCarEngine)
+    {
+        // 현재 상태: 엔진 사운드 재생 중
+        // 원하는 상태: 아이들 사운드 재생
+        // 변경: 엔진 -> 아이들
+        FSoundManager::GetInstance().StopSound("Car_Engine");
+        FSoundManager::GetInstance().PlaySound("Car_Idle"); // "Car_Idle"이 루핑 사운드라면, 멱등성으로 인해 이미 재생 중이면 새 인스턴스를 만들지 않음
+        bSoundCarEngine = false; // 현재 아이들 사운드가 재생 중임을 표시
+    }
     //if (GetAsyncKeyState('R') & 0x8000)
     //{
     //    Restart();

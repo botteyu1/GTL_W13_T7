@@ -101,8 +101,13 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
 
 
     FSoundManager::GetInstance().Initialize();
-    FSoundManager::GetInstance().LoadSound("fishdream", "Contents/Sounds/fishdream.mp3");
-    FSoundManager::GetInstance().LoadSound("sizzle", "Contents/Sounds/sizzle.mp3");
+    FSoundManager::GetInstance().LoadSound("Play", "Contents/Sounds/Play.wav", ESoundType::BGM, true);
+    FSoundManager::GetInstance().LoadSound("Intro", "Contents/Sounds/Intro.wav", ESoundType::BGM, true);
+    FSoundManager::GetInstance().LoadSound("Death", "Contents/Sounds/Death.wav", ESoundType::SFX);
+    FSoundManager::GetInstance().LoadSound("Car_Idle", "Contents/Sounds/Car_Idle.wav", ESoundType::SFX, true);
+    FSoundManager::GetInstance().LoadSound("Car_Engine", "Contents/Sounds/Car_Engine.wav", ESoundType::SFX, true);
+    FSoundManager::GetInstance().LoadSound("Select", "Contents/Sounds/Select.mp3", ESoundType::SFX);
+    
     //FSoundManager::GetInstance().PlaySound("fishdream");
     GameUI->Initialize();
     UpdateUI();
@@ -199,6 +204,8 @@ void FEngineLoop::Tick()
 
         FLuaScriptManager::Get().HotReloadLuaScript();
 
+        FSoundManager::GetInstance().Update();
+        
         GraphicDevice.SwapBuffer();
         do
         {
@@ -207,7 +214,6 @@ void FEngineLoop::Tick()
             ElapsedTime = (static_cast<double>(EndTime.QuadPart - StartTime.QuadPart) * 1000.f / static_cast<double>(Frequency.QuadPart));
         } while (ElapsedTime < TargetFrameTime);
     }
-    FSoundManager::GetInstance().Update();
 }
 
 void FEngineLoop::GetClientSize(uint32& OutWidth, uint32& OutHeight) const

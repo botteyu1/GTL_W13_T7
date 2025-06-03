@@ -22,6 +22,7 @@
 #include "Particles/ParticleSystem.h"
 #include <Components/CarComponent.h>
 
+#include "SoundManager.h"
 #include "LuaScripts/LuaUIManager.h"
 
 extern FEngineLoop GEngineLoop;
@@ -727,6 +728,8 @@ FWorldContext* UEditorEngine::GetPIEWorldContext(/*int32 WorldPIEInstance*/)
 void UEditorEngine::ShowLobby() const// for gamejam
 {
     GEngineLoop.bPendingGame = true;
+    FSoundManager::GetInstance().StopSound("Play");
+    FSoundManager::GetInstance().PlaySound("Intro");
     FEngineLoop::GraphicDevice.SetFullScreen(GEngineLoop.AppWnd);
 }
 
@@ -734,6 +737,8 @@ void UEditorEngine::HideLobby() // for gamejam
 {
     EndPIE();
     GEngineLoop.bPendingGame = false;
+    FSoundManager::GetInstance().StopSound("Play");
+    FSoundManager::GetInstance().StopSound("Intro");
     FEngineLoop::GraphicDevice.SetFullScreen(GEngineLoop.AppWnd, false);
 }
 
