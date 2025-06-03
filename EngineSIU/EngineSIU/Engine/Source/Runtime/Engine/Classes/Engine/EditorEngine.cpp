@@ -770,6 +770,7 @@ void UEditorEngine::ClearActorSelection()
 {
     UE_LOGFMT(ELogLevel::Display, "Clear Actor Selection");
     PrivateEditorSelection::GActorSelected = nullptr;
+    ClearSelectedActors();
 }
 
 void UEditorEngine::ClearSelectedActors()

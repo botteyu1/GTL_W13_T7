@@ -206,7 +206,7 @@ void UPrimitiveComponent::EndPhysicsTickComponent(float DeltaTime)
 {
     Super::EndPhysicsTickComponent(DeltaTime);
     // Physics simulation
-    if (bSimulate && BodyInstance && RigidBodyType != ERigidBodyType::STATIC)
+    if (bSimulate && BodyInstance && BodyInstance->BIGameObject && RigidBodyType != ERigidBodyType::STATIC)
     {
         BodyInstance->BIGameObject->UpdateFromPhysics(GEngine->PhysicsManager->GetScene(GEngine->ActiveWorld));
         XMMATRIX Matrix = BodyInstance->BIGameObject->WorldMatrix;
