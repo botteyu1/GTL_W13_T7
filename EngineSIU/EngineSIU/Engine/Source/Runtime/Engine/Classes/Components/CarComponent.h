@@ -55,8 +55,6 @@ public:
 
     void Restart();
 
-    virtual void RegisterLua(sol::state& Lua) override;
-
 private:
     PxMaterial* DefaultMaterial = nullptr;
     GameObject* CarBody = nullptr;
@@ -67,11 +65,11 @@ private:
     float MaxSteerAngle = PxPi / 18.f;
     float DeltaSteerAngle = PxPi / 6.f;
     float SteerAngle = 0.0f;
-    float MaxDriveTorque = 1000.0f;
+    float MaxDriveTorque = 10000.0f;
     float Velocity = 0.f;
-    float MaxVelocity = 50.f;
+    float MaxVelocity = 70.f;
     float FinalBoost = 0.f;
-    float MaxBoost = 3000.f;
+    float MaxBoost = 5000.f;
     bool bBoosted = false;
 
     UStaticMeshComponent* WheelComp[4] = { nullptr };
@@ -98,5 +96,5 @@ private:
 
     PxTransform InitialBodyT;
     PxTransform InitialWheelT[4];
-    PxTransform InitialHubT;
+    PxTransform InitialHubT[2];
 };

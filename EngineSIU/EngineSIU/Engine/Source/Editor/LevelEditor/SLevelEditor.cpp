@@ -701,7 +701,7 @@ void SLevelEditor::RegisterPIEInputDelegates()
 
     // 이거 주석 꼭 풀어야 함.
     // Clear current delegate functions
-    /*for (const FDelegateHandle& Handle : InputDelegatesHandles)
+    for (const FDelegateHandle& Handle : InputDelegatesHandles)
     {
         Handler->OnKeyCharDelegate.Remove(Handle);
         Handler->OnKeyDownDelegate.Remove(Handle);
@@ -713,6 +713,6 @@ void SLevelEditor::RegisterPIEInputDelegates()
         Handler->OnMouseMoveDelegate.Remove(Handle);
         Handler->OnRawMouseInputDelegate.Remove(Handle);
         Handler->OnRawKeyboardInputDelegate.Remove(Handle);
-    }*/
+    }
     // Add Delegate functions in PIE mode
 }

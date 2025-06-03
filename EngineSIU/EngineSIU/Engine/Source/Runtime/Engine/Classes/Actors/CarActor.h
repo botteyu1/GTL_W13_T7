@@ -12,5 +12,4 @@ public:
     ACarActor();
 
     virtual UObject* Duplicate(UObject* InOuter) override;
-    virtual void RegisterLuaType(sol::state& Lua) override;
 };
