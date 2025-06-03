@@ -22,6 +22,8 @@
 #include "Particles/ParticleSystem.h"
 #include <Components/CarComponent.h>
 
+#include "LuaScripts/LuaUIManager.h"
+
 extern FEngineLoop GEngineLoop;
 
 namespace PrivateEditorSelection
@@ -283,6 +285,7 @@ void UEditorEngine::StartPIE()
     
     // 여기서 Actor들의 BeginPlay를 해줄지 안에서 해줄 지 고민.
     // WorldList.Add(GetWorldContextFromWorld(PIEWorld));
+    LuaUIManager::Get().UpdateScoreUI();
 }
 
 void UEditorEngine::StartSkeletalMeshViewer(FName SkeletalMeshName, UAnimationAsset* AnimAsset)

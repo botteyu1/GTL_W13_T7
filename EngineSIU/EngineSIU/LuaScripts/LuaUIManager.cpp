@@ -7,6 +7,7 @@
 #include "Engine/Classes/Engine/Texture.h"
 #include "Engine/EditorEngine.h"
 #include "Engine/Engine.h"
+#include "Particles/ParticleSystemComponent.h"
 
 void LuaUIManager::CreateUI(FName InName)
 {
@@ -161,6 +162,47 @@ void LuaUIManager::TestCODE()
     auto GotButton = GetButtonUI("TestButton");
 
 }
+void LuaUIManager::InitScoreUI()
+{
+    static const FName ScoreUIName = "ScoreBoard";
+
+    if (GetTextUI(ScoreUIName) != nullptr)
+        return;
+
+    CreateText(
+        ScoreUIName,
+        RectTransform(20, 20, 300, 50, AnchorDirection::TopLeft),
+        5,
+        FString("Score: 0"),
+        FName("Default"),
+        24,
+        FLinearColor(1, 1, 0, 1)
+    );
+}
+void LuaUIManager::UpdateScoreUI()
+{
+    static const FName ScoreUIName = "ScoreBoard";
+
+    // 1. 점수 계산
+    int32 Score = 0;
+    for (auto Iter : TObjectRange<USkeletalMeshComponent>())
+    {
+        AActor* Owner = Iter->GetOwner();
+        if (Owner && Owner->HasTag("Enemy"))
+        {
+            Score += 1;
+        }
+    }
+
+    // 2. 텍스트 갱신
+    LuaTextUI* ScoreText = GetTextUI(ScoreUIName);
+    if (ScoreText)
+    {
+        FString NewText = FString::Printf(TEXT("Score: %d"), Score);
+        ScoreText->SetText(NewText);
+    }
+}
+
 
 void LuaUIManager::UpdateCanvasRectTransform(HWND hWnd)
 {
@@ -223,6 +265,7 @@ LuaUIManager::LuaUIManager()
 
 
     TestCODE();
+    InitScoreUI();
 }
 
 void LuaUIManager::GenerateResource()
