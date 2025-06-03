@@ -1,4 +1,4 @@
-#include "DestructibleStaticMesh"
+#include "DestructibleStaticMesh.h"
 
 #include "PhysicsManager.h"
 #include "Components/BoxComponent.h"

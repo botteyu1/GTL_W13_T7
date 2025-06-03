@@ -46,7 +46,7 @@
 #include "Engine/Contents/Actors/SideViewCameraActor.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Actors/CarActor.h"
-#include "Engine/Contents/Actors/DestructibleStaticMesh"
+#include "Engine/Contents/Actors/DestructibleStaticMesh.h"
 
 
 ControlEditorPanel::ControlEditorPanel()
