@@ -180,7 +180,6 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     BoneWorldMatrices.SetNum(BoneNum);
 
     bool bPoseChanged = false;
-    constexpr float PoseChangeThresholdSqr = 0.1f;
 
     for (int32 i = 0; i < BoneNum; ++i)
     {
@@ -229,18 +228,24 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
     // 비교 시작은 기준 프레임 저장 이후
     if (StableReferenceFrameCount >= StableFrameThreshold && StablePhysicsBoneWorldMatrices.Num() == BoneNum)
     {
+        float TotalDistanceSqr = 0.0f;
+
         for (int32 i = 0; i < BoneNum; ++i)
         {
             FVector Curr = BoneWorldMatrices[i].GetOrigin();
             FVector Ref = StablePhysicsBoneWorldMatrices[i].GetOrigin();
 
-            if ((Curr - Ref).SizeSquared() > PoseChangeThresholdSqr)
-            {
-                bPoseChanged = true;
-                break;
-            }
+            TotalDistanceSqr += (Curr - Ref).SizeSquared();
+        }
+
+        const float AvgDistanceSqr = TotalDistanceSqr / BoneNum;
+
+        if (AvgDistanceSqr > PoseChangeThresholdSqr)
+        {
+            bPoseChanged = true;
         }
     }
+
 
     // ✅ 한번이라도 물리 Pose가 변하면 이후 애니메이션 비활성화
     if (bPoseChanged)
@@ -595,6 +600,7 @@ void USkeletalMeshComponent::CreatePhysXGameObject()
 
         for (const auto& GeomAttribute : BodySetups[i]->GeomAttributes)
         {
+            //버섯돌이에 비해 피직스 Cube가 더 커서
             FVector ScaledOffset = GeomAttribute.Offset * CompScale;
             PxVec3 Offset = PxVec3(ScaledOffset.X, ScaledOffset.Y, ScaledOffset.Z);
             FQuat GeomQuat = GeomAttribute.Rotation.Quaternion();
@@ -610,7 +616,7 @@ void USkeletalMeshComponent::CreatePhysXGameObject()
                 Shape = GEngine->PhysicsManager->CreateSphereShape(Offset, GeomPQuat, Extent.x);
                 break;
             case EGeomType::EBox:
-                Shape = GEngine->PhysicsManager->CreateBoxShape(Offset, GeomPQuat, Extent);
+                Shape = GEngine->PhysicsManager->CreateBoxShape(Offset, GeomPQuat, Extent*0.5f);
                 break;
             case EGeomType::ECapsule:
                 Shape = GEngine->PhysicsManager->CreateCapsuleShape(Offset, GeomPQuat, Extent.x, Extent.z);

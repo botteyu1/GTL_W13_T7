@@ -166,7 +166,8 @@ private:
     bool bPostAnimDisabledGravityApplied = false;//애니메이션 비활성화 시 1회 중력 적용
     int32 StableReferenceFrameCount = 0;
     TArray<FMatrix> StablePhysicsBoneWorldMatrices;
-    constexpr static int32 StableFrameThreshold = 2; // 예: n프레임 이후를 기준 상태로 간주
+    constexpr static int32 StableFrameThreshold = 60; // 예: n프레임 이후를 기준 상태로 간주
+    const float PoseChangeThresholdSqr = 0.5f;
 
     void ApplyGravityToAllBodies();
 
