@@ -55,7 +55,8 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     UIManager = new UImGuiManager;
     AppMessageHandler = std::make_unique<FSlateAppMessageHandler>();
     LevelEditor = new SLevelEditor();
-
+    GameUI = new SGameUI();
+    
     UnrealEditor->Initialize();
     GraphicDevice.Initialize(AppWnd);
 
@@ -103,7 +104,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     FSoundManager::GetInstance().LoadSound("fishdream", "Contents/Sounds/fishdream.mp3");
     FSoundManager::GetInstance().LoadSound("sizzle", "Contents/Sounds/sizzle.mp3");
     //FSoundManager::GetInstance().PlaySound("fishdream");
-    SGameUI::GetInstance().Initialize();
+    GameUI->Initialize();
     UpdateUI();
 
     return 0;
@@ -184,7 +185,7 @@ void FEngineLoop::Tick()
         }
         else
         {
-            SGameUI::GetInstance().Draw();
+            GameUI->Draw();
         }
         UIManager->EndFrame();
 
@@ -232,6 +233,7 @@ void FEngineLoop::Exit()
     delete BufferManager;
     delete UIManager;
     delete LevelEditor;
+    delete GameUI;
 }
 
 void FEngineLoop::WindowInit(HINSTANCE hInstance)
@@ -308,18 +310,13 @@ void FEngineLoop::UpdateUI()
         GEngineLoop.GetUnrealEditor()->OnResize(AppWnd);
     }
     ViewportTypePanel::GetInstance().OnResize(AppWnd);
-    SGameUI::GetInstance().OnResize(AppWnd);
+    GameUI->OnResize(AppWnd);
 }
 
 void FEngineLoop::SetGameMode(AGameMode* InGameMode)
 {
     if (CurrentGameMode != InGameMode)
     {
-        if (CurrentGameMode)
-        {
-            CurrentGameMode->Destroy();
-        }
-        
         CurrentGameMode = nullptr;
         CurrentGameMode = InGameMode;
     }

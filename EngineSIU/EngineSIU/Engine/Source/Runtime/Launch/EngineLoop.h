@@ -8,6 +8,7 @@
 #include "Stats/GPUTimingManager.h"
 
 
+class SGameUI;
 class AGameMode;
 class FSlateAppMessageHandler;
 class UnrealEd;
@@ -53,6 +54,7 @@ public:
     FEngineProfiler EngineProfiler;
 
     bool bPendingGame = false;
+    bool bPauseGame = false;
     
     float GetDeltaTime() const { return DeltaTime; }
 
@@ -61,6 +63,7 @@ public:
 
 private:
     UImGuiManager* UIManager;
+    SGameUI* GameUI;
     //TODO: GWorld 제거, Editor들 EditorEngine으로 넣기
 
     std::unique_ptr<FSlateAppMessageHandler> AppMessageHandler;

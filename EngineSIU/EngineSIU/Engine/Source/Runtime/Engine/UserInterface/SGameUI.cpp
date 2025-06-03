@@ -4,10 +4,11 @@
 #include "Engine/EditorEngine.h"
 #include "GameFramework/GameMode.h"
 
-SGameUI& SGameUI::GetInstance()
+
+SGameUI::SGameUI()
+    : Width()
+    , Height(0)
 {
-    static SGameUI instance;
-    return instance;
 }
 
 void SGameUI::Initialize()
@@ -38,10 +39,17 @@ void SGameUI::Draw()
     ImGui::Begin("Game Information", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse
         | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-    DrawBackground();
-    if (bMovedMario)
+    if (GEngineLoop.bPauseGame)
     {
-        DrawButtons();
+        DrawPause();
+    }
+    else
+    {
+        DrawBackground();
+        if (bMovedMario)
+        {
+            DrawButtons();
+        }
     }
     
     ImGui::End();
@@ -49,10 +57,13 @@ void SGameUI::Draw()
 
 void SGameUI::OnResize(HWND hWnd)
 {
-    RECT ClientRect;
-    GetClientRect(hWnd, &ClientRect);
-    Width = ClientRect.right - ClientRect.left;
-    Height = ClientRect.bottom - ClientRect.top;
+    if (hWnd)
+    {
+        RECT ClientRect;
+        GetClientRect(hWnd, &ClientRect);
+        Width = ClientRect.right - ClientRect.left;
+        Height = ClientRect.bottom - ClientRect.top;
+    }
 }
 
 void SGameUI::DrawBackground()
@@ -108,6 +119,19 @@ void SGameUI::DrawButtons()
             Engine->StartPIE();
             GEngineLoop.bPendingGame = false;
             GEngineLoop.GetGameMode()->StartMatch();
+            OnHandle.Add(GEngineLoop.GetGameMode()->OnGamePause.AddLambda([](bool bPaused)
+            {
+                if (bPaused)
+                {
+                    GEngineLoop.bPendingGame = true;
+                    GEngineLoop.bPauseGame = true;
+                }
+                else
+                {
+                    GEngineLoop.bPendingGame = false;
+                    GEngineLoop.bPauseGame = false;
+                }
+            }));
         }
     }
     
@@ -149,4 +173,66 @@ void SGameUI::DrawButtons()
             MarioCurrentPos = ImVec2(-100, Height / 2);
         }
     }
+}
+
+void SGameUI::DrawPause()
+{
+    // 1) 전체 화면 크기 기준으로 윈도우를 풀스크린으로 설정
+    ImGui::SetNextWindowPos(ImVec2(-10.0f, -10.0f), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(Width + 20.0f, Height + 20.0f), ImGuiCond_Always);
+    ImGui::SetNextWindowBgAlpha(0.8f);
+    ImGui::Begin("Game Pause", nullptr,
+        ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoCollapse
+        | ImGuiWindowFlags_NoTitleBar
+        | ImGuiWindowFlags_NoScrollbar
+        | ImGuiWindowFlags_NoScrollWithMouse);
+
+    // 2) 윈도우 내부 크기 가져오기
+    ImVec2 WindowSize = ImGui::GetWindowSize();
+
+    // 3) 버튼 설정: 크기, 간격 등
+    const ImVec2 ButtonSize = ImVec2(250.0f, 100.0f);
+    const float VerticalSpacing = 20.0f; // 버튼 사이 세로 간격
+
+    // 4) 총 버튼 영역 높이 계산 (버튼 3개 + 간격 2개)
+    float TotalButtonsHeight = ButtonSize.y * 3.0f + VerticalSpacing * 2.0f;
+
+    // 5) 첫 번째 버튼의 Y 시작 위치 = (윈도우 높이 - 전체 버튼 영역 높이) / 2
+    float StartY = (WindowSize.y - TotalButtonsHeight) * 0.5f;
+
+    // 6) 모든 버튼의 X 위치 = (윈도우 너비 - 버튼 너비) / 2  → 가운데 정렬
+    float CenterX = (WindowSize.x - ButtonSize.x) * 0.5f;
+
+    // 7) 첫 번째 버튼 배치
+    ImGui::SetCursorPos(ImVec2(CenterX, StartY));
+    if (ImGui::Button("Resume", ButtonSize))
+    {
+        GEngineLoop.GetGameMode()->PauseMatch();
+    }
+
+    // 8) 두 번째 버튼 배치: Y = StartY + ButtonHeight + VerticalSpacing
+    float SecondY = StartY + ButtonSize.y + VerticalSpacing;
+    ImGui::SetCursorPos(ImVec2(CenterX, SecondY));
+    if (ImGui::Button("Restart", ButtonSize))
+    {
+        // Restart 버튼 클릭 시 처리 로직
+        // 예: RestartGame();
+    }
+
+    // 9) 세 번째 버튼 배치: Y = SecondY + ButtonHeight + VerticalSpacing
+    float ThirdY = SecondY + ButtonSize.y + VerticalSpacing;
+    ImGui::SetCursorPos(ImVec2(CenterX, ThirdY));
+    if (ImGui::Button("MainMenu", ButtonSize))
+    {
+        for (auto Handle : OnHandle)
+        {
+            GEngineLoop.GetGameMode()->OnGamePause.Remove(Handle);
+        }
+        GEngineLoop.GetGameMode()->EndMatch(false);
+        GEngineLoop.bPendingGame = true;
+        GEngineLoop.bPauseGame = false;
+    }
+
+    ImGui::End();
 }
