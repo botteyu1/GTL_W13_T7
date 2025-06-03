@@ -27,6 +27,7 @@ function ReturnTable:BeginPlay()
 
     
     self:InitScoreUI()
+    self:InitCountUI()
 
     -- local imageName = FString.new("MyImageUI")
     -- local textureName = FString.new("ExplosionColor")
@@ -63,7 +64,7 @@ function ReturnTable:Tick(DeltaTime)
     -- 바로 등록된 경우에는 PropertyName() 과 같이 함수 형태로 호출되어야 함.
     local this = self.this
     self:UpdateScoreUI()
-
+    self:UpdateCountUI();
 end
 
 -- EndPlay: Actor가 파괴되거나 레벨이 전환될 때 호출
@@ -112,6 +113,44 @@ function ReturnTable:UpdateScoreUI()
     if self.ScoreUI then
         local text = FString.new(string.format("Score: %d / %d", ragdollEnemy, maxEnemy))
         self.ScoreUI:SetText(text)
+    end
+end
+
+function ReturnTable:InitCountUI()
+    local uiName = FString.new("CountUI")
+    local textContent = FString.new("Fire Count Left:")
+
+    local posX = 0.0
+    local posY = 100.0
+    local width = 200.0     -- Text는 FontSize에만 크기 영향 받음
+    local height = 80.0
+    local anchor = AnchorDirection.TopLeft -- Enum 값 사용
+
+    local myRect = RectTransform.new(posX, posY, width, height, anchor)
+
+    local SortOrder = 20
+    local fontName = FString.new("Default")
+    local fontSize = 50
+    local fontColor = FLinearColor.new(1.0, 0.0, 0.0, 1.0)
+
+    LuaUIBind.CreateText(uiName,  myRect, SortOrder, textContent, fontName, fontSize, fontColor)
+    self.CountUI = LuaUIBind.GetTextUI(uiName)
+        -- 객체를 제대로 가져왔는지 확인 (nil 체크)
+    if not self.CountUI then
+        print("Error: Could not get CountUI with name: "..uiName)
+    end
+end
+function ReturnTable:UpdateCountUI()
+    if not self.CountUI then
+        return
+    end
+
+    local maxFireCount = 5
+    local curFireCount = 5 - GetFireCount()
+
+    if self.CountUI then
+        local text = FString.new(string.format("Fire Count Left: %d / %d", curFireCount, maxFireCount))
+        self.CountUI:SetText(text)
     end
 end
 

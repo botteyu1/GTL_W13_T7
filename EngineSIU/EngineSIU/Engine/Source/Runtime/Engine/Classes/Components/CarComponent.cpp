@@ -5,6 +5,10 @@
 #include "Lua/LuaScriptComponent.h"
 #include "Lua/LuaScriptManager.h"
 #include "Lua/LuaUtils/LuaTypeMacros.h"
+#include <Camera/CameraComponent.h>
+#include <World/World.h>
+#include <Engine/Contents/Actors/FreeCameraActor.h>
+#include <GameFramework/SpringArmComponent.h>
 
 UCarComponent::UCarComponent()
 {
@@ -21,6 +25,19 @@ UObject* UCarComponent::Duplicate(UObject* InOuter)
 void UCarComponent::TickComponent(float DeltaTime)
 {
     MoveCar();
+    if (Camera)
+    {
+        FVector Pos = GetComponentLocation() + FVector(1, 0, 0) * -15.f + FVector(0, 0, 7.5f);
+        Camera->SetWorldLocation(Pos);
+        FVector Target = GetComponentLocation() + FVector(1, 0, 0) * 10.f;
+        Camera->SetLookTarget(Target);
+        Camera->SetWorldRotation(FQuat::Identity);
+    }
+    if (bBoosted)
+        bCarDriving = false;
+    else
+        bCarDriving = true;
+    UE_LOG(ELogLevel::Display, "Is Driving: %d", static_cast<int>(bCarDriving));
     //if (bRestarted)
     //{
     //    RestartTime += DeltaTime;
@@ -77,6 +94,12 @@ void UCarComponent::CreatePhysXGameObject()
     }
     for (auto& Comp : DestroyComps)
     {
+        if (UCameraComponent* DuplicateCamera = Cast<UCameraComponent>(Comp))
+        {
+            Camera = DuplicateCamera;
+            Camera->SetRelativeLocation(FVector(1, 0, 0) * -15.f + FVector(0, 0, 7.5f));
+            continue;
+        }
         Comp->DestroyComponent();
     }
     Spawn();
@@ -488,6 +511,17 @@ void UCarComponent::ApplyForceToActors(float Angle, float Magnitude)
     for (int i = 0; i < 4; ++i)
         Wheels[i]->DynamicRigidBody->addForce(Direction * Magnitude, PxForceMode::eIMPULSE);
     Hub[0]->DynamicRigidBody->addForce(Direction * Magnitude, PxForceMode::eIMPULSE);
+
+    for (auto It : TObjectRange<AFreeCameraActor>())
+    {
+        if (It->GetWorld() == GEngine->ActiveWorld)
+        {
+            APlayerController* PlayerController = GEngine->ActiveWorld->GetPlayerController();
+            FViewTargetTransitionParams TransitionParams;
+            TransitionParams.BlendTime = 0.f; // 0.5초 동안 부드럽게 전환
+            PlayerController->SetViewTarget(It, TransitionParams);
+        }
+    }
 }
 
 void UCarComponent::BoostCar()
@@ -543,4 +577,6 @@ void UCarComponent::Restart()
     }
     Hub[0]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
     Hub[1]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
+
+    FireCount += 1;
 }

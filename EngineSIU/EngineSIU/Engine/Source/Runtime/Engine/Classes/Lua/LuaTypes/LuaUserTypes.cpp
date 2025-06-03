@@ -7,6 +7,7 @@
 #include "Math/Matrix.h"
 #include "Math/Quat.h"
 #include "Engine/Source/Runtime/Core/Container/String.h"
+#include <Components/CarComponent.h>
 
 void LuaTypes::FBindLua<FColor>::Bind(sol::table& Table)
 {
@@ -316,6 +317,18 @@ void LuaTypes::RegisterGlobalFunctions(sol::state& Lua)
                         ++Count;
                     }
                 }
+            }
+        }
+        return Count;
+        });
+
+    Lua.set_function("GetFireCount", []() -> int32 {
+        int Count = 0;
+        for (auto It : TObjectRange<UCarComponent>())
+        {
+            if (It->GetWorld() == GEngine->ActiveWorld)
+            {
+                Count = It->GetFireCount();
             }
         }
         return Count;

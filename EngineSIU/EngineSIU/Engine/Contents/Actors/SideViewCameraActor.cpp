@@ -27,7 +27,7 @@ void ASideViewCameraActor::BeginPlay()
 
     if (CameraComponent)
     {
-        GEngine->ActiveWorld->GetPlayerController()->BindAction("Three", 
+        GEngine->ActiveWorld->GetPlayerController()->BindAction("Q", 
             [this](float DeltaTime)
             {
                 FViewTargetTransitionParams TransitionParams;
