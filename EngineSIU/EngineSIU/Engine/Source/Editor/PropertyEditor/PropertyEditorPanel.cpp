@@ -367,7 +367,10 @@ void PropertyEditorPanel::RenderForActor(AActor* SelectedActor, USceneComponent*
                     USceneComponent* NewComp = Cast<USceneComponent>(SelectedActor->AddComponent(Class));
                     if (NewComp != nullptr && TargetComponent != nullptr)
                     {
-                        NewComp->SetupAttachment(TargetComponent);
+                        if (TargetComponent->GetAttachParent() != NewComp)
+                        {
+                            NewComp->SetupAttachment(TargetComponent);
+                        }
                     }
                 }
             }

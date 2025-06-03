@@ -46,7 +46,7 @@
 #include "Engine/Contents/Actors/SideViewCameraActor.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Actors/CarActor.h"
-#include "Engine/Contents/Actors/DestructibleStaticMesh"
+#include "Engine/Contents/Actors/DestructibleStaticMesh.h"
 
 
 ControlEditorPanel::ControlEditorPanel()
@@ -380,6 +380,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
 
         static const Primitive primitives[] = 
         {
+            { .Label = "DummyActor",              .OBJ = OBJ_DUMMY },
             { .Label = "Cube",              .OBJ = OBJ_CUBE },
             { .Label = "Sphere",            .OBJ = OBJ_SPHERE },
             { .Label = "PointLight",        .OBJ = OBJ_POINTLIGHT },
@@ -410,6 +411,12 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                 AActor* SpawnedActor = nullptr;
                 switch (static_cast<OBJECTS>(primitive.OBJ))
                 {
+                case OBJ_DUMMY:
+                {
+                    SpawnedActor = World->SpawnActor<AActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_Actor"));
+                    break;
+                }
                 case OBJ_SPHERE:
                 {
                     SpawnedActor = World->SpawnActor<AActor>();

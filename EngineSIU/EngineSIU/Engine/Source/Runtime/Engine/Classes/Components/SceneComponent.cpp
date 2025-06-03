@@ -337,10 +337,13 @@ void USceneComponent::SetupAttachment(USceneComponent* InParent)
         ) 
     )
     {
+
+        //DetachFromComponent(InParent); // 기존 부모와의 연결을 끊음
         AttachParent = InParent;
 
         // TODO: .AddUnique의 실행 위치를 RegisterComponent로 바꾸거나 해야할 듯
         InParent->AttachChildren.AddUnique(this);
+        
     }
 }
 

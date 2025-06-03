@@ -207,10 +207,16 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     <ClCompile Include="Engine\Contents\Actors\DestructibleStaticMesh.cpp" />
     <ClCompile Include="Engine\Contents\Actors\CameraActor.cpp" />
     <ClCompile Include="Engine\Contents\Actors\FreeCameraActor.cpp" />
+    <ClCompile Include="Engine\Contents\Actors\GravitySkeletalActor.cpp" />
     <ClCompile Include="Engine\Contents\Actors\ObjectViewCameraActor.cpp" />
     <ClCompile Include="Engine\Contents\Actors\PlayerCameraTest.cpp" />
     <ClCompile Include="Engine\Contents\Actors\SideViewCameraActor.cpp" />
     <ClCompile Include="Engine\Contents\AnimInstance\LuaScriptAnimInstance.cpp" />
+    <ClCompile Include="Engine\Contents\Components\FloorSoil.cpp" />
+    <ClCompile Include="Engine\Contents\Components\MysteryBoxComponent.cpp" />
+    <ClCompile Include="Engine\Contents\Components\Cloud.cpp" />
+    <ClCompile Include="Engine\Contents\Components\PillarSoil.cpp" />
+    <ClCompile Include="Engine\Contents\Components\Whomp.cpp" />
     <ClCompile Include="Engine\Contents\Objects\DamageCameraShake.cpp" />
     <ClCompile Include="Engine\Source\Developer\AnimDataController\AnimDataController.cpp" />
     <ClCompile Include="Engine\Source\Developer\LuaUtils\LuaButtonUI.cpp" />
@@ -532,13 +538,19 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Engine\Contents\Actors\DestructibleStaticMesh" />
+    <ClInclude Include="Engine\Contents\Actors\DestructibleStaticMesh.h" />
     <ClInclude Include="Engine\Contents\Actors\CameraActor.h" />
     <ClInclude Include="Engine\Contents\Actors\FreeCameraActor.h" />
+    <ClInclude Include="Engine\Contents\Actors\GravitySkeletalActor.h" />
     <ClInclude Include="Engine\Contents\Actors\ObjectViewCameraActor.h" />
     <ClInclude Include="Engine\Contents\Actors\PlayerCameraTest.h" />
     <ClInclude Include="Engine\Contents\Actors\SideViewCameraActor.h" />
     <ClInclude Include="Engine\Contents\AnimInstance\LuaScriptAnimInstance.h" />
+    <ClInclude Include="Engine\Contents\Components\FloorSoil.h" />
+    <ClInclude Include="Engine\Contents\Components\MysteryBoxComponent.h" />
+    <ClInclude Include="Engine\Contents\Components\Cloud.h" />
+    <ClInclude Include="Engine\Contents\Components\PillarSoil.h" />
+    <ClInclude Include="Engine\Contents\Components\Whomp.h" />
     <ClInclude Include="Engine\Contents\Objects\DamageCameraShake.h" />
     <ClInclude Include="Engine\Source\Developer\LuaUtils\LuaButtonUI.h" />
     <ClInclude Include="Engine\Source\Developer\LuaUtils\LuaImageUI.h" />
@@ -992,9 +1004,6 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     <Compile Include="Engine\Source\ThirdParty\fmod\inc\fmod.cs" />
     <Compile Include="Engine\Source\ThirdParty\fmod\inc\fmod_dsp.cs" />
     <Compile Include="Engine\Source\ThirdParty\fmod\inc\fmod_errors.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Engine\Contents\Components\" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
