@@ -197,7 +197,7 @@ void UCarComponent::CreatePhysXGameObject()
         HubShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Hub, 0xFFFF, 0, 0));
         Hub[i]->DynamicRigidBody->attachShape(*HubShape);
         PxReal HubVolume = 8 * HubSize[i].x * HubSize[i].y * HubSize[i].z;
-        PxReal HubMass = 2000.f;
+        PxReal HubMass = 2500.f;
         if (i == 1)
             HubMass = 200.f;
         PxRigidBodyExt::updateMassAndInertia(*Hub[i]->DynamicRigidBody, HubMass / HubVolume);
@@ -352,7 +352,7 @@ void UCarComponent::MoveCar()
         return;
     }
 
-    //FVector Up = GetUpVector();
+    //  FVector Up = GetUpVector();
     //if (Up.Dot(FVector(0, 0, 1)) < 0)
     //{
     //    bBoosted = true;
