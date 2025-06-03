@@ -35,6 +35,11 @@ void FParticleSpriteRenderPass::PrepareRenderArr()
     {
         if (Iter->GetWorld() == GEngine->ActiveWorld)
         {
+            if (Iter->bEnabled == false)
+            {
+                continue;
+            }
+            
             FParticleDynamicData* Particle = Iter->GetParticleDynamicData();
             if (Particle && !Particle->DynamicEmitterDataArray.IsEmpty())
             {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "StaticMeshComponent.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "Physics/PhysicsManager.h"
 
 class UCameraComponent;
@@ -83,6 +84,8 @@ private:
     bool bCarDriving = true;
 
     UStaticMeshComponent* WheelComp[4] = { nullptr };
+    UParticleSystemComponent* BoostParticle = nullptr;
+    UParticleSystemComponent* WheelDustParticle[2] =  { nullptr };
 
     UCameraComponent* Camera = nullptr;
 

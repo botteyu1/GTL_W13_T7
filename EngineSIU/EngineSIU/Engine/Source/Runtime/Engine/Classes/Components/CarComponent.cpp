@@ -1,4 +1,6 @@
 #include "CarComponent.h"
+
+#include "Engine/AssetManager.h"
 #include "Engine/FObjLoader.h"
 #include "GameFramework/Actor.h"
 #include "Engine/Engine.h"
@@ -9,6 +11,7 @@
 #include <World/World.h>
 #include <Engine/Contents/Actors/FreeCameraActor.h>
 #include <GameFramework/SpringArmComponent.h>
+#include "Particles/ParticleSystem.h"
 
 UCarComponent::UCarComponent()
 {
@@ -45,6 +48,11 @@ void UCarComponent::TickComponent(float DeltaTime)
         bCarDriving = false;
     else
         bCarDriving = true;
+    BoostParticle->bEnabled = bBoosted;
+    //if (GetAsyncKeyState('R') & 0x8000)
+    //{
+    //    Restart();
+    //}
 }
 
 void UCarComponent::EndPhysicsTickComponent(float DeltaTime)
@@ -323,6 +331,31 @@ void UCarComponent::Spawn()
         WheelComp[i]->SetRelativeTransform(FTransform(WheelPos[i]));
         //WheelComp[i]->SetRelativeRotation(WheelWorldMatrix.GetMatrixWithoutScale().ToQuat());
         //WheelComp[i]->SetWorldScale3D(WheelWorldMatrix.GetScaleVector());
+    }
+
+    BoostParticle = GetOwner()->AddComponent<UParticleSystemComponent>();
+    BoostParticle->SetupAttachment(GetOwner()->GetRootComponent());
+
+    UParticleSystem* BoostParticleSystem = Cast<UParticleSystem>(UAssetManager::Get().GetAsset(EAssetType::ParticleSystem, TEXT("Contents/ParticleSystem/Boost2")));
+    if (BoostParticleSystem)
+    {
+        BoostParticle->SetParticleSystem(BoostParticleSystem);
+        BoostParticle->SetRelativeTransform(FTransform(FRotator(90, 0, 0), FVector(-1.8f, -0.1f, 0.5f)));
+        BoostParticle->bEnabled = false;
+    }
+
+    UParticleSystem* WheelDustParticleSystem = Cast<UParticleSystem>(UAssetManager::Get().GetAsset(EAssetType::ParticleSystem, TEXT("Contents/ParticleSystem/WheelDust")));
+    for (int i = 0; i < 2; ++i)
+    {
+        WheelDustParticle[i] = GetOwner()->AddComponent<UParticleSystemComponent>();
+        WheelDustParticle[i]->SetupAttachment(GetOwner()->GetRootComponent());
+
+        if (WheelDustParticleSystem)
+        {
+            float y = i == 0 ? 0.9f : -0.9f;
+            WheelDustParticle[i]->SetParticleSystem(WheelDustParticleSystem);
+            WheelDustParticle[i]->SetRelativeTransform(FTransform(FRotator(0, 0, 0), FVector(-0.95f, y, -0.6f), FVector(0.4f, 0.4f, 0.5f)));
+        }
     }
 }
 
