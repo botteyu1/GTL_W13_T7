@@ -290,6 +290,8 @@ bool AActor::SetRootComponent(USceneComponent* NewRootComponent)
             {
                 OldRootComponent->SetupAttachment(RootComponent);
             }
+            
+            //RootComponent->AttachToComponent(nullptr);
         }
         return true;
     }

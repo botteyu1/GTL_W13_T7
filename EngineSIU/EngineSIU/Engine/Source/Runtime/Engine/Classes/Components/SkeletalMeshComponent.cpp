@@ -266,8 +266,8 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
 
 
     // ✅ 한번이라도 물리 Pose가 변하면 이후 애니메이션 비활성화
-    if (bPoseChanged)
-        bDisableAnimAfterHit++;
+    // if (bPoseChanged)
+    //     bDisableAnimAfterHit++;
 
     // ✅ 래그돌 상태 진입 시 중력 적용
     if (IsInRagdollState())
