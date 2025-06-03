@@ -28,31 +28,31 @@ function ReturnTable:BeginPlay()
     
     self:InitScoreUI()
 
-    local imageName = FString.new("MyImageUI")
-    local textureName = FString.new("ExplosionColor")
+    -- local imageName = FString.new("MyImageUI")
+    -- local textureName = FString.new("ExplosionColor")
 
-    local TexturePosX = -450.0
-    local TexturePosY = 50.0
-    local TextureWidth = 300.0
-    local TextureHeight = 80.0
-    local TextureAnchor = AnchorDirection.MiddleCenter
+    -- local TexturePosX = -450.0
+    -- local TexturePosY = 50.0
+    -- local TextureWidth = 300.0
+    -- local TextureHeight = 80.0
+    -- local TextureAnchor = AnchorDirection.MiddleCenter
 
-    local TextureRect = RectTransform.new(TexturePosX, TexturePosY, TextureWidth, TextureHeight, TextureAnchor)
+    -- local TextureRect = RectTransform.new(TexturePosX, TexturePosY, TextureWidth, TextureHeight, TextureAnchor)
 
-    local TextureSortOrder = 10
-    local TextureColor = FLinearColor.new(1.0, 1.0, 1.0, 0.1)
+    -- local TextureSortOrder = 10
+    -- local TextureColor = FLinearColor.new(1.0, 1.0, 1.0, 0.1)
 
-    LuaUIBind.CreateImage(imageName, TextureRect, TextureSortOrder, textureName, TextureColor)
+    -- LuaUIBind.CreateImage(imageName, TextureRect, TextureSortOrder, textureName, TextureColor)
 
 
     -- 생성된 UI 객체 가져오기 (Tick에서 사용하기 위해)
     -- LuaUIBind.GetTextUI/GetImageUI는 포인터를 반환하므로, Lua에서 객체로 다뤄짐
-    self.ManagedImageUI = LuaUIBind.GetImageUI(imageName)
+    -- self.ManagedImageUI = LuaUIBind.GetImageUI(imageName)
 
 
-    if not self.ManagedImageUI then
-        print("Error: Could not get ManagedImageUI with name: " .. imageName:ToAnsiString())
-    end
+    -- if not self.ManagedImageUI then
+    --     print("Error: Could not get ManagedImageUI with name: " .. imageName:ToAnsiString())
+    -- end
 
 end
 
