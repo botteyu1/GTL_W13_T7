@@ -65,13 +65,13 @@ private:
     PxRevoluteJoint* WheelJoints[4] = { nullptr }; //FR, FL, RR, RL
     PxRevoluteJoint* SteeringJoint = nullptr;
     float MaxSteerAngle = PxPi / 18.f;
-    float DeltaSteerAngle = PxPi / 9.f;
+    float DeltaSteerAngle = PxPi / 6.f;
     float SteerAngle = 0.0f;
     float MaxDriveTorque = 1000.0f;
     float Velocity = 0.f;
-    float MaxVelocity = 30.f;
+    float MaxVelocity = 50.f;
     float FinalBoost = 0.f;
-    float MaxBoost = 4000.f;
+    float MaxBoost = 3000.f;
     bool bBoosted = false;
 
     UStaticMeshComponent* WheelComp[4] = { nullptr };

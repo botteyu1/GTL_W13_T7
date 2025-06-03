@@ -129,7 +129,9 @@ void UCarComponent::CreatePhysXGameObject()
         WheelShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Wheel, 0xFFFF, 0, 0));
         Wheels[i]->DynamicRigidBody->attachShape(*WheelShape);
         WheelShape->release();
-        PxRigidBodyExt::updateMassAndInertia(*Wheels[i]->DynamicRigidBody, 20.f);
+        PxReal WheelMass = 50.f;
+        PxReal WheelVolume = WheelRadius * WheelRadius * PxPi * 2 * WheelHeight;
+        PxRigidBodyExt::updateMassAndInertia(*Wheels[i]->DynamicRigidBody, WheelMass / WheelVolume);
         Wheels[i]->DynamicRigidBody->setLinearDamping(0.05f);
         Wheels[i]->DynamicRigidBody->setAngularDamping(0.05f);
         Wheels[i]->DynamicRigidBody->setSolverIterationCounts(
@@ -162,7 +164,7 @@ void UCarComponent::CreatePhysXGameObject()
         HubShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Hub, 0xFFFF, 0, 0));
         Hub[i]->DynamicRigidBody->attachShape(*HubShape);
         PxReal HubVolume = 8 * HubSize[0].x * HubSize[0].y * HubSize[0].z;
-        PxReal HubMass = 150.f;
+        PxReal HubMass = 200.f;
         PxRigidBodyExt::updateMassAndInertia(*Hub[i]->DynamicRigidBody, HubMass/HubVolume);
         Hub[i]->DynamicRigidBody->setLinearDamping(0.05f);
         Hub[i]->DynamicRigidBody->setAngularDamping(0.05f);
@@ -290,34 +292,56 @@ void UCarComponent::SetProperties(const TMap<FString, FString>& InProperties)
 void UCarComponent::MoveCar()
 {
     float CarLocX = GetComponentLocation().X;
-    float EndLoc = 100 * FMath::Cos(SlopeAngle) + 1.5f;
+    float EndLoc = 100 * FMath::Cos(SlopeAngle) + 1.f;
     if (CarLocX > EndLoc && !bBoosted)
     {
-        //ApplyForceToActors(SlopeAngle, FinalBoost);
+        ApplyForceToActors(SlopeAngle, FinalBoost);
         UE_LOG(ELogLevel::Display, "Boosted!: %f", FinalBoost);
-        UE_LOG(ELogLevel::Display, "Car Loc: %f\nEnd Loc: %f", CarLocX, EndLoc);
-        //bBoosted = true;
+        bBoosted = true;
         return;
     }
 
-    if (!Wheels[0] || bBoosted)
+    if (!Wheels[0])
         return;
-    if (GetAsyncKeyState('W') & 0x8000)
+    if (!bBoosted)
     {
-        if (Velocity < 0)
-            Velocity = 0;
-        Velocity += 0.1f;
-        FinalBoost += 20.f * Velocity / MaxVelocity;
-        //Velocity = 20.f;
-    }
-    else if (bBoosted)
-    {
-        if (Velocity > 0)
-            Velocity -= 0.1f;
-        else if (Velocity < 0)
+        if (GetAsyncKeyState('W') & 0x8000)
+        {
+            if (Velocity < 0)
+                Velocity = 0;
             Velocity += 0.1f;
-        if (FMath::Abs(Velocity) < 0.1f)
-            Velocity = 0.f;
+            FinalBoost += 20.f * Velocity / MaxVelocity;
+            //Velocity = 20.f;
+        }
+        else
+        {
+            if (Velocity > 0)
+                Velocity -= 0.1f;
+            else if (Velocity < 0)
+                Velocity += 0.1f;
+            if (FMath::Abs(Velocity) < 0.1f)
+                Velocity = 0.f;
+            FinalBoost -= 5.f;
+        }
+
+        if (GetAsyncKeyState('A') & 0x8000)
+        {
+            SteerAngle = DeltaSteerAngle;
+        }
+        else if (GetAsyncKeyState('D') & 0x8000)
+        {
+            SteerAngle = -DeltaSteerAngle;
+        }
+        else
+        {
+            float CurSteerAngle = GetCurSteerAngle();
+            if (CurSteerAngle > 0.1f)
+                SteerAngle = -DeltaSteerAngle;
+            else if (CurSteerAngle < -0.1f)
+                SteerAngle = DeltaSteerAngle;
+            if (FMath::Abs(CurSteerAngle) < 0.01)
+                SteerAngle = 0;
+        }
     }
     else
     {
@@ -327,7 +351,20 @@ void UCarComponent::MoveCar()
             Velocity += 0.1f;
         if (FMath::Abs(Velocity) < 0.1f)
             Velocity = 0.f;
-        FinalBoost -= 5.f;
+
+        float CurSteerAngle = GetCurSteerAngle();
+        if (CurSteerAngle > 0.1f)
+            SteerAngle = -DeltaSteerAngle * 3.f;
+        else if (CurSteerAngle < -0.1f)
+            SteerAngle = DeltaSteerAngle * 3.f;
+        if (FMath::Abs(CurSteerAngle) < 0.01)
+            SteerAngle = 0;
+
+        if (GetCurSpeed() < 0.1f)
+        {
+            if (GetAsyncKeyState('R') & 0x8000)
+                Restart();
+        }
     }
     FinalBoost = FMath::Clamp(FinalBoost, 0.f, MaxBoost);
     if (!bBoosted && FinalBoost > 0.f)
@@ -339,19 +376,7 @@ void UCarComponent::MoveCar()
     {
         WheelJoints[i]->setDriveVelocity(Velocity);
     }
-
-    if (GetAsyncKeyState('A') & 0x8000)
-    {
-        SteeringJoint->setDriveVelocity(DeltaSteerAngle * 3.f);
-    }
-    else if (GetAsyncKeyState('D') & 0x8000)
-    {
-        SteeringJoint->setDriveVelocity(-DeltaSteerAngle * 3.f);
-    }
-    else
-    {
-        SteeringJoint->setDriveVelocity(0.f);
-    }
+    SteeringJoint->setDriveVelocity(SteerAngle);
 }
 
 void UCarComponent::createWheelConvexData(float radius, float halfHeight, int segmentCount, const FVector& Scale, std::vector<PxVec3>& outPoints)
@@ -472,7 +497,8 @@ void UCarComponent::Restart()
         Wheels[i]->DynamicRigidBody->setGlobalPose(InitialWheelT[i]);
     }
     Velocity = 0; 
-    bBoosted = 0;
+    bBoosted = false;
+    FinalBoost = 0;
 
     CarBody->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
     for (int i = 0; i < 4; ++i)
