@@ -176,7 +176,7 @@ function ReturnTable:InitResultUI()
     local SortOrder = 100
     local fontName = FString.new("Default")
     local fontSize = 60
-    local fontColor = FLinearColor.new(0.0, 0.0, 0.0, 0.0) -- a=0.0으로 안 보이게
+    local fontColor = FLinearColor.new(0.0, 1.0, 0.0, 1.0)
 
     LuaUIBind.CreateText(uiName, myRect, SortOrder, initialText, fontName, fontSize, fontColor)
     self.ResultUI = LuaUIBind.GetTextUI(uiName)
@@ -212,7 +212,7 @@ function ReturnTable:InitControlsUI()
     local SortOrder = 30
     local fontName = FString.new("Default")
     local fontSize = 28
-    local fontColor = FLinearColor.new(0.0, 0.0, 0.0, 1.0) -- 흰색
+    local fontColor = FLinearColor.new(0.0, 1.0, 0.0, 1.0) -- 흰색
 
     LuaUIBind.CreateText(uiName, myRect, SortOrder, controlsText, fontName, fontSize, fontColor)
     self.ControlsUI = LuaUIBind.GetTextUI(uiName)

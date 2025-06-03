@@ -545,6 +545,20 @@ void UPrimitiveComponent::CreatePhysXGameObject()
     BodyInstance->bSimulatePhysics = bSimulate;
     BodyInstance->bEnableGravity = bApplyGravity;
     ////////////////////////
+    ///
+    ///    // Release 빌드에서 충돌 감지 강화 설정
+    BodyInstance->CollisionEnabled = ECollisionEnabled::QueryAndPhysics;  // 물리와 쿼리 모두 활성화
+    BodyInstance->bUseCCD = true;                                        // CCD 활성화
+    BodyInstance->bStartAwake = true;                                    // 항상 깨어있는 상태로 시작
+    BodyInstance->PositionSolverIterationCount = 8;                     // 위치 솔버 반복 횟수 증가
+    BodyInstance->VelocitySolverIterationCount = 4;                     // 속도 솔버 반복 횟수 증가
+    
+    // Release 빌드에서 물리 설정 확인 로깅
+    UE_LOG(ELogLevel::Display, TEXT("CreatePhysXGameObject for %s: MassInKg=%.2f, bSimulatePhysics=%s, bEnableGravity=%s, CollisionEnabled=%d"), 
+           *GetName(), BodyInstance->MassInKg, 
+           BodyInstance->bSimulatePhysics ? TEXT("TRUE") : TEXT("FALSE"),
+           BodyInstance->bEnableGravity ? TEXT("TRUE") : TEXT("FALSE"),
+           (int32)BodyInstance->CollisionEnabled);
     
     FVector Location = GetComponentLocation();
     PxVec3 PPos = PxVec3(Location.X, Location.Y, Location.Z);
