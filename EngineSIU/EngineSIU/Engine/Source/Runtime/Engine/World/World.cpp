@@ -131,7 +131,7 @@ AActor* UWorld::SpawnActor(UClass* InClass, FName InActorName)
 
         if (NewActor->GetRootComponent() == nullptr)
         {
-            NewActor->SetRootComponent(NewActor->AddComponent<USceneComponent>());
+            NewActor->SetRootComponent(NewActor->AddComponent<USceneComponent>("emptyComp"));
         }
         
         return NewActor;
