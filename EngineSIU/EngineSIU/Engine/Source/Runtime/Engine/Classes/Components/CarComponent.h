@@ -11,7 +11,7 @@ class UCarComponent : public UStaticMeshComponent
 
 public:
     UCarComponent();
-    virtual ~UCarComponent() override = default;
+    virtual ~UCarComponent() override;
 
     virtual UObject* Duplicate(UObject* InOuter) override;
 
@@ -61,6 +61,8 @@ public:
 
     bool IsDriving() { return bCarDriving; }
 
+    void Release();
+
 private:
     PxMaterial* DefaultMaterial = nullptr;
     GameObject* CarBody = nullptr;
@@ -68,6 +70,7 @@ private:
     GameObject* Wheels[4] = { nullptr }; //FR, FL, RR, RL
     PxRevoluteJoint* WheelJoints[4] = { nullptr }; //FR, FL, RR, RL
     PxRevoluteJoint* SteeringJoint = nullptr;
+    PxFixedJoint* RearHubJoints[2] = { nullptr };
     float MaxSteerAngle = PxPi / 6.f;
     float DeltaSteerAngle = PxPi / 6.f;
     float SteerAngle = 0.0f;
@@ -93,7 +96,7 @@ private:
 
     float SlopeAngle;
 
-    int FireCount = 0;
+    int FireCount = 1;
 
     FVector HubSize = FVector(0.2f, 0.5f, 0.2f);
 
