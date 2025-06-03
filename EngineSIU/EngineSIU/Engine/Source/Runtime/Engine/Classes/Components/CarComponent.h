@@ -55,6 +55,8 @@ public:
 
     void Restart();
 
+    virtual void RegisterLua(sol::state& Lua) override;
+
 private:
     PxMaterial* DefaultMaterial = nullptr;
     GameObject* CarBody = nullptr;
@@ -88,10 +90,10 @@ private:
 
     const FVector WheelPos[4] =
     {
-        { 0.35f,  0.4f,  0.1f}, //FR
-        { 0.35f, -0.4f,  0.1f}, //FL
-        {-0.35f,  0.45f, 0.15f}, //RR
-        {-0.35f, -0.45f, 0.15f}  //RL
+        {  0.7f,  0.8f, -0.2f}, //FR
+        {  0.7f, -0.8f, -0.2f}, //FL
+        {-0.95f,  0.9f, -0.1f}, //RR
+        {-0.95f, -0.9f, -0.1f}  //RL
     };
 
     PxTransform InitialBodyT;

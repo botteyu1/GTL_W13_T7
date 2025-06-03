@@ -8,6 +8,10 @@
 #include "GameFramework/Actor.h"
 #include "Math/Transform.h"
 
+#include "Lua/LuaScriptComponent.h"
+#include "Lua/LuaScriptManager.h"
+#include "Lua/LuaUtils/LuaTypeMacros.h"
+
 USceneComponent::USceneComponent()
     : RelativeLocation(FVector(0.f, 0.f, 0.f))
     , RelativeRotation(FVector(0.f, 0.f, 0.f))
@@ -413,7 +417,6 @@ bool USceneComponent::MoveComponent(const FVector& Delta, const FRotator& NewRot
 {
     return MoveComponentImpl(Delta, NewRotation.Quaternion(), bSweep, OutHit);
 }
-
 void USceneComponent::UpdateOverlapsImpl(const TArray<FOverlapInfo>* PendingOverlaps, bool bDoNotifies, const TArray<const FOverlapInfo>* OverlapsAtEndLocation)
 {
     TArray<USceneComponent*> AttachedChildren(AttachChildren);

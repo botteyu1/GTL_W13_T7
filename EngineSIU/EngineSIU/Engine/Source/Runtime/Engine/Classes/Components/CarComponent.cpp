@@ -2,6 +2,9 @@
 #include "Engine/FObjLoader.h"
 #include "GameFramework/Actor.h"
 #include "Engine/Engine.h"
+#include "Lua/LuaScriptComponent.h"
+#include "Lua/LuaScriptManager.h"
+#include "Lua/LuaUtils/LuaTypeMacros.h"
 
 UCarComponent::UCarComponent()
 {
@@ -17,6 +20,7 @@ UObject* UCarComponent::Duplicate(UObject* InOuter)
 
 void UCarComponent::TickComponent(float DeltaTime)
 {
+    MoveCar();
     //if (GetAsyncKeyState('R') & 0x8000)
     //{
     //    Restart();
@@ -80,10 +84,10 @@ void UCarComponent::CreatePhysXGameObject()
 
     BodyExtent = (AABB.MaxLocation - AABB.MinLocation) * GetComponentScale3D() * 0.5f;
     BodyExtent.Y *= 0.35f;
-    BodyExtent.Z *= 0.6f;
+    BodyExtent.Z *= 0.25f;
+    BodyExtent.X *= 0.6f;
     PxBoxGeometry CarBodyGeom(BodyExtent.ToPxVec3());
-    BodyExtent.Z /= 0.6f;
-    CarBody->DynamicRigidBody = Physics->createRigidDynamic(PxTransform((GetComponentLocation() + FVector(0, 0, BodyExtent.Z)).ToPxVec3(), BodyQuat));
+    CarBody->DynamicRigidBody = Physics->createRigidDynamic(PxTransform((GetComponentLocation() + GetUpVector() * BodyExtent.Z).ToPxVec3(), BodyQuat));
     //CarBody->DynamicRigidBody->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
     {
         PxShape* BodyShape = Physics->createShape(CarBodyGeom, *DefaultMaterial);
@@ -285,18 +289,69 @@ void UCarComponent::SetProperties(const TMap<FString, FString>& InProperties)
 
 void UCarComponent::MoveCar()
 {
-    if (!Wheels[0])
+    float CarLocX = GetComponentLocation().X;
+    float EndLoc = 100 * FMath::Cos(SlopeAngle) + 1.5f;
+    if (CarLocX > EndLoc && !bBoosted)
+    {
+        //ApplyForceToActors(SlopeAngle, FinalBoost);
+        UE_LOG(ELogLevel::Display, "Boosted!: %f", FinalBoost);
+        UE_LOG(ELogLevel::Display, "Car Loc: %f\nEnd Loc: %f", CarLocX, EndLoc);
+        //bBoosted = true;
         return;
+    }
 
-    //if (!bBoosted && FinalBoost > 0.f)
-    //    UE_LOG(ELogLevel::Display, "Boost: %f", FinalBoost);        
+    if (!Wheels[0] || bBoosted)
+        return;
+    if (GetAsyncKeyState('W') & 0x8000)
+    {
+        if (Velocity < 0)
+            Velocity = 0;
+        Velocity += 0.1f;
+        FinalBoost += 20.f * Velocity / MaxVelocity;
+        //Velocity = 20.f;
+    }
+    else if (bBoosted)
+    {
+        if (Velocity > 0)
+            Velocity -= 0.1f;
+        else if (Velocity < 0)
+            Velocity += 0.1f;
+        if (FMath::Abs(Velocity) < 0.1f)
+            Velocity = 0.f;
+    }
+    else
+    {
+        if (Velocity > 0)
+            Velocity -= 0.1f;
+        else if (Velocity < 0)
+            Velocity += 0.1f;
+        if (FMath::Abs(Velocity) < 0.1f)
+            Velocity = 0.f;
+        FinalBoost -= 5.f;
+    }
+    FinalBoost = FMath::Clamp(FinalBoost, 0.f, MaxBoost);
+    if (!bBoosted && FinalBoost > 0.f)
+        UE_LOG(ELogLevel::Display, "Boost: %f", FinalBoost);
+
+    Velocity = FMath::Clamp(Velocity, 0.f, MaxVelocity);
 
     for (int i = 0; i < 4; ++i)
     {
         WheelJoints[i]->setDriveVelocity(Velocity);
     }
 
-    SteeringJoint->setDriveVelocity(SteerAngle);
+    if (GetAsyncKeyState('A') & 0x8000)
+    {
+        SteeringJoint->setDriveVelocity(DeltaSteerAngle * 3.f);
+    }
+    else if (GetAsyncKeyState('D') & 0x8000)
+    {
+        SteeringJoint->setDriveVelocity(-DeltaSteerAngle * 3.f);
+    }
+    else
+    {
+        SteeringJoint->setDriveVelocity(0.f);
+    }
 }
 
 void UCarComponent::createWheelConvexData(float radius, float halfHeight, int segmentCount, const FVector& Scale, std::vector<PxVec3>& outPoints)
@@ -425,4 +480,35 @@ void UCarComponent::Restart()
         Wheels[i]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
     }
     Hub[0]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE); 
+}
+
+void UCarComponent::RegisterLua(sol::state& Lua)
+{
+    DEFINE_LUA_TYPE_NO_PARENT(UCarComponent,
+        "Velocity", sol::property(
+            &UCarComponent::GetVelocity,
+            &UCarComponent::SetVelocity
+        ),
+        "SteerAngle", sol::property(
+            &UCarComponent::GetSteerAngle,
+            &UCarComponent::SetSteerAngle
+        ),
+        "Boost", sol::property(
+            &UCarComponent::GetFinalBoost,
+            &UCarComponent::SetFinalBoost
+        ),
+        "SlopeAngle", sol::property(
+            &UCarComponent::GetSlopeAngle,
+            &UCarComponent::SetSlopeAngle
+        ),
+        "IsBoosted", sol::property(
+            &UCarComponent::IsBoosted,
+            &UCarComponent::SetBoosted
+        ),
+        "BoostCar", &UCarComponent::BoostCar,
+        "Move", &UCarComponent::MoveCar,
+        "CurSteerAngle", &UCarComponent::GetCurSteerAngle,
+        "Speed", &UCarComponent::GetCurSpeed,
+        "Restart", &UCarComponent::Restart
+    )
 }

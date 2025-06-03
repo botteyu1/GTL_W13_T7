@@ -1,7 +1,7 @@
 # Blender 4.4.0 MTL File: 'None'
 # www.blender.org
 
-newmtl mt_kart_Mario_S.006
+newmtl mt_kart_Mario_S.008
 Ns 250.000000
 Ka 1.000000 1.000000 1.000000
 Ks 0.500000 0.500000 0.500000
@@ -11,7 +11,7 @@ illum 2
 map_Kd MarioKart.fbm/F2_Item_Kart_Mario_Kart_S.png
 map_d MarioKart.fbm/F2_Item_Kart_Mario_Kart_S.png
 
-newmtl mt_mario.006
+newmtl mt_mario.008
 Ns 250.000000
 Ka 1.000000 1.000000 1.000000
 Ks 0.500000 0.500000 0.500000
