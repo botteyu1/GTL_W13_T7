@@ -25,10 +25,11 @@ function ReturnTable:BeginPlay()
     self.ManagedImageUI = nil
     self.ElapsedTime = 0 -- 시간 누적용
     self.fireCount=0
-    
+
     self:InitScoreUI()
     self:InitCountUI()
     self:InitControlsUI()
+    self:InitResultUI()
 
     -- local imageName = FString.new("MyImageUI")
     -- local textureName = FString.new("ExplosionColor")
@@ -72,6 +73,8 @@ end
 function ReturnTable:EndPlay(EndPlayReason)
     -- print("[Lua] EndPlay called. Reason:", EndPlayReason) -- EndPlayReason Type 등록된 이후 사용 가능.
     print("EndPlay")
+    local fallbackImageColor = FLinearColor.new(0.0, 1.0, 1.0, 0.0) 
+    self.ResultUI:SetColor(fallbackImageColor)
 
 end
 
@@ -114,7 +117,7 @@ function ReturnTable:UpdateScoreUI()
         if self.fireCount==0 then
             self.fireCount=GetFireCount()
         end
-        self:ShowResultUI()
+        self:UpdateResultUI()
     end
     if self.ScoreUI then
         local text = FString.new(string.format("Score: %d / %d", ragdollEnemy, maxEnemy))
@@ -158,30 +161,42 @@ function ReturnTable:UpdateCountUI()
         self.CountUI:SetText(text)
     end
 end
-function ReturnTable:ShowResultUI()
+function ReturnTable:InitResultUI()
     local uiName = FString.new("ResultUI")
-    local resultText = FString.new(string.format("You Win! Total Fire Count: %d", self.fireCount))
+    local initialText = FString.new("")  -- 처음에는 비어 있음
 
     local posX = 0.0
     local posY = 0.0
-    local width = 600.0     -- 충분히 크게 설정
+    local width = 600.0
     local height = 100.0
     local anchor = AnchorDirection.MiddleCenter
 
     local myRect = RectTransform.new(posX, posY, width, height, anchor)
 
-    local SortOrder = 100  -- 다른 UI보다 위에 렌더링
+    local SortOrder = 100
     local fontName = FString.new("Default")
     local fontSize = 60
-    local fontColor = FLinearColor.new(0.0, 0.0, 0.0, 1.0)
+    local fontColor = FLinearColor.new(0.0, 0.0, 0.0, 0.0) -- a=0.0으로 안 보이게
 
-    LuaUIBind.CreateText(uiName, myRect, SortOrder, resultText, fontName, fontSize, fontColor)
+    LuaUIBind.CreateText(uiName, myRect, SortOrder, initialText, fontName, fontSize, fontColor)
     self.ResultUI = LuaUIBind.GetTextUI(uiName)
 
     if not self.ResultUI then
-        print("Error: Could not get ResultUI with name: "..uiName)
+        print("Error: Could not get ResultUI with name: " .. uiName)
     end
 end
+function ReturnTable:UpdateResultUI()
+    if not self.ResultUI then
+        return
+    end
+
+    local resultText = FString.new(string.format("You Win! Total Fire Count: %d", self.fireCount))
+    self.ResultUI:SetText(resultText)
+
+    local visibleColor = FLinearColor.new(0.0, 0.0, 0.0, 1.0)
+    self.ResultUI:SetFontColor(visibleColor)
+end
+
 function ReturnTable:InitControlsUI()
     local uiName = FString.new("ControlsUI")
     local controlsText = FString.new("Controls:\nQ: Boost\nR: Start\n1: Free Camera")
