@@ -32,6 +32,8 @@ FLuaScriptManager::FLuaScriptManager()
     );
 
     SetLuaDefaultTypes();
+    LuaTypes::RegisterGlobalFunctions(LuaState);
+
 }
 
 FLuaScriptManager::~FLuaScriptManager()
@@ -120,7 +122,7 @@ void FLuaScriptManager::RegisterActiveLuaComponent(ULuaScriptComponent* LuaCompo
     ActiveLuaComponents.Add(LuaComponent);
 }
 
-void FLuaScriptManager::UnRigisterActiveLuaComponent(ULuaScriptComponent* LuaComponent)
+void FLuaScriptManager::UnRegisterActiveLuaComponent(ULuaScriptComponent* LuaComponent)
 {
     if (ActiveLuaComponents.Contains(LuaComponent))
         ActiveLuaComponents.Remove(LuaComponent);
@@ -161,6 +163,7 @@ void FLuaScriptManager::HotReloadLuaScript()
     {
         for (const ULuaScriptComponent* LuaComponent : ActiveLuaComponents)
         {
+            if (!LuaComponent||LuaComponent->GetScriptName()=="")continue;
             const FString FullPath = "LuaScripts/Actors/" + LuaComponent->GetScriptName() + ".lua";
             if (FullPath == ChangedScript)
             {

@@ -1,5 +1,6 @@
 #include "LuaUserTypes.h"
 
+#include "Engine/Engine.h"
 #include "Engine/World/World.h"
 #include "Lua/LuaUtils/LuaBindUtils.h"
 #include "Math/Color.h"
@@ -266,4 +267,22 @@ void LuaTypes::FBindLua<FString>::Bind(sol::table& Table)
         LUA_BIND_MEMBER(&FString::ToWideString),
         LUA_BIND_MEMBER(&FString::ToBool)
     );
+}
+// LuaUserTypes.cpp
+
+void LuaTypes::RegisterGlobalFunctions(sol::state& Lua)
+{
+    Lua.set_function("GetAllActorsInWorld", []() -> std::vector<AActor*> {
+        std::vector<AActor*> Result;
+
+        for (auto It : TObjectRange<AActor>())
+        {
+            if (It->GetWorld() == GEngine->ActiveWorld)
+            {
+                Result.push_back(It);
+            }
+        }
+
+        return Result;
+        });
 }

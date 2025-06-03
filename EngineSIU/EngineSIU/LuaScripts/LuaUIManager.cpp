@@ -154,7 +154,7 @@ void LuaUIManager::DrawLuaUIs()
 
 void LuaUIManager::TestCODE()
 {
-    CreateText("TestTEXT", RectTransform(0, 0, 100, 100, AnchorDirection::MiddleCenter), 10, FString("Chan GOOOD!"), FName("Default"), 30, FLinearColor(1, 0, 0, 1));
+    /*CreateText("TestTEXT", RectTransform(0, 0, 100, 100, AnchorDirection::MiddleCenter), 10, FString("Chan GOOOD!"), FName("Default"), 30, FLinearColor(1, 0, 0, 1));
     CreateImage("TestImage", RectTransform(-100, -100, 200, 200, AnchorDirection::MiddleCenter), 3, FName("ExplosionColor"), FLinearColor(1, 1, 1, 1));
     CreateButton("TestButton", RectTransform(-100, -100, 200, 200, AnchorDirection::MiddleCenter), 15, FString("TEstbutonFUn"));
 
@@ -164,16 +164,16 @@ void LuaUIManager::TestCODE()
 
     /*DeleteUI("TestTEXT");
     DeleteUI("TestImage");
-    DeleteUI("TestButton");*/
+    DeleteUI("TestButton");#1#
 
     auto GotText = GetTextUI("TestTEXT");
     auto GotImage = GetImageUI("TestImage");
-    auto GotButton = GetButtonUI("TestButton");
+    auto GotButton = GetButtonUI("TestButton");*/
 
 }
 void LuaUIManager::InitScoreUI()
 {
-    static const FName ScoreUIName = "ScoreBoard";
+    /*static const FName ScoreUIName = "ScoreBoard";
 
     if (GetTextUI(ScoreUIName) != nullptr)
         return;
@@ -203,16 +203,22 @@ void LuaUIManager::InitScoreUI()
         FName("Default"),
         24,
         FLinearColor(1, 1, 0, 1)
-    );
+    );*/
 }
 
 void LuaUIManager::UpdateScoreUI()
 {
-    static const FName ScoreUIName = "ScoreBoard";
+    /*static const FName ScoreUIName = "ScoreBoard";
 
     int32 Max = 0;
     int32 Current = 0;
-
+    for (auto Iter:TObjectRange<AActor>())
+    {
+        if (Iter->GetWorld() != GEngine->ActiveWorld)
+        {
+            continue;
+        }
+    }
     for (auto Iter : TObjectRange<USkeletalMeshComponent>())
     {
         if (Iter->GetWorld() != GEngine->ActiveWorld)
@@ -235,7 +241,7 @@ void LuaUIManager::UpdateScoreUI()
     {
         FString NewText = FString::Printf(TEXT("Score: %d / %d"), Current, Max);
         ScoreText->SetText(NewText);
-    }
+    }*/
 }
 
 

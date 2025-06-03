@@ -407,6 +407,7 @@ void AActor::RegisterLuaType(sol::state& Lua)
 {
     DEFINE_LUA_TYPE_NO_PARENT(AActor,
     "UUID", sol::property(&ThisClass::GetUUID),
+    "Tag", sol::property(&ThisClass::GetTag, &ThisClass::SetTag),
     "ActorLocation", sol::property(&ThisClass::GetActorLocation, &ThisClass::SetActorLocation),
     "ActorRotation", sol::property(&ThisClass::GetActorRotation, &ThisClass::SetActorRotation),
     "ActorScale", sol::property(&ThisClass::GetActorScale, &ThisClass::SetActorScale),
@@ -437,7 +438,7 @@ bool AActor::BindSelfLuaProperties()
     // 자기 자신 객체를 따로 넘겨주어야만 AActor:GetName() 같은 함수를 실행시켜줄 수 있다.
     LuaTable["this"] = this;
     LuaTable["Name"] = *GetName(); // FString 해결되기 전까지 임시로 Table로 전달.
-    LuaTable["Tag"] = Tag; // FString 해결되기 전까지 임시로 Table로 전달.
+    //LuaTable["Tag"] = Tag; // FString 해결되기 전까지 임시로 Table로 전달.
     // 이 아래에서 또는 하위 클래스 함수에서 멤버 변수 등록.
 
     return true;

@@ -40,7 +40,7 @@ public:
     sol::table CreateLuaTable(const FString& ScriptName);
 
     void RegisterActiveLuaComponent(ULuaScriptComponent* LuaComponent);
-    void UnRigisterActiveLuaComponent(ULuaScriptComponent* LuaComponent);
+    void UnRegisterActiveLuaComponent(ULuaScriptComponent* LuaComponent);
 
     void RegisterActiveAnimLua(UAnimStateMachine* AnimInstance);
     void UnRegisterActiveAnimLua(UAnimStateMachine* AnimInstance);
