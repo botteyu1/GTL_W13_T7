@@ -1,6 +1,7 @@
 #pragma once
 
 #include "StaticMeshComponent.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "Physics/PhysicsManager.h"
 
 class UCarComponent : public UStaticMeshComponent
@@ -75,6 +76,8 @@ private:
     bool bBoosted = false;
 
     UStaticMeshComponent* WheelComp[4] = { nullptr };
+    UParticleSystemComponent* BoostParticle = nullptr;
+    UParticleSystemComponent* WheelDustParticle[2] =  { nullptr };
 
     bool bHasBody = false;
 

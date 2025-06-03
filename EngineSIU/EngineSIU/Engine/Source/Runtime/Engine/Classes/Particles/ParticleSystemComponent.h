@@ -52,10 +52,13 @@ public:
 public:
     float AccumTickTime;
     
+    UPROPERTY_WITH_FLAGS(EditAnywhere, bool, bEnabled)
+    
 private:
     TArray<FParticleEmitterInstance*> EmitterInstances;
 
     UPROPERTY_WITH_FLAGS(EditAnywhere, UParticleSystem*, Template)
+    
 
     TArray<FDynamicEmitterDataBase*> EmitterRenderData;
 
