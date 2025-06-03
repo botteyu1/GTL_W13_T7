@@ -108,7 +108,7 @@ void UCarComponent::CreatePhysXGameObject()
         CarBody->DynamicRigidBody->attachShape(*BodyShape);
         BodyShape->release();
         PxReal volume = 8 * BodyExtent.X * BodyExtent.Y * BodyExtent.Z;
-        PxReal density = 1000.f / volume;
+        PxReal density = 3000.f / volume;
         PxRigidBodyExt::updateMassAndInertia(*CarBody->DynamicRigidBody, density);
 
         //PxVec3 inertia = CarBody->DynamicRigidBody->getMassSpaceInertiaTensor();
@@ -124,6 +124,9 @@ void UCarComponent::CreatePhysXGameObject()
         CarBody->DynamicRigidBody->setRigidDynamicLockFlags(
             PxRigidDynamicLockFlag::eLOCK_ANGULAR_X
         );
+        BodyInstance = new FBodyInstance(this);
+        CarBody->DynamicRigidBody->userData = BodyInstance;
+        BodyInstance->BIGameObject = CarBody;
         Scene->addActor(*CarBody->DynamicRigidBody);
     }
     if (!WheelComp[0])
@@ -144,7 +147,7 @@ void UCarComponent::CreatePhysXGameObject()
         WheelShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Wheel, 0xFFFF, 0, 0));
         Wheels[i]->DynamicRigidBody->attachShape(*WheelShape);
         WheelShape->release();
-        PxReal WheelMass = 200.f;
+        PxReal WheelMass = 100.f;
         PxReal WheelVolume = WheelRadius * WheelRadius * PxPi * 2 * WheelHeight;
         PxRigidBodyExt::updateMassAndInertia(*Wheels[i]->DynamicRigidBody, WheelMass / WheelVolume);
         Wheels[i]->DynamicRigidBody->setLinearDamping(0.01f);
@@ -179,9 +182,9 @@ void UCarComponent::CreatePhysXGameObject()
         HubShape->setSimulationFilterData(PxFilterData(ECollisionChannel::ECC_Hub, 0xFFFF, 0, 0));
         Hub[i]->DynamicRigidBody->attachShape(*HubShape);
         PxReal HubVolume = 8 * HubSize[i].x * HubSize[i].y * HubSize[i].z;
-        PxReal HubMass = 500.f;
+        PxReal HubMass = 2000.f;
         if (i == 1)
-            HubMass = 100.f;
+            HubMass = 200.f;
         PxRigidBodyExt::updateMassAndInertia(*Hub[i]->DynamicRigidBody, HubMass / HubVolume);
         Hub[i]->DynamicRigidBody->setLinearDamping(0.01f);
         Hub[i]->DynamicRigidBody->setAngularDamping(0.01f);
@@ -316,16 +319,16 @@ void UCarComponent::MoveCar()
     float CarLocX = GetComponentLocation().X;
     float EndLoc = 50 * FMath::Cos(SlopeAngle) + 130.f;
 
-    if (CarLocX > EndLoc && !bBoosted)
+    if (!Wheels[0])
+        return;
+
+    if (GetAsyncKeyState('Q') & 0x8000 && !bBoosted)
     {
-        ApplyForceToActors(SlopeAngle, FinalBoost);
+        ApplyForceToActors(SlopeAngle, MaxBoost);
         UE_LOG(ELogLevel::Display, "Boosted!: %f", FinalBoost);
         bBoosted = true;
         return;
     }
-
-    if (!Wheels[0])
-        return;
 
     FVector Up = GetUpVector();
     if (Up.Dot(FVector(0, 0, 1)) < 0)
@@ -340,8 +343,6 @@ void UCarComponent::MoveCar()
             if (Velocity < 0)
                 Velocity = 0;
             Velocity += 0.15f;
-            FinalBoost += 30.f * Velocity / MaxVelocity;
-            //Velocity = 20.f;
         }
         else
         {
@@ -351,7 +352,6 @@ void UCarComponent::MoveCar()
                 Velocity += 0.1f;
             if (FMath::Abs(Velocity) < 0.1f)
                 Velocity = 0.f;
-            FinalBoost -= 10.f;
         }
 
         if (GetAsyncKeyState('A') & 0x8000)

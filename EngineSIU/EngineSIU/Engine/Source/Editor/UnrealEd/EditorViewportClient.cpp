@@ -646,26 +646,26 @@ void FEditorViewportClient::UpdateViewMatrix()
     }
     if (GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE) //여기 false 있으면 꼭 수정!!!
     {
-        if (Car)
-        {
-            FVector Front = FVector(1, 0, 0);
-            FVector Pos = Car->GetComponentLocation() + Front * -7.5f + FVector(0, 0, 7.5f);
-            View = JungleMath::CreateViewMatrix(
-                Pos, Car->GetComponentLocation() + Front * 10.f, FVector(0, 0, 1)
-            );
-        }
+        //if (Car)
+        //{
+        //    FVector Front = FVector(1, 0, 0);
+        //    FVector Pos = Car->GetComponentLocation() + Front * -7.5f + FVector(0, 0, 7.5f);
+        //    View = JungleMath::CreateViewMatrix(
+        //        Pos, Car->GetComponentLocation() + Front * 10.f, FVector(0, 0, 1)
+        //    );
+        //}
 
-        //FMinimalViewInfo ViewInfo;
-        //GetViewInfo(ViewInfo);
-        //
-        //FMatrix RotationMatrix = ViewInfo.Rotation.ToMatrix();
-        //FVector FinalUp = FMatrix::TransformVector(FVector::UpVector, RotationMatrix);
-        //
-        //View = JungleMath::CreateViewMatrix(
-        //    ViewInfo.Location,
-        //    ViewInfo.Location + ViewInfo.Rotation.ToVector(),
-        //    FinalUp
-        //);
+        FMinimalViewInfo ViewInfo;
+        GetViewInfo(ViewInfo);
+        
+        FMatrix RotationMatrix = ViewInfo.Rotation.ToMatrix();
+        FVector FinalUp = FMatrix::TransformVector(FVector::UpVector, RotationMatrix);
+        
+        View = JungleMath::CreateViewMatrix(
+            ViewInfo.Location,
+            ViewInfo.Location + ViewInfo.Rotation.ToVector(),
+            FinalUp
+        );
     }
     else
     {
