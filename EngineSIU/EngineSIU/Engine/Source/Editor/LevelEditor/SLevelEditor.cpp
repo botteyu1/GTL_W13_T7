@@ -324,6 +324,12 @@ void SLevelEditor::RegisterEditorInputDelegates()
                     if (!EdEngine->GetSelectedActors().IsEmpty())
                     {
                         USceneComponent* TargetComponent = EdEngine->GetSelectedComponent();
+                        
+                        if (TargetComponent == nullptr)
+                        {
+                            TargetComponent = EdEngine->GetSelectedActor()->GetRootComponent();
+                        }
+
                         if (TargetComponent)
                         {
                             // 초기 Actor와 Cursor의 거리차를 저장
@@ -576,7 +582,7 @@ void SLevelEditor::RegisterEditorInputDelegates()
                         for (int32 i = 0; i < SelectedActors.Num(); ++i)
                         {
                             AActor* CurrentActor = SelectedActors[i];
-                            if (!CurrentActor || !CurrentActor->GetRootComponent() || i >= InitialActorLocations.Num())
+                            if (!CurrentActor || !CurrentActor->GetRootComponent() || i >= InitialActorLocations.Num() || InitialActorLocations.IsEmpty())
                             {
                                 continue;
                             }
