@@ -116,9 +116,17 @@ void SLevelEditor::ResizeEditor(uint32 InEditorWidth, uint32 InEditorHeight)
     {
         return;
     }
-    
-    EditorWidth = InEditorWidth * 0.8f;
-    EditorHeight = InEditorHeight - 104.f;
+
+    if (GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE)
+    {
+        EditorWidth = InEditorWidth;
+        EditorHeight = InEditorHeight;
+    }
+    else
+    {
+        EditorWidth = InEditorWidth * 0.8f;
+        EditorHeight = InEditorHeight - 104.f;
+    }
 
     if (HSplitter && VSplitter)
     {
@@ -159,7 +167,8 @@ void SLevelEditor::ResizeViewports()
     }
     else
     {
-        ActiveViewportClient->GetViewport()->ResizeViewport(FRect(0.0f, 72.f, EditorWidth , EditorHeight ));
+        float y = GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE ? 0.0f : 72.f;
+        ActiveViewportClient->GetViewport()->ResizeViewport(FRect(0.0f, y, EditorWidth , EditorHeight ));
     }
 }
 

@@ -6,7 +6,7 @@
 
 OutlinerEditorPanel::OutlinerEditorPanel()
 {
-    SetSupportedWorldTypes(EWorldTypeBitFlag::Editor | EWorldTypeBitFlag::PIE );
+    SetSupportedWorldTypes(EWorldTypeBitFlag::Editor /*| EWorldTypeBitFlag::PIE */ );
 }
 
 void OutlinerEditorPanel::Render()
