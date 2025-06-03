@@ -4,6 +4,7 @@
 
 DECLARE_MULTICAST_DELEGATE(FOnGameInit);
 DECLARE_MULTICAST_DELEGATE(FOnGameStart);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnGamePause, bool);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameEnd, bool);
 
 class UCameraComponent;
@@ -36,6 +37,9 @@ public:
     // 게임 시작
     virtual void StartMatch();
 
+    // 게임 일시정지
+    virtual void PauseMatch();
+
     // 게임 종료
     virtual void EndMatch(bool bIsWin);
 
@@ -46,12 +50,14 @@ public:
 public:
     FOnGameInit OnGameInit;
     FOnGameStart OnGameStart;
+    FOnGamePause OnGamePause;
     FOnGameEnd OnGameEnd;
 
     FGameInfo GameInfo;
     
 private:
-    bool bGameRunning = false; // 내부 
+    bool bGameRunning = false; // 내부
+    bool bGamePaused = false;
     bool bGameEnded = true;
 
     float LogTimer = 0.f;

@@ -51,6 +51,8 @@ public:
     FGPUTimingManager GPUTimingManager;
     FEngineProfiler EngineProfiler;
 
+    bool bPendingGame = false;
+    
     float GetDeltaTime() const { return DeltaTime; }
 
 private:

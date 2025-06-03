@@ -117,7 +117,7 @@ void SLevelEditor::ResizeEditor(uint32 InEditorWidth, uint32 InEditorHeight)
         return;
     }
 
-    if (GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE)
+    if (GEngineLoop.bPendingGame)
     {
         EditorWidth = InEditorWidth;
         EditorHeight = InEditorHeight;
@@ -167,7 +167,7 @@ void SLevelEditor::ResizeViewports()
     }
     else
     {
-        float y = GEngine && GEngine->ActiveWorld->WorldType == EWorldType::PIE ? 0.0f : 72.f;
+        float y = GEngineLoop.bPendingGame ? 0.0f : 72.f;
         ActiveViewportClient->GetViewport()->ResizeViewport(FRect(0.0f, y, EditorWidth , EditorHeight ));
     }
 }

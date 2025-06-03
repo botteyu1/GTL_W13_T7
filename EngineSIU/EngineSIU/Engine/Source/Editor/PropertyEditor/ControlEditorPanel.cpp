@@ -665,7 +665,8 @@ void ControlEditorPanel::CreatePIEButton(const ImVec2 ButtonSize, ImFont* IconFo
     if (ImGui::Button("\ue9a8", ButtonSize)) // Play
     {
         UE_LOG(ELogLevel::Display, TEXT("PIE Button Clicked"));
-        Engine->StartPIE();
+        // Engine->StartPIE(); for Gamejam
+        Engine->ShowLobby();
     }
     ImGui::SameLine();
 

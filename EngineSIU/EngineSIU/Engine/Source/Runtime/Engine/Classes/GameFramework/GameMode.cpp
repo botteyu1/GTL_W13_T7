@@ -1,8 +1,6 @@
 #include "GameMode.h"
 #include "EngineLoop.h"
 #include "SoundManager.h"
-#include "InputCore/InputCoreTypes.h"
-#include "Camera/CameraComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/World/World.h"
 
@@ -31,14 +29,23 @@ AGameMode::AGameMode()
         });
 
         Handler->OnKeyDownDelegate.AddLambda([this](const FKeyEvent& KeyEvent)
+        {
+            // 키 ESC, 게임이 시작됐고, 실패 또는 종료되지 않았다면
+            if (KeyEvent.GetKeyCode() == VK_ESCAPE && bGameRunning && !bGameEnded)
             {
-                // 키가 Space, 아직 게임이 안 시작됐고, 실패 또는 종료되지 않았다면
-                if (KeyEvent.GetKeyCode() == VK_RCONTROL && 
-                    bGameRunning && !bGameEnded)
-                {
-                    EndMatch(false);
-                }
-            });
+                PauseMatch();
+            }
+        });
+
+        Handler->OnKeyDownDelegate.AddLambda([this](const FKeyEvent& KeyEvent)
+        {
+            // 키가 Space, 아직 게임이 안 시작됐고, 실패 또는 종료되지 않았다면
+            if (KeyEvent.GetKeyCode() == VK_RCONTROL && 
+                bGameRunning && !bGameEnded)
+            {
+                EndMatch(false);
+            }
+        });
     }
 }
 
@@ -62,6 +69,7 @@ UObject* AGameMode::Duplicate(UObject* InOuter)
     {
         NewActor->bGameRunning = bGameRunning;
         NewActor->bGameEnded = bGameEnded;
+        NewActor->bGamePaused = bGamePaused;
         NewActor->GameInfo = GameInfo;
     }
     return NewActor;
@@ -83,11 +91,18 @@ void AGameMode::StartMatch()
     OnGameStart.Broadcast();
 }
 
+void AGameMode::PauseMatch()
+{
+    bGamePaused = !bGamePaused;
+
+    OnGamePause.Broadcast(bGamePaused);
+}
+
 void AGameMode::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (bGameRunning && !bGameEnded)
+    if (bGameRunning && !bGameEnded && !bGamePaused)
     {
         GameInfo.ElapsedGameTime += DeltaTime / 2.0f;
     }
@@ -111,5 +126,6 @@ void AGameMode::EndMatch(bool bIsWin)
 void AGameMode::Reset()
 {
     bGameRunning = false;
+    bGamePaused = false;
     bGameEnded = true;
 }

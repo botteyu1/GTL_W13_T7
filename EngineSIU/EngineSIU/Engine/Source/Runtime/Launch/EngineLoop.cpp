@@ -17,6 +17,7 @@
 
 #include "SoundManager.h"
 #include "Lua/LuaScriptManager.h"
+#include "UserInterface/SGameUI.h"
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
@@ -101,7 +102,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     FSoundManager::GetInstance().LoadSound("fishdream", "Contents/Sounds/fishdream.mp3");
     FSoundManager::GetInstance().LoadSound("sizzle", "Contents/Sounds/sizzle.mp3");
     //FSoundManager::GetInstance().PlaySound("fishdream");
-
+    SGameUI::GetInstance().Initialize();
     UpdateUI();
 
     return 0;
@@ -174,11 +175,16 @@ void FEngineLoop::Tick()
         LevelEditor->Tick(DeltaTime);
         Render();
         UIManager->BeginFrame();
-        UnrealEditor->Render();
-
-        FConsole::GetInstance().Draw();
-        EngineProfiler.Render(GraphicDevice.DeviceContext, GraphicDevice.ScreenWidth, GraphicDevice.ScreenHeight);
-
+        if (!bPendingGame)
+        {
+            UnrealEditor->Render();
+            FConsole::GetInstance().Draw();
+            EngineProfiler.Render(GraphicDevice.DeviceContext, GraphicDevice.ScreenWidth, GraphicDevice.ScreenHeight);
+        }
+        else
+        {
+            SGameUI::GetInstance().Draw();
+        }
         UIManager->EndFrame();
 
         // Pending 처리된 오브젝트 제거
@@ -301,4 +307,5 @@ void FEngineLoop::UpdateUI()
         GEngineLoop.GetUnrealEditor()->OnResize(AppWnd);
     }
     ViewportTypePanel::GetInstance().OnResize(AppWnd);
+    SGameUI::GetInstance().OnResize(AppWnd);
 }
