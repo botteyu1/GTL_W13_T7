@@ -42,8 +42,6 @@ public:
 
     /////////////// TEST CODE 꼭 지우기
     void TestCODE();
-    void InitScoreUI(); // LuaUIManager.h
-    void UpdateScoreUI();
 
     void UpdateCanvasRectTransform(HWND hWnd);
 

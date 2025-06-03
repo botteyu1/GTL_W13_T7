@@ -12,7 +12,6 @@
 void LuaUIManager::UpdateAll(float DeltaTime)
 {
     // 점수판 UI 업데이트
-    UpdateScoreUI();
 
     // TODO: 향후 추가적인 동적 UI 업데이트가 있다면 여기에 추가
 }
@@ -171,79 +170,6 @@ void LuaUIManager::TestCODE()
     auto GotButton = GetButtonUI("TestButton");*/
 
 }
-void LuaUIManager::InitScoreUI()
-{
-    /*static const FName ScoreUIName = "ScoreBoard";
-
-    if (GetTextUI(ScoreUIName) != nullptr)
-        return;
-
-    // 최대 적 수 계산
-    int32 MaxEnemyCount = 0;
-    for (auto Iter : TObjectRange<USkeletalMeshComponent>())
-    {
-        if (Iter->GetWorld() != GEngine->ActiveWorld)
-        {
-            continue;
-        }
-        AActor* Owner = Iter->GetOwner();
-        if (Owner && Owner->HasTag("Enemy"))
-        {
-            MaxEnemyCount++;
-        }
-    }
-
-    FString InitText = FString::Printf(TEXT("Score: 0 / %d"), MaxEnemyCount);
-
-    CreateText(
-        ScoreUIName,
-        RectTransform(20, 20, 300, 50, AnchorDirection::TopLeft),
-        5,
-        InitText,
-        FName("Default"),
-        24,
-        FLinearColor(1, 1, 0, 1)
-    );*/
-}
-
-void LuaUIManager::UpdateScoreUI()
-{
-    /*static const FName ScoreUIName = "ScoreBoard";
-
-    int32 Max = 0;
-    int32 Current = 0;
-    for (auto Iter:TObjectRange<AActor>())
-    {
-        if (Iter->GetWorld() != GEngine->ActiveWorld)
-        {
-            continue;
-        }
-    }
-    for (auto Iter : TObjectRange<USkeletalMeshComponent>())
-    {
-        if (Iter->GetWorld() != GEngine->ActiveWorld)
-        {
-            continue;
-        }
-        AActor* Owner = Iter->GetOwner();
-        if (Owner && Owner->HasTag("Enemy"))
-        {
-            Max++;
-
-            if (Iter->IsInRagdollState())
-            {
-                Current++;
-            }
-        }
-    }
-    LuaTextUI* ScoreText = GetTextUI(ScoreUIName);
-    if (ScoreText)
-    {
-        FString NewText = FString::Printf(TEXT("Score: %d / %d"), Current, Max);
-        ScoreText->SetText(NewText);
-    }*/
-}
-
 
 
 void LuaUIManager::UpdateCanvasRectTransform(HWND hWnd)
@@ -307,7 +233,6 @@ LuaUIManager::LuaUIManager()
 
 
     TestCODE();
-    InitScoreUI();
 }
 
 void LuaUIManager::GenerateResource()

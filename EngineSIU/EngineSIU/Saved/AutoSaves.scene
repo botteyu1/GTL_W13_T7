@@ -8,19 +8,6 @@
             "ActorTickInEditor": "false",
             "Components": [
                 {
-                    "ComponentClass": "ULuaScriptComponent",
-                    "ComponentID": "LuaComponent",
-                    "Properties": {
-                        "ComponentClass": "ULuaScriptComponent",
-                        "ComponentName": "LuaComponent",
-                        "ComponentOwner": "ACube_470",
-                        "ComponentOwnerClass": "ACube",
-                        "ScriptName": "",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
                     "ComponentClass": "UStaticMeshComponent",
                     "ComponentID": "StaticMeshComponent_0",
                     "Properties": {
@@ -41,6 +28,19 @@
                         "bIsActive": "true",
                         "bSimulate": "true",
                         "m_Type": ""
+                    }
+                },
+                {
+                    "ComponentClass": "ULuaScriptComponent",
+                    "ComponentID": "LuaComponent",
+                    "Properties": {
+                        "ComponentClass": "ULuaScriptComponent",
+                        "ComponentName": "LuaComponent",
+                        "ComponentOwner": "ACube_470",
+                        "ComponentOwnerClass": "ACube",
+                        "ScriptName": "",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
                     }
                 }
             ],
@@ -77,6 +77,19 @@
                     }
                 },
                 {
+                    "ComponentClass": "ULuaScriptComponent",
+                    "ComponentID": "LuaComponent",
+                    "Properties": {
+                        "ComponentClass": "ULuaScriptComponent",
+                        "ComponentName": "LuaComponent",
+                        "ComponentOwner": "ADestructibleStaticMesh_420",
+                        "ComponentOwnerClass": "ADestructibleStaticMesh",
+                        "ScriptName": "",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
                     "ComponentClass": "UBoxComponent",
                     "ComponentID": "PhysicsCollider",
                     "Properties": {
@@ -97,19 +110,6 @@
                         "bIsActive": "true",
                         "bSimulate": "true",
                         "m_Type": ""
-                    }
-                },
-                {
-                    "ComponentClass": "ULuaScriptComponent",
-                    "ComponentID": "LuaComponent",
-                    "Properties": {
-                        "ComponentClass": "ULuaScriptComponent",
-                        "ComponentName": "LuaComponent",
-                        "ComponentOwner": "ADestructibleStaticMesh_420",
-                        "ComponentOwnerClass": "ADestructibleStaticMesh",
-                        "ScriptName": "",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
                     }
                 }
             ],
@@ -211,6 +211,19 @@
                     }
                 },
                 {
+                    "ComponentClass": "ULuaScriptComponent",
+                    "ComponentID": "LuaComponent",
+                    "Properties": {
+                        "ComponentClass": "ULuaScriptComponent",
+                        "ComponentName": "LuaComponent",
+                        "ComponentOwner": "ADirectionalLight_573",
+                        "ComponentOwnerClass": "ADirectionalLight",
+                        "ScriptName": "",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
                     "ComponentClass": "UBillboardComponent",
                     "ComponentID": "UBillboardComponent_0",
                     "Properties": {
@@ -233,19 +246,6 @@
                         "bIsActive": "true",
                         "bSimulate": "false",
                         "m_Type": "UBillboardComponent"
-                    }
-                },
-                {
-                    "ComponentClass": "ULuaScriptComponent",
-                    "ComponentID": "LuaComponent",
-                    "Properties": {
-                        "ComponentClass": "ULuaScriptComponent",
-                        "ComponentName": "LuaComponent",
-                        "ComponentOwner": "ADirectionalLight_573",
-                        "ComponentOwnerClass": "ADirectionalLight",
-                        "ScriptName": "",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
                     }
                 }
             ],
@@ -570,17 +570,14 @@
                     }
                 },
                 {
-                    "ComponentClass": "USceneComponent",
-                    "ComponentID": "USceneComponent_803",
+                    "ComponentClass": "ULuaScriptComponent",
+                    "ComponentID": "ULuaScriptComponent_802",
                     "Properties": {
-                        "AttachParentID": "USkeletalMeshComponent_805",
-                        "ComponentClass": "USceneComponent",
-                        "ComponentName": "USceneComponent_803",
+                        "ComponentClass": "ULuaScriptComponent",
+                        "ComponentName": "ULuaScriptComponent_802",
                         "ComponentOwner": "ASkeletalMeshActor_801",
                         "ComponentOwnerClass": "ASkeletalMeshActor",
-                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "ScriptName": "",
                         "bAutoActive": "true",
                         "bIsActive": "true"
                     }
@@ -618,25 +615,28 @@
                     }
                 },
                 {
-                    "ComponentClass": "ULuaScriptComponent",
-                    "ComponentID": "ULuaScriptComponent_802",
-                    "Properties": {
-                        "ComponentClass": "ULuaScriptComponent",
-                        "ComponentName": "ULuaScriptComponent_802",
-                        "ComponentOwner": "ASkeletalMeshActor_801",
-                        "ComponentOwnerClass": "ASkeletalMeshActor",
-                        "ScriptName": "",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
                     "ComponentClass": "USceneComponent",
                     "ComponentID": "USceneComponent_804",
                     "Properties": {
                         "AttachParentID": "USkeletalMeshComponent_805",
                         "ComponentClass": "USceneComponent",
                         "ComponentName": "USceneComponent_804",
+                        "ComponentOwner": "ASkeletalMeshActor_801",
+                        "ComponentOwnerClass": "ASkeletalMeshActor",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "USceneComponent",
+                    "ComponentID": "USceneComponent_803",
+                    "Properties": {
+                        "AttachParentID": "USkeletalMeshComponent_805",
+                        "ComponentClass": "USceneComponent",
+                        "ComponentName": "USceneComponent_803",
                         "ComponentOwner": "ASkeletalMeshActor_801",
                         "ComponentOwnerClass": "ASkeletalMeshActor",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
