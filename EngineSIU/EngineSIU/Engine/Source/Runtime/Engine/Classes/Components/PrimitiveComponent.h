@@ -54,6 +54,8 @@ public:
     UPROPERTY_WITH_FLAGS(EditAnywhere, bool, bSimulate, = false)
     UPROPERTY_WITH_FLAGS(EditAnywhere, bool, bApplyGravity, = false)
     UPROPERTY_WITH_FLAGS(EditAnywhere, ERigidBodyType, RigidBodyType, = ERigidBodyType::DYNAMIC)
+    
+    UPROPERTY(EditAnywhere, float, MinImpactForceToDestroy, = 300.0f)
 
     UPROPERTY_WITH_FLAGS(EditAnywhere, TArray<AggregateGeomAttributes>, GeomAttributes)
 
@@ -150,6 +152,7 @@ public:
     FBoundingBox GetBoundingBox() const { return AABB; }
 
     FBoundingBox GetWorldBoundingBox() const;
+
 };
 
 

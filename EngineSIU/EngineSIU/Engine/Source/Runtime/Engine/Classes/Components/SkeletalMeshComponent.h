@@ -166,7 +166,7 @@ private:
         TArray<FMatrix> StablePhysicsBoneWorldMatrices;
         constexpr static int32 StableFrameThreshold = 2; // 예: n프레임 이후를 기준 상태로 간주
 
-        float MinImpactForceToDestroy = 300.0f;
+        
         void ApplyGravityToAllBodies();
 
 public:

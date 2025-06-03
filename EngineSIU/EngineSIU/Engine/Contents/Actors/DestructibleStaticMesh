@@ -24,7 +24,7 @@ public:
 
     UBodySetup* FragmentBodySetupTemplate; // 파편들이 사용할 BodySetup 템플릿
 
-    float MinImpactForceToDestroy = 100.0f;
+    
 
     const float StrengthMultiplier = 3.0f;
 
