@@ -795,6 +795,17 @@ void USkeletalMeshComponent::CPUSkinning(bool bForceUpdate)
      }
 }
 
+void USkeletalMeshComponent::OnHit(
+    UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit
+)
+{
+    float ImpulseMagnitude = NormalImpulse.Size();
+    if (ImpulseMagnitude > MinImpactForceToDestroy)
+    {
+        bDisableAnimAfterHit = 100.0f;
+    }
+}
+
 UAnimSingleNodeInstance* USkeletalMeshComponent::GetSingleNodeInstance() const
 {
     return Cast<UAnimSingleNodeInstance>(AnimScriptInstance);
@@ -853,6 +864,16 @@ UAnimationAsset* USkeletalMeshComponent::GetAnimation() const
         return SingleNodeInstance->GetAnimationAsset();
     }
     return nullptr;
+}
+
+void USkeletalMeshComponent::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (bSimulate)
+    {
+        OnComponentHit.AddUObject(this, &USkeletalMeshComponent::OnHit);
+    }
 }
 
 void USkeletalMeshComponent::Play(bool bLooping)

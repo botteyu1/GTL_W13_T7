@@ -68,6 +68,8 @@ public:
 
     UAnimationAsset* GetAnimation() const;
 
+    virtual void BeginPlay() override;
+
     void Play(bool bLooping);
 
     void Stop();
@@ -164,6 +166,7 @@ private:
         TArray<FMatrix> StablePhysicsBoneWorldMatrices;
         constexpr static int32 StableFrameThreshold = 2; // 예: n프레임 이후를 기준 상태로 간주
 
+        float MinImpactForceToDestroy = 300.0f;
         void ApplyGravityToAllBodies();
 
 public:
@@ -173,6 +176,9 @@ public:
     TSubclassOf<UAnimInstance> AnimClass;
     
     UAnimInstance* AnimScriptInstance;
+    
+    void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+    
 
     UAnimSingleNodeInstance* GetSingleNodeInstance() const;
 
