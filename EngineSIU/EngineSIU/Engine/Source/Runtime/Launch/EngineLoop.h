@@ -8,6 +8,7 @@
 #include "Stats/GPUTimingManager.h"
 
 
+class AGameMode;
 class FSlateAppMessageHandler;
 class UnrealEd;
 class UImGuiManager;
@@ -55,6 +56,9 @@ public:
     
     float GetDeltaTime() const { return DeltaTime; }
 
+    void SetGameMode(AGameMode* InGameMode);
+    AGameMode* GetGameMode() const { return CurrentGameMode; };
+
 private:
     UImGuiManager* UIManager;
     //TODO: GWorld 제거, Editor들 EditorEngine으로 넣기
@@ -70,6 +74,7 @@ private:
 
     float DeltaTime = 0.f;
 
+    AGameMode* CurrentGameMode;
 public:
     SLevelEditor* GetLevelEditor() const { return LevelEditor; }
     UnrealEd* GetUnrealEditor() const { return UnrealEditor; }

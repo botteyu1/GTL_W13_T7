@@ -53,7 +53,7 @@ public:
     FWorldContext& GetEditorWorldContext(/*bool bEnsureIsGWorld = false*/);
     FWorldContext* GetPIEWorldContext(/*int32 WorldPIEInstance = 0*/);
 
-    void ShowLobby();
+    void ShowLobby() const;
     void HideLobby();
 public:
     // void SelectActor(AActor* InActor);

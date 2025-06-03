@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "Engine/AssetManager.h"
 #include "Engine/EditorEngine.h"
+#include "GameFramework/GameMode.h"
 
 SGameUI& SGameUI::GetInstance()
 {
@@ -106,6 +107,7 @@ void SGameUI::DrawButtons()
         {
             Engine->StartPIE();
             GEngineLoop.bPendingGame = false;
+            GEngineLoop.GetGameMode()->StartMatch();
         }
     }
     

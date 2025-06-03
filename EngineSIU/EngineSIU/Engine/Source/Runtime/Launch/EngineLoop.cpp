@@ -16,6 +16,7 @@
 #include "Renderer/TileLightCullingPass.h"
 
 #include "SoundManager.h"
+#include "GameFramework/GameMode.h"
 #include "Lua/LuaScriptManager.h"
 #include "UserInterface/SGameUI.h"
 
@@ -308,4 +309,18 @@ void FEngineLoop::UpdateUI()
     }
     ViewportTypePanel::GetInstance().OnResize(AppWnd);
     SGameUI::GetInstance().OnResize(AppWnd);
+}
+
+void FEngineLoop::SetGameMode(AGameMode* InGameMode)
+{
+    if (CurrentGameMode != InGameMode)
+    {
+        if (CurrentGameMode)
+        {
+            CurrentGameMode->Destroy();
+        }
+        
+        CurrentGameMode = nullptr;
+        CurrentGameMode = InGameMode;
+    }
 }

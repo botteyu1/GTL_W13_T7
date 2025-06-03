@@ -7,7 +7,7 @@
 AGameMode::AGameMode()
 {
     OnGameInit.AddLambda([]() { UE_LOG(ELogLevel::Display, TEXT("Game Initialized")); });
-    
+    GEngineLoop.SetGameMode(this);
     //LuaScriptComp->GetOuter()->
 
     SetActorTickInEditor(false); // PIE 모드에서만 Tick 수행

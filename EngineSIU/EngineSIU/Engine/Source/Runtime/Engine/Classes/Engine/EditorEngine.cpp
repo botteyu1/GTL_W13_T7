@@ -724,12 +724,10 @@ FWorldContext* UEditorEngine::GetPIEWorldContext(/*int32 WorldPIEInstance*/)
     return nullptr;
 }
 
-void UEditorEngine::ShowLobby() // for gamejam
+void UEditorEngine::ShowLobby() const// for gamejam
 {
     GEngineLoop.bPendingGame = true;
-    EditorWorld->WorldType = EWorldType::PIE;
     FEngineLoop::GraphicDevice.SetFullScreen(GEngineLoop.AppWnd);
-    EditorWorld->WorldType = EWorldType::Editor;
 }
 
 void UEditorEngine::HideLobby() // for gamejam
