@@ -207,6 +207,7 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     <ClCompile Include="Engine\Contents\Actors\DestructibleStaticMesh.cpp" />
     <ClCompile Include="Engine\Contents\Actors\CameraActor.cpp" />
     <ClCompile Include="Engine\Contents\Actors\FreeCameraActor.cpp" />
+    <ClCompile Include="Engine\Contents\Actors\GravitySkeletalActor.cpp" />
     <ClCompile Include="Engine\Contents\Actors\ObjectViewCameraActor.cpp" />
     <ClCompile Include="Engine\Contents\Actors\PlayerCameraTest.cpp" />
     <ClCompile Include="Engine\Contents\Actors\SideViewCameraActor.cpp" />
@@ -536,9 +537,10 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Engine\Contents\Actors\DestructibleStaticMesh" />
+    <ClInclude Include="Engine\Contents\Actors\DestructibleStaticMesh.h" />
     <ClInclude Include="Engine\Contents\Actors\CameraActor.h" />
     <ClInclude Include="Engine\Contents\Actors\FreeCameraActor.h" />
+    <ClInclude Include="Engine\Contents\Actors\GravitySkeletalActor.h" />
     <ClInclude Include="Engine\Contents\Actors\ObjectViewCameraActor.h" />
     <ClInclude Include="Engine\Contents\Actors\PlayerCameraTest.h" />
     <ClInclude Include="Engine\Contents\Actors\SideViewCameraActor.h" />

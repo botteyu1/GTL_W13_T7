@@ -288,7 +288,7 @@ void USkeletalMeshComponent::EndPhysicsTickComponent(float DeltaTime)
             : BoneWorldMatrices[ParentIndex];
 
         FMatrix Local = BoneWorldMatrices[i] * FMatrix::Inverse(ParentMatrix);
-        if (IsInRagdollState())
+        if (IsInRagdollState() or ParentIndex == INDEX_NONE)
             BonePoseContext.Pose[i] = FTransform(Local);
     }
 
