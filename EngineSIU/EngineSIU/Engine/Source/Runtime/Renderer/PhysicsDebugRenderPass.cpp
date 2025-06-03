@@ -114,8 +114,8 @@ void FPhysicsDebugRenderPass::DrawDebugData(physx::PxScene* PhysicsScene, const 
     // 어떤 항목을 시각화할지 설정 (매 프레임 또는 필요시 설정)
     PhysicsScene->setVisualizationParameter(physx::PxVisualizationParameter::eSCALE, 1.0f);
     PhysicsScene->setVisualizationParameter(physx::PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
-    PhysicsScene->setVisualizationParameter(physx::PxVisualizationParameter::eJOINT_LIMITS, 1.0f);
-    PhysicsScene->setVisualizationParameter(physx::PxVisualizationParameter::eCONTACT_POINT, 0.5f); // 접촉점은 작게
+    //PhysicsScene->setVisualizationParameter(physx::PxVisualizationParameter::eJOINT_LIMITS, 1.0f);
+    PhysicsScene->setVisualizationParameter(physx::PxVisualizationParameter::eCONTACT_POINT, 1.f); // 접촉점은 작게
     // ... 필요한 다른 파라미터들 ...
 
     const physx::PxRenderBuffer& rb = PhysicsScene->getRenderBuffer();
