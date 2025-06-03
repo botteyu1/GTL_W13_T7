@@ -35,7 +35,7 @@ void UCarComponent::TickComponent(float DeltaTime)
     MoveCar();
     if (Camera)
     {
-        FVector Pos = GetComponentLocation() + FVector(1, 0, 0) * -15.f + FVector(0, 0, 7.5f);
+        FVector Pos = GetComponentLocation() + FVector(1, 0, 0) * -15.f + FVector(0, 0, 3.5f);
         Camera->SetWorldLocation(Pos);
         FVector Target = GetComponentLocation() + FVector(1, 0, 0) * 10.f;
         Camera->SetLookTarget(Target);
@@ -88,7 +88,7 @@ void UCarComponent::CreatePhysXGameObject()
         if (UCameraComponent* DuplicateCamera = Cast<UCameraComponent>(Comp))
         {
             Camera = DuplicateCamera;
-            Camera->SetRelativeLocation(FVector(1, 0, 0) * -15.f + FVector(0, 0, 7.5f));
+            Camera->SetRelativeLocation(FVector(1, 0, 0) * -15.f + FVector(0, 0, 2.f));
             continue;
         }
         Comp->DestroyComponent();
@@ -352,11 +352,11 @@ void UCarComponent::MoveCar()
         return;
     }
 
-    FVector Up = GetUpVector();
-    if (Up.Dot(FVector(0, 0, 1)) < 0)
-    {
-        bBoosted = true;
-    }
+    //FVector Up = GetUpVector();
+    //if (Up.Dot(FVector(0, 0, 1)) < 0)
+    //{
+    //    bBoosted = true;
+    //}
 
     if (!bBoosted)
     {
@@ -364,7 +364,7 @@ void UCarComponent::MoveCar()
         {
             if (Velocity < 0)
                 Velocity = 0;
-            Velocity += 0.15f;
+            Velocity += 0.2f;
         }
         else
         {
@@ -407,7 +407,7 @@ void UCarComponent::MoveCar()
         if (FMath::Abs(CurSteerAngle) < 0.01)
             SteerAngle = 0;
 
-        if (GetCurSpeed() < 5.f)
+        //if (GetCurSpeed() < 5.f)
         {
             if (GetAsyncKeyState('R') & 0x8000)
                 Restart();
@@ -574,6 +574,18 @@ void UCarComponent::Restart()
     }
     Hub[0]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
     Hub[1]->DynamicRigidBody->clearForce(PxForceMode::eIMPULSE);
+
+    CarBody->DynamicRigidBody->setLinearVelocity(PxVec3(0));
+    CarBody->DynamicRigidBody->setAngularVelocity(PxVec3(0));
+    for (int i = 0; i < 4; ++i)
+    {
+        Wheels[i]->DynamicRigidBody->setLinearVelocity(PxVec3(0));
+        Wheels[i]->DynamicRigidBody->setAngularVelocity(PxVec3(0));
+    }
+    Hub[0]->DynamicRigidBody->setLinearVelocity(PxVec3(0));
+    Hub[0]->DynamicRigidBody->setAngularVelocity(PxVec3(0));
+    Hub[1]->DynamicRigidBody->setLinearVelocity(PxVec3(0));
+    Hub[1]->DynamicRigidBody->setAngularVelocity(PxVec3(0));
 
     FireCount += 1;
 }
