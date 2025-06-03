@@ -1,5 +1,6 @@
 #include "LuaUserTypes.h"
 
+#include "Engine/Engine.h"
 #include "Engine/World/World.h"
 #include "Lua/LuaUtils/LuaBindUtils.h"
 #include "Math/Color.h"
@@ -266,4 +267,57 @@ void LuaTypes::FBindLua<FString>::Bind(sol::table& Table)
         LUA_BIND_MEMBER(&FString::ToWideString),
         LUA_BIND_MEMBER(&FString::ToBool)
     );
+}
+// LuaUserTypes.cpp
+
+void LuaTypes::RegisterGlobalFunctions(sol::state& Lua)
+{
+    // 기존 함수
+    Lua.set_function("GetAllActorsInWorld", []() -> std::vector<AActor*> {
+        std::vector<AActor*> Result;
+        for (auto It : TObjectRange<AActor>())
+        {
+            if (It->GetWorld() == GEngine->ActiveWorld)
+            {
+                Result.push_back(It);
+            }
+        }
+        return Result;
+        });
+
+    // 최대 Enemy 수 반환
+    Lua.set_function("GetEnemyCountInWorld", []() -> int32 {
+        int32 Count = 0;
+        for (auto It : TObjectRange<AActor>())
+        {
+            if (It->GetWorld() == GEngine->ActiveWorld)
+            {
+                if (It->GetTag() == "Enemy") // 또는 It->HasTag("Enemy") 사용 가능
+                {
+                    ++Count;
+                }
+            }
+        }
+        return Count;
+        });
+
+    // Enemy 중 Ragdoll 상태인 수 반환
+    Lua.set_function("GetRagdollEnemyCountInWorld", []() -> int32 {
+        int32 Count = 0;
+        for (auto It : TObjectRange<USkeletalMeshComponent>())
+        {
+            if (It->GetWorld() == GEngine->ActiveWorld)
+            {
+                AActor* Owner = It->GetOwner();
+                if (Owner && Owner->GetTag() == "Enemy")
+                {
+                    if (It->IsInRagdollState())
+                    {
+                        ++Count;
+                    }
+                }
+            }
+        }
+        return Count;
+        });
 }

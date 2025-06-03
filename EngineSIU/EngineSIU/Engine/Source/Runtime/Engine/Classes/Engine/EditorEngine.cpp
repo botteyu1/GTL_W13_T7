@@ -22,6 +22,8 @@
 #include "Particles/ParticleSystem.h"
 #include <Components/CarComponent.h>
 
+#include "LuaScripts/LuaUIManager.h"
+
 extern FEngineLoop GEngineLoop;
 
 namespace PrivateEditorSelection
