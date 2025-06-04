@@ -3,12 +3,10 @@
 #include "ShadowManager.h"
 #include "BaseGizmos/GizmoBaseComponent.h"
 #include "Components/Light/LightComponent.h"
-#include "Components/Light/PointLightComponent.h"
 #include "D3D11RHI/DXDBufferManager.h"
 #include "D3D11RHI/GraphicDevice.h"
 #include "D3D11RHI/DXDShaderManager.h"
 #include "Components/Light/DirectionalLightComponent.h"
-#include "Components/Light/PointLightComponent.h"
 #include "Components/Light/SpotLightComponent.h"
 #include "Engine/EditorEngine.h"
 #include "Engine/Engine.h"
@@ -17,10 +15,10 @@
 #include "UObject/UObjectIterator.h"
 #include "Editor/PropertyEditor/ShowFlags.h"
 #include "Engine/AssetManager.h"
+#include "Engine/SkeletalMesh.h"
 
 class UEditorEngine;
 class UStaticMeshComponent;
-#include "UnrealEd/EditorViewportClient.h"
 
 void FShadowRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
 {
@@ -34,33 +32,18 @@ void FShadowRenderPass::InitializeShadowManager(class FShadowManager* InShadowMa
 
 
 //한번만 실행하면 되는 것
-void FShadowRenderPass::PrepareRenderState()
+void FShadowRenderPass::PrepareSpotLightRenderState()
 {
-    // Shader Hot Reload 대응 
-    StaticMeshIL = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
-    DepthOnlyVS = ShaderManager->GetVertexShaderByKey(L"DepthOnlyVS");
-    DepthOnlyPS = ShaderManager->GetPixelShaderByKey(L"DepthOnlyPS");
-    
-    Graphics->DeviceContext->IASetInputLayout(StaticMeshIL);
-    Graphics->DeviceContext->VSSetShader(DepthOnlyVS, nullptr, 0);
-
-    // Note : PS만 언바인드할 뿐, UpdateLightBuffer에서 바인딩된 SRV 슬롯들은 그대로 남아 있음
     Graphics->DeviceContext->PSSetShader(nullptr, nullptr, 0);
     Graphics->DeviceContext->RSSetState(Graphics->RasterizerShadow);
     
     BufferManager->BindConstantBuffer(TEXT("FShadowConstantBuffer"), 11, EShaderStage::Vertex);
-    BufferManager->BindConstantBuffer(TEXT("FShadowConstantBuffer"), 11, EShaderStage::Pixel);
     BufferManager->BindConstantBuffer(TEXT("FIsShadowConstants"), 5, EShaderStage::Pixel);
 }
 
 void FShadowRenderPass::PrepareCSMRenderState()
 {
-    StaticMeshIL = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
-    CascadedShadowMapVS = ShaderManager->GetVertexShaderByKey(L"CascadedShadowMapVS");
-    CascadedShadowMapPS = ShaderManager->GetPixelShaderByKey(L"CascadedShadowMapPS");
-
-    Graphics->DeviceContext->IASetInputLayout(StaticMeshIL);
-    Graphics->DeviceContext->VSSetShader(CascadedShadowMapVS, nullptr, 0);
+    CascadedShadowMapGS = ShaderManager->GetGeometryShaderByKey(L"CascadedShadowMapGS");
     Graphics->DeviceContext->GSSetShader(CascadedShadowMapGS, nullptr, 0);
 
     // Note : PS만 언바인드할 뿐, UpdateLightBuffer에서 바인딩된 SRV 슬롯들은 그대로 남아 있음
@@ -77,12 +60,40 @@ void FShadowRenderPass::PrepareRenderArr()
 {
     for (const auto Iter : TObjectRange<UStaticMeshComponent>())
     {
-        if (!Cast<UGizmoBaseComponent>(Iter) && Iter->GetWorld() == GEngine->ActiveWorld)
+        if (Iter->GetWorld() != GEngine->ActiveWorld)
         {
-            if (Iter->GetOwner() && !Iter->GetOwner()->IsHidden())
+            continue;
+        }
+        if (!Iter->GetOwner() || Iter->GetOwner()->IsHidden())
+        {
+            continue;
+        }
+
+        if (UStaticMeshComponent* StaticMeshComp = Cast<UStaticMeshComponent>(Iter))
+        {
+            if (Iter->IsA<UGizmoBaseComponent>())
             {
-                StaticMeshComponents.Add(Iter);
+                continue;
             }
+
+            StaticMeshComponents.Add(StaticMeshComp);
+        }
+    }
+
+    for (const auto Iter : TObjectRange<USkeletalMeshComponent>())
+    {
+        if (Iter->GetWorld() != GEngine->ActiveWorld)
+        {
+            continue;
+        }
+        if (!Iter->GetOwner() || Iter->GetOwner()->IsHidden())
+        {
+            continue;
+        }
+
+        if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(Iter))
+        {
+            SkeletalMeshComponents.Add(SkeletalMeshComp);
         }
     }
 }
@@ -94,13 +105,251 @@ void FShadowRenderPass::UpdateIsShadowConstant(int32 IsShadow) const
     BufferManager->UpdateConstantBuffer(TEXT("FIsShadowConstants"), ShadowData);
 }
 
-
-void FShadowRenderPass::Render(ULightComponentBase* Light)
+void FShadowRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
+    PrepareRender(Viewport);
     
+    // Directional Light
+    PrepareCSMRenderState();
+    for (const auto DirectionalLight : TObjectRange<UDirectionalLightComponent>())
+    {
+        // Cascade Shadow Map을 위한 ViewProjection Matrix 설정
+        ShadowManager->UpdateCascadeMatrices(Viewport, DirectionalLight);
+
+        FCascadeConstantBuffer CascadeData = {};
+        uint32 NumCascades = ShadowManager->GetNumCasCades();
+        for (uint32 Idx = 0; Idx < NumCascades; Idx++)
+        {
+            CascadeData.ViewProj[Idx] = ShadowManager->GetCascadeViewProjMatrix(Idx);
+        }
+        ShadowManager->BeginDirectionalShadowCascadePass(0);
+       
+        RenderAllMeshesForCSM(Viewport, CascadeData);
+    }
+
+    Graphics->DeviceContext->GSSetShader(nullptr, nullptr, 0);
+    Graphics->DeviceContext->RSSetViewports(0, nullptr);
+    Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+
+    // Spot Light
+    PrepareSpotLightRenderState();
+
+    for (int Idx = 0 ; Idx < SpotLights.Num(); Idx++)
+    {
+        const auto& SpotLight = SpotLights[Idx];
+        FShadowConstantBuffer ShadowData;
+        FMatrix LightViewMatrix = SpotLight->GetViewMatrix();
+        FMatrix LightProjectionMatrix = SpotLight->GetProjectionMatrix();
+        ShadowData.ShadowViewProj = LightViewMatrix * LightProjectionMatrix;
+
+        BufferManager->UpdateConstantBuffer(TEXT("FShadowConstantBuffer"), ShadowData);
+
+        ShadowManager->BeginSpotShadowPass(Idx);
+        
+        RenderAllMeshesForSpotLight(Viewport);
+    }
+    Graphics->DeviceContext->RSSetViewports(0, nullptr);
+    Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+
+    // Point Light
+    PreparePointLightRenderState();
+    for (int Idx = 0 ; Idx < PointLights.Num(); Idx++)
+    {
+        ShadowManager->BeginPointShadowPass(Idx);
+        RenderAllMeshesForPointLight(Viewport, PointLights[Idx]);
+    }
+    Graphics->DeviceContext->RSSetViewports(0, nullptr);
+    Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+
+    CleanUpRender(Viewport);
 }
 
-void FShadowRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
+
+void FShadowRenderPass::ClearRenderArr()
+{
+    StaticMeshComponents.Empty();
+    SkeletalMeshComponents.Empty();
+}
+
+void FShadowRenderPass::SetLightData(const TArray<class UPointLightComponent*>& InPointLights, const TArray<class USpotLightComponent*>& InSpotLights)
+{
+    PointLights = InPointLights;
+    SpotLights = InSpotLights;
+}
+
+void FShadowRenderPass::RenderAllMeshesForSpotLight(const std::shared_ptr<FEditorViewportClient>& Viewport) 
+{
+    StaticMeshIL = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+    DepthOnlyVS = ShaderManager->GetVertexShaderByKey(L"DepthOnlyVS_SM");
+
+    Graphics->DeviceContext->IASetInputLayout(StaticMeshIL);
+    Graphics->DeviceContext->VSSetShader(DepthOnlyVS, nullptr, 0);
+
+    for (UStaticMeshComponent* Comp : StaticMeshComponents)
+    {
+        if (!Comp || !Comp->GetStaticMesh())
+        {
+            continue;
+        }
+        FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
+        if (RenderData == nullptr)
+        {
+            continue;
+        }
+        UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+        FMatrix WorldMatrix = Comp->GetWorldMatrix();
+        FVector4 UUIDColor = Comp->EncodeUUID() / 255.0f;
+        const bool bIsSelected = (Engine && Engine->GetSelectedActor() == Comp->GetOwner());
+
+        UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
+
+        RenderStaticMesh_Internal(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
+    }
+
+    ID3D11InputLayout* TempIL = ShaderManager->GetInputLayoutByKey(L"SkeletalMeshVertexShader");
+    ID3D11VertexShader* TempVS = ShaderManager->GetVertexShaderByKey(L"DepthOnlyVS_SKM");
+
+    Graphics->DeviceContext->IASetInputLayout(TempIL);
+    Graphics->DeviceContext->VSSetShader(TempVS, nullptr, 0);
+
+    for (const USkeletalMeshComponent* Comp : SkeletalMeshComponents)
+    {
+        if (!Comp || !Comp->GetSkeletalMeshAsset())
+        {
+            continue;
+        }
+        const FSkeletalMeshRenderData* RenderData = Comp->GetCPUSkinning() ? Comp->GetCPURenderData() : Comp->GetSkeletalMeshAsset()->GetRenderData();
+        if (RenderData == nullptr)
+        {
+            continue;
+        }
+        FMatrix WorldMatrix = Comp->GetWorldMatrix();
+        FVector4 UUIDColor = Comp->EncodeUUID() / 255.0f;
+        constexpr bool bIsSelected = false;
+
+        UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
+
+        UpdateBones(Comp);
+
+        RenderSkeletalMesh_Internal(RenderData);
+    }
+}
+
+void FShadowRenderPass::RenderAllMeshesForCSM(const std::shared_ptr<FEditorViewportClient>& Viewport, FCascadeConstantBuffer FCasCadeData)
+{
+    StaticMeshIL = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+    CascadedShadowMapVS = ShaderManager->GetVertexShaderByKey(L"CascadedShadowMapVS_SM");
+
+    Graphics->DeviceContext->IASetInputLayout(StaticMeshIL);
+    Graphics->DeviceContext->VSSetShader(CascadedShadowMapVS, nullptr, 0);
+    for (UStaticMeshComponent* Comp : StaticMeshComponents)
+    {
+        if (!Comp || !Comp->GetStaticMesh())
+        {
+            continue;
+        }
+
+        FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
+        if (RenderData == nullptr)
+        {
+            continue;
+        }
+
+        FMatrix WorldMatrix = Comp->GetWorldMatrix();
+
+        FCasCadeData.World = WorldMatrix;
+        BufferManager->UpdateConstantBuffer(TEXT("FCascadeConstantBuffer"), FCasCadeData);
+
+        RenderStaticMesh_Internal(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
+    }
+
+    ID3D11InputLayout* TempIL = ShaderManager->GetInputLayoutByKey(L"SkeletalMeshVertexShader");
+    ID3D11VertexShader* TempVS = ShaderManager->GetVertexShaderByKey(L"CascadedShadowMapVS_SKM");
+
+    Graphics->DeviceContext->IASetInputLayout(TempIL);
+    Graphics->DeviceContext->VSSetShader(TempVS, nullptr, 0);
+
+    for (const USkeletalMeshComponent* Comp : SkeletalMeshComponents)
+    {
+        if (!Comp || !Comp->GetSkeletalMeshAsset())
+        {
+            continue;
+        }
+        const FSkeletalMeshRenderData* RenderData = Comp->GetCPUSkinning() ? Comp->GetCPURenderData() : Comp->GetSkeletalMeshAsset()->GetRenderData();
+        if (RenderData == nullptr)
+        {
+            continue;
+        }
+        FMatrix WorldMatrix = Comp->GetWorldMatrix();
+        FCasCadeData.World = WorldMatrix;
+        BufferManager->UpdateConstantBuffer(TEXT("FCascadeConstantBuffer"), FCasCadeData);
+
+        UpdateBones(Comp);
+
+        RenderSkeletalMesh_Internal(RenderData);
+    }
+}
+
+void FShadowRenderPass::BindResourcesForSampling()
+{
+    ShadowManager->BindResourcesForSampling(
+        static_cast<UINT>(EShaderSRVSlot::SRV_SpotLight),
+        static_cast<UINT>(EShaderSRVSlot::SRV_DirectionalLight),
+        10
+    );
+}
+
+void FShadowRenderPass::RenderAllMeshesForPointLight(const std::shared_ptr<FEditorViewportClient>& Viewport, UPointLightComponent*& PointLight)
+{
+    StaticMeshIL = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+    DepthCubeMapVS = ShaderManager->GetVertexShaderByKey(L"DepthCubeMapVS_SM");
+
+    Graphics->DeviceContext->IASetInputLayout(StaticMeshIL);
+    Graphics->DeviceContext->VSSetShader(DepthCubeMapVS, nullptr, 0);
+
+    for (UStaticMeshComponent* Comp : StaticMeshComponents)
+    {
+        if (!Comp || !Comp->GetStaticMesh()) { continue; }
+
+        FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
+        if (RenderData == nullptr) { continue; }
+
+        FMatrix WorldMatrix = Comp->GetWorldMatrix();
+
+        UpdateCubeMapConstantBuffer(PointLight, WorldMatrix);
+
+        RenderStaticMesh_Internal(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
+    }
+
+    ID3D11InputLayout* TempIL = ShaderManager->GetInputLayoutByKey(L"SkeletalMeshVertexShader");
+    ID3D11VertexShader* TempVS = ShaderManager->GetVertexShaderByKey(L"DepthCubeMapVS_SKM");
+
+    Graphics->DeviceContext->IASetInputLayout(TempIL);
+    Graphics->DeviceContext->VSSetShader(TempVS, nullptr, 0);
+
+    for (USkeletalMeshComponent* Comp : SkeletalMeshComponents)
+    {
+        if (!Comp || !Comp->GetSkeletalMeshAsset())
+        {
+            continue;
+        }
+        const FSkeletalMeshRenderData* RenderData = Comp->GetCPUSkinning() ? Comp->GetCPURenderData() : Comp->GetSkeletalMeshAsset()->GetRenderData();
+        if (RenderData == nullptr)
+        {
+            continue;
+        }
+
+        FMatrix WorldMatrix = Comp->GetWorldMatrix();
+
+        UpdateCubeMapConstantBuffer(PointLight, WorldMatrix);
+
+        UpdateBones(Comp);
+
+        RenderSkeletalMesh_Internal(RenderData);
+    }
+}
+
+void FShadowRenderPass::PrepareRender(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
     const uint64 ShowFlag = Viewport->GetShowFlag();
     if (ShowFlag & EEngineShowFlags::SF_Shadow)
@@ -114,230 +363,55 @@ void FShadowRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& Vie
 
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
     Graphics->DeviceContext->OMSetDepthStencilState(Graphics->DepthStencilState_Default, 1);
-    
-    for (const auto DirectionalLight : TObjectRange<UDirectionalLightComponent>())
-    {
-        // Cascade Shadow Map을 위한 ViewProjection Matrix 설정
-            ShadowManager->UpdateCascadeMatrices(Viewport, DirectionalLight);
 
-            PrepareCSMRenderState();
-            FCascadeConstantBuffer CascadeData = {};
-            uint32 NumCascades = ShadowManager->GetNumCasCades();
-            for (uint32 Idx = 0; Idx < NumCascades; Idx++)
-            {
-                CascadeData.ViewProj[Idx] = ShadowManager->GetCascadeViewProjMatrix(Idx);
-            }
+    BufferManager->BindStructuredBufferSRV(TEXT("BoneBuffer"), 1, EShaderStage::Vertex);
+    BufferManager->BindConstantBuffer(TEXT("FCPUSkinningConstants"), 2, EShaderStage::Vertex);
 
-            ShadowManager->BeginDirectionalShadowCascadePass(0);
-            //RenderAllStaticMeshes(Viewport);
-
-            RenderAllStaticMeshesForCSM(Viewport, CascadeData);
-
-            Graphics->DeviceContext->GSSetShader(nullptr, nullptr, 0);
-            Graphics->DeviceContext->RSSetViewports(0, nullptr);
-            Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-       
-    }
-    PrepareRenderState();
-    for (int Idx = 0 ; Idx < SpotLights.Num(); Idx++)
-    {
-        const auto& SpotLight = SpotLights[Idx];
-        FShadowConstantBuffer ShadowData;
-        FMatrix LightViewMatrix = SpotLight->GetViewMatrix();
-        FMatrix LightProjectionMatrix = SpotLight->GetProjectionMatrix();
-        ShadowData.ShadowViewProj = LightViewMatrix * LightProjectionMatrix;
-
-        BufferManager->UpdateConstantBuffer(TEXT("FShadowConstantBuffer"), ShadowData);
-
-        ShadowManager->BeginSpotShadowPass(Idx);
-        RenderAllStaticMeshes(Viewport);
-           
-        Graphics->DeviceContext->RSSetViewports(0, nullptr);
-        Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-    }
-
-    PrepareCubeMapRenderState();
-    for (int Idx = 0 ; Idx < PointLights.Num(); Idx++)
-    {
-        
-        ShadowManager->BeginPointShadowPass(Idx);
-        RenderAllStaticMeshesForPointLight(Viewport, PointLights[Idx]);
-           
-        Graphics->DeviceContext->RSSetViewports(0, nullptr);
-        Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-    }
-    Graphics->DeviceContext->GSSetShader(nullptr, nullptr, 0);
-}
-
-
-void FShadowRenderPass::ClearRenderArr()
-{
-    StaticMeshComponents.Empty();
-}
-
-void FShadowRenderPass::SetLightData(const TArray<class UPointLightComponent*>& InPointLights, const TArray<class USpotLightComponent*>& InSpotLights)
-{
-    PointLights = InPointLights;
-    SpotLights = InSpotLights;
-}
-
-void FShadowRenderPass::RenderPrimitive(FStaticMeshRenderData* RenderData, const TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int32 SelectedSubMeshIndex)
-{
-    UINT Stride = sizeof(FStaticMeshVertex);
-    UINT Offset = 0;
-
-    FVertexInfo VertexInfo;
-    BufferManager->CreateVertexBuffer(RenderData->ObjectName, RenderData->Vertices, VertexInfo);
-    
-    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &VertexInfo.VertexBuffer, &Stride, &Offset);
-
-    FIndexInfo IndexInfo;
-    BufferManager->CreateIndexBuffer(RenderData->ObjectName, RenderData->Indices, IndexInfo);
-    if (IndexInfo.IndexBuffer)
-    {
-        Graphics->DeviceContext->IASetIndexBuffer(IndexInfo.IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    }
-
-    if (RenderData->MaterialSubsets.Num() == 0)
-    {
-        Graphics->DeviceContext->DrawIndexed(RenderData->Indices.Num(), 0, 0);
-        return;
-    }
-
-    for (int SubMeshIndex = 0; SubMeshIndex < RenderData->MaterialSubsets.Num(); SubMeshIndex++)
-    {
-        uint32 MaterialIndex = RenderData->MaterialSubsets[SubMeshIndex].MaterialIndex;
-
-        FSubMeshConstants SubMeshData = (SubMeshIndex == SelectedSubMeshIndex) ? FSubMeshConstants(true) : FSubMeshConstants(false);
-
-        BufferManager->UpdateConstantBuffer(TEXT("FSubMeshConstants"), SubMeshData);
-
-        if (!OverrideMaterials.IsEmpty() && OverrideMaterials.Num() >= MaterialIndex && OverrideMaterials[MaterialIndex] != nullptr)
-        {
-            MaterialUtils::UpdateMaterial(BufferManager, Graphics, OverrideMaterials[MaterialIndex]->GetMaterialInfo());
-        }
-        else if (!Materials.IsEmpty() && Materials.Num() >= MaterialIndex && Materials[MaterialIndex] != nullptr)
-        {
-            MaterialUtils::UpdateMaterial(BufferManager, Graphics, Materials[MaterialIndex]->Material->GetMaterialInfo());
-        }
-        else if (UMaterial* Mat = UAssetManager::Get().GetMaterial(RenderData->MaterialSubsets[SubMeshIndex].MaterialName))
-        {
-            MaterialUtils::UpdateMaterial(BufferManager, Graphics, Mat->GetMaterialInfo());
-        }
-
-        uint32 StartIndex = RenderData->MaterialSubsets[SubMeshIndex].IndexStart;
-        uint32 IndexCount = RenderData->MaterialSubsets[SubMeshIndex].IndexCount;
-        Graphics->DeviceContext->DrawIndexed(IndexCount, StartIndex, 0);
-    }
-}
-
-void FShadowRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorViewportClient>& Viewport)
-{
-    for (UStaticMeshComponent* Comp : StaticMeshComponents)
-    {
-        if (!Comp || !Comp->GetStaticMesh())
-        {
-            continue;
-        }
-
-        FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
-        if (RenderData == nullptr)
-        {
-            continue;
-        }
-
-        UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-
-        FMatrix WorldMatrix = Comp->GetWorldMatrix();
-        FVector4 UUIDColor = Comp->EncodeUUID() / 255.0f;
-        const bool bIsSelected = (Engine && Engine->GetSelectedActor() == Comp->GetOwner());
-
-        UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
-
-        RenderPrimitive(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
-        
-    }
-}
-
-void FShadowRenderPass::RenderAllStaticMeshesForCSM(const std::shared_ptr<FEditorViewportClient>& Viewport, FCascadeConstantBuffer FCasCadeData)
-{
-    for (UStaticMeshComponent* Comp : StaticMeshComponents)
-    {
-        if (!Comp || !Comp->GetStaticMesh())
-        {
-            continue;
-        }
-
-        FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
-        if (RenderData == nullptr)
-        {
-            continue;
-        }
-
-        UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-        FMatrix WorldMatrix = Comp->GetWorldMatrix();
-        FCasCadeData.World = WorldMatrix;
-        BufferManager->UpdateConstantBuffer(TEXT("FCascadeConstantBuffer"), FCasCadeData);
-
-        RenderPrimitive(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
-
-    }
-}
-
-void FShadowRenderPass::BindResourcesForSampling()
-{
-    ShadowManager->BindResourcesForSampling(static_cast<UINT>(EShaderSRVSlot::SRV_SpotLight),
-        static_cast<UINT>(EShaderSRVSlot::SRV_DirectionalLight),
-    10);
-}
-
-void FShadowRenderPass::RenderAllStaticMeshesForPointLight(const std::shared_ptr<FEditorViewportClient>& Viewport, UPointLightComponent*& PointLight)
-{
-    for (UStaticMeshComponent* Comp : StaticMeshComponents)
-    {
-        if (!Comp || !Comp->GetStaticMesh()) { continue; }
-
-        FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
-        if (RenderData == nullptr) { continue; }
-
-        UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-
-        FMatrix WorldMatrix = Comp->GetWorldMatrix();
-
-        UpdateCubeMapConstantBuffer(PointLight, WorldMatrix);
-
-        RenderPrimitive(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
-    }
-}
-
-void FShadowRenderPass::PrepareRender(const std::shared_ptr<FEditorViewportClient>& Viewport)
-{
+    FCPUSkinningConstants CPUSkinningData;
+    CPUSkinningData.bCPUSkinning = USkeletalMeshComponent::GetCPUSkinning();
+    BufferManager->UpdateConstantBuffer(TEXT("FCPUSkinningConstants"), CPUSkinningData);
 }
 
 void FShadowRenderPass::CleanUpRender(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
+    Graphics->DeviceContext->RSSetViewports(0, nullptr);
+    Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+    Graphics->DeviceContext->GSSetShader(nullptr, nullptr, 0);
 }
 
 void FShadowRenderPass::CreateResource()
 {
-    HRESULT hr = ShaderManager->AddVertexShader(L"DepthOnlyVS", L"Shaders/DepthOnlyVS.hlsl", "mainVS");
+    HRESULT hr = ShaderManager->AddVertexShader(L"DepthOnlyVS_SM", L"Shaders/DepthOnlyVS.hlsl", "mainVS_SM");
     if (FAILED(hr))
     {
         UE_LOG(ELogLevel::Error, TEXT("Failed to create DepthOnlyVS shader!"));
     }
-    hr = ShaderManager->AddVertexShader(L"DepthCubeMapVS", L"Shaders/DepthCubeMapVS.hlsl", "mainVS");
+    hr = ShaderManager->AddVertexShader(L"DepthOnlyVS_SKM", L"Shaders/DepthOnlyVS.hlsl", "mainVS_SKM");
+    if (FAILED(hr))
+    {
+        UE_LOG(ELogLevel::Error, TEXT("Failed to create DepthOnlyVS shader!"));
+    }
+    hr = ShaderManager->AddVertexShader(L"DepthCubeMapVS_SM", L"Shaders/DepthCubeMapVS.hlsl", "mainVS_SM");
     if (FAILED(hr))
     {
         UE_LOG(ELogLevel::Error, TEXT("Failed to create DepthCubeMapVS shader!"));
     }
-
+    hr = ShaderManager->AddVertexShader(L"DepthCubeMapVS_SKM", L"Shaders/DepthCubeMapVS.hlsl", "mainVS_SKM");
+    if (FAILED(hr))
+    {
+        UE_LOG(ELogLevel::Error, TEXT("Failed to create DepthCubeMapVS shader!"));
+    }
     hr = ShaderManager->AddGeometryShader(L"DepthCubeMapGS", L"Shaders/PointLightCubemapGS.hlsl", "mainGS");
     if (FAILED(hr))
     {
         UE_LOG(ELogLevel::Error, TEXT("Failed to create DepthCubeMapGS shader!"));
     }
-
-    hr = ShaderManager->AddVertexShader(L"CascadedShadowMapVS", L"Shaders/CascadedShadowMap.hlsl", "mainVS");
+    hr = ShaderManager->AddVertexShader(L"CascadedShadowMapVS_SM", L"Shaders/CascadedShadowMap.hlsl", "mainVS_SM");
+    if (FAILED(hr))
+    {
+        UE_LOG(ELogLevel::Error, TEXT("Failed to create Cascaded ShadowMap Vertex shader!"));
+    }
+    hr = ShaderManager->AddVertexShader(L"CascadedShadowMapVS_SKM", L"Shaders/CascadedShadowMap.hlsl", "mainVS_SKM");
     if (FAILED(hr))
     {
         UE_LOG(ELogLevel::Error, TEXT("Failed to create Cascaded ShadowMap Vertex shader!"));
@@ -354,52 +428,23 @@ void FShadowRenderPass::CreateResource()
     {
         UE_LOG(ELogLevel::Error, TEXT("Failed to create Cascaded ShadowMap Pixel shader!"));
     }   
-
-
-    StaticMeshIL = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
-    DepthOnlyVS = ShaderManager->GetVertexShaderByKey(L"DepthOnlyVS");
-    DepthOnlyPS = ShaderManager->GetPixelShaderByKey(L"DepthOnlyPS");
-
-    CascadedShadowMapVS = ShaderManager->GetVertexShaderByKey(L"CascadedShadowMapVS");
-    CascadedShadowMapGS = ShaderManager->GetGeometryShaderByKey(L"CascadedShadowMapGS");
-    CascadedShadowMapPS = ShaderManager->GetPixelShaderByKey(L"CascadedShadowMapPS");
 }
 
-
-void FShadowRenderPass::PrepareCubeMapRenderState()
+void FShadowRenderPass::PreparePointLightRenderState()
 {
-    /*auto*& DSV = Viewport->GetViewportResource()->GetDepthStencil(EResourceType::ERT_Scene)->DSV;*/
-    // auto sm = PointLight->GetShadowMap();
-    // auto*& DSV = sm[1].DSV;
-    // Graphics->DeviceContext->ClearDepthStencilView(DSV,
-    //     D3D11_CLEAR_DEPTH, 1.0f, 0);
-    //Graphics->DeviceContext->ClearRenderTargetView(PointLight->DepthRTVArray, ClearColor);
-    //Graphics->DeviceContext->OMSetRenderTargets(1, &PointLight->DepthRTVArray, DSV);
-
-    DepthCubeMapVS = ShaderManager->GetVertexShaderByKey(L"DepthCubeMapVS");
     DepthCubeMapGS = ShaderManager->GetGeometryShaderByKey(L"DepthCubeMapGS");
-    DepthOnlyPS = ShaderManager->GetPixelShaderByKey(L"DepthOnlyPS");
-
-    Graphics->DeviceContext->VSSetShader(DepthCubeMapVS, nullptr, 0);
-    Graphics->DeviceContext->IASetInputLayout(StaticMeshIL);
     
     Graphics->DeviceContext->GSSetShader(DepthCubeMapGS, nullptr, 0);
-    
-    Graphics->DeviceContext->PSSetShader(DepthOnlyPS, nullptr, 0);
+
+    Graphics->DeviceContext->PSSetShader(nullptr, nullptr, 0);
     Graphics->DeviceContext->RSSetState(Graphics->RasterizerSolidBack);
     
     // VS, GS에 대한 상수버퍼 업데이트
     BufferManager->BindConstantBuffer(TEXT("FPointLightGSBuffer"), 0, EShaderStage::Geometry);
     BufferManager->BindConstantBuffer(TEXT("FShadowConstantBuffer"), 11, EShaderStage::Vertex);
-    BufferManager->BindConstantBuffer(TEXT("FShadowConstantBuffer"), 11, EShaderStage::Pixel);
-
-    //UpdateViewport(ShadowMapWidth, ShadowMapHeight);
-    //Graphics->DeviceContext->RSSetViewports(1, &ShadowViewport);
 }
 
-void FShadowRenderPass::UpdateCubeMapConstantBuffer(UPointLightComponent*& PointLight,
-    const FMatrix& WorldMatrix
-    ) const
+void FShadowRenderPass::UpdateCubeMapConstantBuffer(UPointLightComponent*& PointLight, const FMatrix& WorldMatrix) const
 {
     FPointLightGSBuffer DepthCubeMapBuffer;
     DepthCubeMapBuffer.World = WorldMatrix;
@@ -408,13 +453,6 @@ void FShadowRenderPass::UpdateCubeMapConstantBuffer(UPointLightComponent*& Point
         DepthCubeMapBuffer.ViewProj[Idx] = PointLight->GetViewMatrix(Idx) * PointLight->GetProjectionMatrix();
     }
     BufferManager->UpdateConstantBuffer(TEXT("FPointLightGSBuffer"), DepthCubeMapBuffer);
-}
-
-void FShadowRenderPass::RenderCubeMap(const std::shared_ptr<FEditorViewportClient>& Viewport, UPointLightComponent*& PointLight)
-{
-    //UpdateCubeMapConstantBuffer(PointLight);
-    PrepareCubeMapRenderState();
-
 }
 
 
