@@ -107,6 +107,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     FSoundManager::GetInstance().LoadSound("Car_Idle", "Contents/Sounds/Car_Idle.wav", ESoundType::SFX, true);
     FSoundManager::GetInstance().LoadSound("Car_Engine", "Contents/Sounds/Car_Engine.wav", ESoundType::SFX, true);
     FSoundManager::GetInstance().LoadSound("Select", "Contents/Sounds/Select.mp3", ESoundType::SFX);
+    FSoundManager::GetInstance().LoadSound("Car_Boost", "Contents/Sounds/Car_Boost.mp3", ESoundType::SFX, false);
     
     //FSoundManager::GetInstance().PlaySound("fishdream");
     GameUI->Initialize();

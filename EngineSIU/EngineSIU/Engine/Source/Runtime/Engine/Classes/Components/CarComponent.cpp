@@ -565,7 +565,7 @@ void UCarComponent::ApplyForceToActors(float Angle, float Magnitude)
     for (int i = 0; i < 4; ++i)
         Wheels[i]->DynamicRigidBody->addForce(Direction * Magnitude, PxForceMode::eIMPULSE);
     Hub[0]->DynamicRigidBody->addForce(Direction * Magnitude, PxForceMode::eIMPULSE);
-
+    FSoundManager::GetInstance().PlaySound("Car_Boost");
     for (auto It : TObjectRange<AFreeCameraActor>())
     {
         if (It->GetWorld() == GEngine->ActiveWorld)
